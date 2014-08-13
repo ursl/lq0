@@ -558,18 +558,18 @@ double anaLq::iso(Photon *gamma, double radius, double ptmin) {
   Tower *t; 
   TLorentzVector p4; 
   TLorentzVector g4 = gamma->P4(); 
-  for (int i = 0; i < fbPFtowers->GetEntries(); ++i) {
-    t = (Tower*)fbPFtowers->At(i);
-    p4 = t->P4(); 
-    if (p4.Pt() < ptmin) continue;
-    if (t->Particles.At(0) == gamma->Particles.At(0)) {
-      //      cout << " tower: " << t->ET << " " << t->Eta << endl;
-    } else {
-      if (g4.DeltaR(p4) < radius) {
-	et += t->ET; 
-      }
-    }
-  }
+//   for (int i = 0; i < fbPF->GetEntries(); ++i) {
+//     t = (Tower*)fbPFtowers->At(i);
+//     p4 = t->P4(); 
+//     if (p4.Pt() < ptmin) continue;
+//     if (t->Particles.At(0) == gamma->Particles.At(0)) {
+//       //      cout << " tower: " << t->ET << " " << t->Eta << endl;
+//     } else {
+//       if (g4.DeltaR(p4) < radius) {
+// 	et += t->ET; 
+//       }
+//     }
+//   }
 
   Track *tr;
   for (int i = 0; i < fbPFtracks->GetEntries(); ++i) {

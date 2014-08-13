@@ -71,8 +71,9 @@ public:
     *fbJets,
     *fbPhotons,  
     *fbTracks,
-    *fbPFtowers, 
     *fbPFtracks, 
+    *fbPFphotons, 
+    *fbPFneutralh, 
     *fbElectrons,
     *fbMuons;
 
