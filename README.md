@@ -3,7 +3,6 @@ have github access):
 
 * create a work directory: 
 ```
-  cd
   mkdir lq
   cd lq
 ```
