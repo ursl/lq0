@@ -14,6 +14,8 @@ have github access and a tcsh):
   cmsenv
   cd - 
 ```
+I think you can ignore the warning about the non-production
+architecture.
 
 * install Delphes 
 ```
@@ -25,6 +27,7 @@ have github access and a tcsh):
   setenv DELPHES `pwd`
   cd - 
 ```
+I think you can ignore the many compilation warnings.
 
 * get user code
 ```
