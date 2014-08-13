@@ -16,10 +16,10 @@ CXXFLAGS     += $(ROOTCFLAGS)
 LIBS          = $(ROOTLIBS) 
 GLIBS         = $(filter-out -lz, $(ROOTGLIBS)) # -lTMVA -lRooFitCore -lRooFit -lRooStats
 
-EXTHEADERS    = -I../util
+EXTHEADERS    = -I../util -I$(DELPHES)
 LIBPATH       = $(shell pwd)/lib
 
-READER = anaLq.o ExRootTreeReader.o runLq.o
+READER = anaLq.o runLq.o # ExRootTreeReader.o
 ANA = plotLq.o 
 
 DICTFILES = ${ANA:.o=Dict.o}
@@ -51,22 +51,22 @@ bin: lib/libLq.so obj/runLq.o
 	$(LD) $(LDFLAGS) -o bin/runLq $(GLIBS) obj/runLq.o $(LIBPATH)/libLq.so $(LIBPATH)/libDelphes.so $(LIBPATH)/libutil.so
 
 # -- other stuff
-obj/ExRootTreeReader.o: 
-	$(CXX) $(CXXFLAGS) $(EXTHEADERS) -c delphes/ExRootTreeReader.cc -o $@
+#obj/ExRootTreeReader.o: 
+#	$(CXX) $(CXXFLAGS) $(EXTHEADERS) -c delphes/ExRootTreeReader.cc -o $@
 
 
 # -- preparatory setup
 prep:
 	mkdir -p obj bin lib
 	cd lib && ln -f -s ../../util/lib/libutil.so && cd - 
-	cd delphes && ln -f -s  $(DELPHES)/classes && cd - 
+#	cd delphes && ln -f -s  $(DELPHES)/classes && cd - 
 	cd lib && ln -f -s $(DELPHES)/libDelphes.so && cd - 
 
 # -- clean up
 clean:
 	rm -f $(addprefix obj/,$(ANA) $(READER) $(DICTFILES)) 
 	rm -f $(DICTHEADERS) 
-	rm -f delphes/classes
+#	rm -f delphes/classes
 	rm -f bin/runLq
 	rm -f lib/*
 
