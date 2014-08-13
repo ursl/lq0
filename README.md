@@ -32,3 +32,8 @@ have github access):
   cd util && make && cd - 
   cd lq0 && make
 ```
+
+* run user code
+```
+  bin/runLq -f /STORE/LQ/pair/Events/run_01/tag_1_delphes_events.root
+```
