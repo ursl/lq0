@@ -7,16 +7,15 @@ have github access and a tcsh):
   cd lq
 ```
 
-* setup a CMS release
+* setup a CMS release (I think you can ignore the warning about the non-production architecture)
 ```
   scramv1 project CMSSW_5_3_20
   cd CMSSW_5_3_20
   cmsenv
   cd - 
 ```
-  I think you can ignore the warning about the non-production architecture.
 
-* install Delphes 
+* install Delphes (I think you can ignore the many compilation warnings)
 ```
   wget http://cp3.irmp.ucl.ac.be/downloads/Delphes-3.1.2.tar.gz
   tar zxvf Delphes-3.1.2.tar.gz
@@ -26,7 +25,7 @@ have github access and a tcsh):
   setenv DELPHES `pwd`
   cd - 
 ```
-  I think you can ignore the many compilation warnings.
+  
 
 * get user code
 ```
