@@ -36,17 +36,11 @@ $(addprefix obj/,%.o) : %.cc
 %Dict.cc : %.hh
 	$(ROOTCINT) -f $@ -c $(EXTHEADERS) $< 
 
+.PHONY: prep all clean vars
 
 # ================================================================================
-all: prep lib bin
+all: vars prep lib bin
 # -----------------------------------------------------------------------
-
-# -- preparatory setup
-prep:
-	mkdir -p obj bin lib
-	cd lib && ln -f -s ../../util/lib/libutil.so && cd - 
-	cd delphes && ln -f -s  $(DELPHES)/classes && cd - 
-	cd lib && ln -f -s $(DELPHES)/libDelphes.so && cd - 
 
 # -- library
 lib/libLq.so: $(addprefix obj/,$(ANA) $(READER) $(DICTFILES)) 
@@ -61,9 +55,26 @@ obj/ExRootTreeReader.o:
 	$(CXX) $(CXXFLAGS) $(EXTHEADERS) -c delphes/ExRootTreeReader.cc -o $@
 
 
+# -- preparatory setup
+prep:
+	mkdir -p obj bin lib
+	cd lib && ln -f -s ../../util/lib/libutil.so && cd - 
+	cd delphes && ln -f -s  $(DELPHES)/classes && cd - 
+	cd lib && ln -f -s $(DELPHES)/libDelphes.so && cd - 
+
+# -- clean up
 clean:
 	rm -f $(addprefix obj/,$(ANA) $(READER) $(DICTFILES)) 
 	rm -f $(DICTHEADERS) 
 	rm -f delphes/classes
 	rm -f bin/runLq
 	rm -f lib/*
+
+# -- ensure that the environment variable DELPHES is set
+vars:
+ifndef DELPHES
+    $(error DELPHES is undefined, please set it to your local Delphes installation)
+endif
+ifndef CMSSW_BASE
+    $(error CMSSW_BASE is undefined, please run cmsenv somewhere)
+endif
