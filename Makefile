@@ -29,7 +29,7 @@ DICTHEADERS = ${ANA:.o=Dict.h}
 
 
 # -- Default rules
-$(addprefix obj/,%.o) : %.cc 
+$(addprefix obj/,%.o) : %.cc %.hh %.icc
 	$(CXX) $(CXXFLAGS) $(EXTHEADERS) -c $< -o $@
 
 %Dict.cc : %.hh %LinkDef.h
