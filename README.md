@@ -1,5 +1,5 @@
 Code example for the LQ analysis. To start from scratch (assuming you
-have github access):
+have github access and a tcsh):
 
 * create a work directory: 
 ```
@@ -22,6 +22,8 @@ have github access):
   cd Delphes-3.1.2
   perl -pi -e 's%#include "Pythia.h"%#include "Pythia8/Pythia.h"%g' modules/PileUpMergerPythia8.cc readers/DelphesPythia8.cpp
   make -j4
+  setenv DELPHES `pwd`
+  cd - 
 ```
 
 * get user code
