@@ -1,12 +1,14 @@
-# required ENV variables: 
-# DELPHES
+# prerequisites: 
+# DELPHES, an environment variable pointing to a DELPHES-3.1.2 release build
+# CMSSW_BASE, an environment variable pointing to a CMSSW release
+# ../util, containing utilities
 
 ROOTCINT      = $(ROOTSYS)/bin/rootcint
 ROOTCFLAGS    = $(shell $(ROOTSYS)/bin/root-config --cflags)
 ROOTLIBS      = $(shell $(ROOTSYS)/bin/root-config --libs)
 ROOTGLIBS     = $(shell $(ROOTSYS)/bin/root-config --glibs)
 
-#CXXFLAGS      = -g -O3 -Wall -fPIC -pipe -Wuninitialized
+# -- simple non-optimized compilation
 CXXFLAGS      = -g -O0 -Wall -fPIC -pipe -Wuninitialized -O 
 LD            = $(CXX)
 LDFLAGS       = -g 
@@ -14,12 +16,12 @@ SOFLAGS       = -g -shared
 
 CXXFLAGS     += $(ROOTCFLAGS)
 LIBS          = $(ROOTLIBS) 
-GLIBS         = $(filter-out -lz, $(ROOTGLIBS)) # -lTMVA -lRooFitCore -lRooFit -lRooStats
+GLIBS         = $(filter-out -lz, $(ROOTGLIBS))
 
 EXTHEADERS    = -I../util -I$(DELPHES)
 LIBPATH       = $(shell pwd)/lib
 
-READER = anaLq.o runLq.o # ExRootTreeReader.o
+READER = anaLq.o runLq.o 
 ANA = plotLq.o 
 
 DICTFILES = ${ANA:.o=Dict.o}
@@ -50,16 +52,11 @@ lib/libLq.so: $(addprefix obj/,$(ANA) $(READER) $(DICTFILES))
 bin: lib/libLq.so obj/runLq.o 
 	$(LD) $(LDFLAGS) -o bin/runLq $(GLIBS) obj/runLq.o $(LIBPATH)/libLq.so $(LIBPATH)/libDelphes.so $(LIBPATH)/libutil.so
 
-# -- other stuff
-#obj/ExRootTreeReader.o: 
-#	$(CXX) $(CXXFLAGS) $(EXTHEADERS) -c delphes/ExRootTreeReader.cc -o $@
-
 
 # -- preparatory setup
 prep:
 	mkdir -p obj bin lib
 	cd lib && ln -f -s ../../util/lib/libutil.so && cd - 
-#	cd delphes && ln -f -s  $(DELPHES)/classes && cd - 
 	cd lib && ln -f -s $(DELPHES)/libDelphes.so && cd - 
 
 # -- clean up

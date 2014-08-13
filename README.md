@@ -27,8 +27,7 @@ have github access and a tcsh):
 ```
   
 
-* get user code (this assumes you have ssh keys setup, else use
-e.g. `git clone https://ursl@github.com/ursl/util`, etc)
+* get user code (this assumes you have ssh keys setup, else use e.g. `git clone https://ursl@github.com/ursl/util`, etc)
 ```
   git clone git@github.com:ursl/util  
   git clone git@github.com:ursl/lq0
