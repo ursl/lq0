@@ -2,7 +2,7 @@
 #define REDTREEDATA_H
 
 struct redTreeData {
-  int type; 
+  int type, channel; 
   double w8; 
 
   double gpm;    
