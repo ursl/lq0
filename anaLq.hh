@@ -15,7 +15,11 @@
 #include "external/ExRootAnalysis/ExRootTreeReader.h"
 #include "classes/DelphesClasses.h"
 
+#include "masses.hh"
 #include "redTreeData.hh"
+#include "lepton.hh"
+#include "jet.hh"
+#include "lq.hh"
 
 
 // ----------------------------------------------------------------------
@@ -51,6 +55,16 @@ public:
   virtual int isLeptonJet(Jet *j, double deltaR = 0.3); 
   virtual double nearestLepton(Jet *j); 
 
+  // -- reco-level analysis
+  virtual void analysis();
+  virtual void leptonSelection();
+  virtual double muonIso(Muon *m);
+  virtual void jetSelection();
+  virtual double jetMuonSeparation(Jet *j);
+  virtual void preselection();
+  virtual void candSelection();
+
+  // -- print utilities
   virtual void printSummary(int mode = 0); 
   virtual void dumpGenBlock(bool withGluons=false); 
   virtual void dumpGenJets(); 
@@ -65,6 +79,7 @@ public:
   Photon*      getPhoton(int i)   {return (Photon*)fbPhotons->At(i);}
   Electron*    getElectron(int i) {return (Electron*)fbElectrons->At(i);}
   Muon*        getMuon(int i)     {return (Muon*)fbMuons->At(i);}
+  Track*       getTrack(int i)    {return (Track*)fbTracks->At(i);}
   HepMCEvent*  getEvent(int i)    {return (HepMCEvent*)fbEvent->At(i);}
 
   ExRootTreeReader *fTR;
@@ -99,8 +114,16 @@ public:
   Jet         *fGenLQnJ;
   TLorentzVector fP4GenLQn, fP4GenLQnL, fP4GenLQnQ, fP4GenLQnJ
     , fP4GenLQnLQ, fP4GenLQnLJ;
+
+  // -- reco vectors
+  std::vector<lepton *> fLeptons;
+  std::vector<jet *> fJets;
+  std::vector<lq *> fLQ;
   
-  
+  int         CHANNEL; // 11 = electron; 13 = muon
+  double      MUISODELTAR; 
+  double      L0PT, L1PT;
+  double      J0PT, J1PT;
 
   int         fClass; 
   double      fW8;

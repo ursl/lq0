@@ -18,8 +18,12 @@ bool sortPtP(GenParticle *a, GenParticle *b) {
   return ( a->PT > b->PT );
 }
 
-bool sortPtE(Electron *a, Electron *b) {
-    return ( a->PT > b->PT );
+bool sortPtLepton(lepton *a, lepton *b) {
+  return ( a->fP4.Pt() > b->fP4.Pt() );
+}
+
+bool sortPtJet(jet *a, jet *b) {
+  return ( a->fP4.Pt() > b->fP4.Pt() );
 }
 
 bool sortPtM(Muon *a, Muon *b) {
@@ -28,12 +32,21 @@ bool sortPtM(Muon *a, Muon *b) {
 
 // ----------------------------------------------------------------------
 void anaLq::startAnalysis() {
-  cout << "anaLq: startAnalysis: ..." << endl;
+  cout << "==> anaLq: startAnalysis: ..." << endl;
+  CHANNEL = 13; 
+
+  MUISODELTAR = 0.3;
+
+  L0PT = 45.; 
+  L1PT = 45.; 
+
+  J0PT = 125.; 
+  J1PT = 45.; 
 }
 
 // ----------------------------------------------------------------------
 void anaLq::endAnalysis() {
-  cout << "anaLq: endAnalysis: ..." << endl;
+  cout << "==> anaLq: endAnalysis: ..." << endl;
 }
 
 
@@ -52,6 +65,7 @@ void anaLq::eventProcessing() {
   //        << endl;
 
   genLevelAnalysis(); 
+  analysis();
   fillHist(); 
 
 }
@@ -91,6 +105,98 @@ void anaLq::genLevelAnalysis() {
       }
     }
   }
+}
+
+
+// ----------------------------------------------------------------------
+void anaLq::analysis() {
+  leptonSelection();
+  jetSelection();
+  preselection();
+  candSelection();
+}
+
+
+// ----------------------------------------------------------------------
+void anaLq::leptonSelection() {
+
+  for (unsigned int i = 0; i < fLeptons.size(); ++i) delete fLeptons[i];
+  fLeptons.clear();
+  
+  if (13 == CHANNEL) {
+    Muon *pM(0); 
+    double iso(0.); 
+    TLorentzVector m4; 
+    for (int i = 0; i < fbMuons->GetEntries(); ++i) {
+      pM = getMuon(i); 
+      if (pM->PT < L1PT) continue;
+      if (TMath::Abs(pM->Eta) > 2.1) continue;
+      if (muonIso(pM) > 0.1) continue;
+      cout << "adding muon with pT = " << pM->PT << " and charge " << pM->Charge << endl;
+      lepton *l = new lepton;
+      m4.SetPtEtaPhiM(pM->PT, pM->Eta, pM->Phi, MMUON); 
+      l->fP4 = m4;
+      l->q   = pM->Charge;
+      l->fpMuon = pM;
+      l->fpElectron = 0; 
+      fLeptons.push_back(l);
+    }      
+
+    if (fLeptons.size() > 1) {
+      sort(fLeptons.begin(), fLeptons.end(), sortPtLepton);
+    }
+
+  }
+
+  if (11 == CHANNEL) {
+    cout << "implement electron selection!!" << endl;
+    exit(1); 
+  }
+
+
+}
+
+
+// ----------------------------------------------------------------------
+void anaLq::jetSelection() {
+
+  for (unsigned int i = 0; i < fJets.size(); ++i) delete fJets[i];
+  fJets.clear();
+
+  Jet *pJ(0); 
+  double iso(0.); 
+  TLorentzVector j4; 
+  for (int i = 0; i < fbJets->GetEntries(); ++i) {
+    pJ = getJet(i); 
+    if (pJ->PT < J1PT) continue;
+    if (TMath::Abs(pJ->Eta) > 2.4) continue;
+    if (jetMuonSeparation(pJ) < 0.3) continue;
+    cout << "adding jet with pT = " << pJ->PT << endl;
+    jet *j = new jet;
+    j4.SetPtEtaPhiM(pJ->PT, pJ->Eta, pJ->Phi, pJ->Mass); 
+    j->fP4 = j4;
+    j->fpJet = pJ; 
+    fJets.push_back(j);
+  }
+  
+  if (fJets.size() > 1) {
+    sort(fJets.begin(), fJets.end(), sortPtJet);
+  }
+
+}
+
+// ----------------------------------------------------------------------
+void anaLq::preselection() {
+
+  
+
+
+}
+
+// ----------------------------------------------------------------------
+void anaLq::candSelection() {
+
+
 }
 
 
@@ -507,3 +613,53 @@ void anaLq::printSummary(int mode) {
 
 }
 
+// ----------------------------------------------------------------------
+double anaLq::muonIso(Muon *m) {
+
+  double iso(0.);
+  Track *pT(0);
+  TLorentzVector m4, t4; 
+  m4.SetPtEtaPhiM(m->PT, m->Eta, m->Phi, MMUON); 
+  for (int i = 0; i < fbTracks->GetEntries(); ++i) {
+    pT = getTrack(i); 
+    t4.SetPtEtaPhiM(pT->PT, pT->Eta, pT->Phi, MPION); 
+    if (pT->Particle == m->Particle) {
+      //       cout << "track matches muon, skipping " ;
+      //       cout << "track/muon: pT = " << pT->PT << "/" << m->PT 
+      // 	   << " eta = " << pT->Eta << "/" << m->Eta 
+      // 	   << " phi = " << pT->Phi << "/" << m->Phi 
+      // 	   << endl;
+      continue;
+    }
+    if (m4.DeltaR(t4) < MUISODELTAR) {
+      //      cout << " pt = " << t4.Pt() << " -> iso = " << iso << " -> " ;
+      iso += t4.Pt();
+      cout << iso << endl;
+    }
+  }
+  iso /= m->PT; 
+  //  cout << "=> iso = " << iso << endl;
+  return iso;
+}
+
+
+// ----------------------------------------------------------------------
+double anaLq::jetMuonSeparation(Jet *j) {
+  Muon *pM(0); 
+  TLorentzVector j4, m4; 
+  j4.SetPtEtaPhiM(j->PT, j->Eta, j->Phi, j->Mass); 
+
+  double sep(99.), sepMin(99.); 
+  for (int i = 0; i < fbMuons->GetEntries(); ++i) {
+    pM = getMuon(i); 
+    if (TMath::Abs(pM->Eta) > 2.1) continue;
+
+    m4.SetPtEtaPhiM(pM->PT, pM->Eta, pM->Phi, MMUON); 
+    sep = j4.DeltaR(m4); 
+    if (sep < sepMin) {
+      sepMin = sep; 
+    }
+  }
+
+  return sepMin;
+}
