@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
 
   // -- Set up chain
   TChain *chain = new TChain(TString(treeName));
-  cout << "Chaining ... " << treeName << endl;
+  cout << "==> runLq: Chaining ... " << treeName << endl;
   char pName[2000]; 
   int nentries; 
   if (file == 0) {
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
       if (meta.Data()[0] == '#') continue; 
       sscanf(meta.Data(), "%s %d", pName, &nentries); 
       if (nentries > -1) {
-        cout << pName << " -> " << nentries << " entries" << endl; 
+        cout << "       " << pName << " -> " << nentries << " entries" << endl; 
         chain->Add(pName, nentries); 
       } else {
         cout << meta << endl;
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
   }
   else if (file == 1) {
     // -- single file input
-    cout << fileName << endl;
+    cout << "           " << fileName << endl;
     chain->Add(TString(fileName));
   }
 
