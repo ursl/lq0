@@ -34,6 +34,7 @@ bool sortPtM(Muon *a, Muon *b) {
 void anaLq::startAnalysis() {
   cout << "==> anaLq: startAnalysis: ..." << endl;
   CHANNEL = 13; 
+  TYPE = 2; 
 
   MUISODELTAR = 0.3;
 
@@ -113,7 +114,10 @@ void anaLq::analysis() {
   leptonSelection();
   jetSelection();
   preselection();
-  candSelection();
+
+  if (!fPreselected) return;
+
+  if (2 == TYPE) lqlqSelection();
 }
 
 
@@ -132,7 +136,6 @@ void anaLq::leptonSelection() {
       if (pM->PT < L1PT) continue;
       if (TMath::Abs(pM->Eta) > 2.1) continue;
       if (muonIso(pM) > 0.1) continue;
-      cout << "adding muon with pT = " << pM->PT << " and charge " << pM->Charge << endl;
       lepton *l = new lepton;
       m4.SetPtEtaPhiM(pM->PT, pM->Eta, pM->Phi, MMUON); 
       l->fP4 = m4;
@@ -171,7 +174,6 @@ void anaLq::jetSelection() {
     if (pJ->PT < J1PT) continue;
     if (TMath::Abs(pJ->Eta) > 2.4) continue;
     if (jetMuonSeparation(pJ) < 0.3) continue;
-    cout << "adding jet with pT = " << pJ->PT << endl;
     jet *j = new jet;
     j4.SetPtEtaPhiM(pJ->PT, pJ->Eta, pJ->Phi, pJ->Mass); 
     j->fP4 = j4;
@@ -188,17 +190,90 @@ void anaLq::jetSelection() {
 // ----------------------------------------------------------------------
 void anaLq::preselection() {
 
-  
+  fPreselected = false;
+  fST = -9999.; 
 
+  if (2 == TYPE) {
+    if (fLeptons.size() < 2) return;
+    if (fJets.size() < 2)    return;
+
+    if (fLeptons[0]->fP4.Pt() < L0PT) return;
+    if (fJets[0]->fP4.Pt() < J0PT)    return;
+
+    TLorentzVector ll4; 
+    ll4 = fLeptons[0]->fP4 + fLeptons[1]->fP4;
+    if (ll4.M() < 50.)  return;
+
+    fST = fLeptons[0]->fP4.Pt() + fLeptons[1]->fP4.Pt() + fJets[0]->fP4.Pt() + fJets[1]->fP4.Pt();
+    if (fST < 300) return;
+
+    fPreselected = true;
+  }
 
 }
 
 // ----------------------------------------------------------------------
-void anaLq::candSelection() {
+void anaLq::lqlqSelection() {
+
+  for (unsigned int i = 0; i < fLQ.size(); ++i) delete fLQ[i];
+  fLQ.clear();
+
+  
+  if (!fPreselected) return;
+
+  int iBest(-1);
+  double mdiff(99999.), mdiffBest(99999.); 
+  TLorentzVector lq0, lq1; 
+  for (int i = 0; i < 2; ++i) {
+    lq0 = fLeptons[0]->fP4 + fJets[i]->fP4; 
+    lq1 = fLeptons[1]->fP4 + fJets[1-i]->fP4; 
+    //    cout << "i = " << i << " LQ0: " << lq0.M() << " LQ1: " << lq1.M() << endl;
+    mdiff = TMath::Abs(lq0.M() - lq1.M()); 
+    if (mdiff < mdiffBest) {
+      mdiffBest = mdiff; 
+      iBest = i; 
+    }
+  }
+
+  lq0 = fLeptons[0]->fP4 + fJets[iBest]->fP4; 
+  lq1 = fLeptons[1]->fP4 + fJets[1-iBest]->fP4; 
+  //  cout << "iBest = " << iBest << " LQ0 = " << lq0.M() << "  LQ1 = " << lq1.M() << endl;
+
+  fMll = (fLeptons[0]->fP4 + fLeptons[1]->fP4).M();
+
+  // -- I hope the following is correct
+  double mlq0 = lq0.M();
+  double mlq1 = lq1.M();
+  if (mlq0 < mlq1) {
+    fMljetMin = mlq0;
+  } else {
+    fMljetMin = mlq1;
+  }  
+
+  // -- charge determination
+  fPos = (fLeptons[0]->q > 0?0:1);  
+  fNeg = (fLeptons[1]->q > 0?0:1);  
+  if (fPos == fNeg) {
+    fNeg = 1 - fPos; 
+    cout << "XXXXXXXX problem with charge assignment, using positive muon only, i.e. pos = " << fPos << " neg = " << fNeg << endl;
+  }
 
 
+  lq *Lq = new lq;
+  Lq->fP4 = lq0; 
+  fLQ.push_back(Lq); 
+
+  Lq = new lq;
+  Lq->fP4 = lq1; 
+  fLQ.push_back(Lq); 
+      
 }
 
+// ----------------------------------------------------------------------
+void anaLq::lqSelection() {
+  
+
+}
 
 
 // ----------------------------------------------------------------------
@@ -369,11 +444,23 @@ void anaLq::setupReducedTree() {
 
   fTree->Branch("glqpm",   &fRtd.glqpm,           "glqpm/D");
   fTree->Branch("gljpm",   &fRtd.gljpm,           "gljpm/D");
-  fTree->Branch("ljpm",    &fRtd.ljpm,            "ljpm/D");
 
   fTree->Branch("glqnm",   &fRtd.glqnm,           "glqnm/D");
   fTree->Branch("gljnm",   &fRtd.gljnm,           "gljnm/D");
+
+  
   fTree->Branch("ljnm",    &fRtd.ljnm,            "ljnm/D");
+  fTree->Branch("ljnpt",   &fRtd.ljnpt,           "ljnpt/D");
+  fTree->Branch("ljneta",  &fRtd.ljneta,          "ljneta/D");
+
+  fTree->Branch("ljpm",    &fRtd.ljpm,            "ljpm/D");
+  fTree->Branch("ljppt",   &fRtd.ljppt,           "ljppt/D");
+  fTree->Branch("ljpeta",  &fRtd.ljpeta,          "ljpeta/D");
+
+  fTree->Branch("st",      &fRtd.st,              "st/D");
+  fTree->Branch("mll",     &fRtd.mll,             "mll/D");
+  fTree->Branch("mljetmin",&fRtd.mljetmin,        "mljetmin/D");
+
 
 }
 
@@ -392,17 +479,16 @@ void anaLq::fillRedTreeData(int type) {
 
     fRtd.glqpm = fP4GenLQpLQ.M();  
     fRtd.gljpm = fP4GenLQpLJ.M();  
-    fRtd.ljpm;  
 
   } else {
     fRtd.gpm   = -9999.;
     fRtd.gpm2  = -9999.;
     fRtd.gppt  = -9999.;
     fRtd.gpeta = -9999.;
+
+    fRtd.glqpm = -9999.;
+    fRtd.gljpm = -9999.;
   }
-
-
-
 
   if (fGenLQn) {
     fRtd.gnm   = fGenLQn->Mass;
@@ -412,17 +498,43 @@ void anaLq::fillRedTreeData(int type) {
 
     fRtd.glqnm = fP4GenLQnLQ.M();  
     fRtd.gljnm = fP4GenLQnLJ.M();  
-    fRtd.ljnm;  
 
   } else {
     fRtd.gnm   = -9999.;
     fRtd.gnm2  = -9999.;
     fRtd.gnpt  = -9999.;
     fRtd.gneta = -9999.;
+
+    fRtd.glqnm = -9999.;
+    fRtd.gljnm = -9999.;
   }
 
 
-  //  cout << "  fillRedTreeData: " << fW8 << endl;
+  if (fPreselected) {
+    fRtd.ljpm = fLQ[fPos]->fP4.M();  
+    fRtd.ljppt = fLQ[fPos]->fP4.Pt();  
+    fRtd.ljpeta = fLQ[fPos]->fP4.Eta();  
+
+    fRtd.ljnm = fLQ[fNeg]->fP4.M();  
+    fRtd.ljnpt = fLQ[fNeg]->fP4.Pt();  
+    fRtd.ljneta = fLQ[fNeg]->fP4.Eta();  
+
+    fRtd.mljetmin = fMljetMin; 
+    fRtd.mll      = fMll; 
+    fRtd.st       = fST; 
+  } else {
+    fRtd.ljpm = -9999.;
+    fRtd.ljppt = -9999.;  
+    fRtd.ljpeta = -9999.;  
+
+    fRtd.ljnm = -9999.;  
+    fRtd.ljnpt = -9999.;  
+    fRtd.ljneta = -9999.;  
+
+    fRtd.mljetmin = -9999.; 
+    fRtd.mll      = -9999.; 
+    fRtd.st       = -9999.;
+  }
 
 }
 
@@ -450,7 +562,7 @@ void anaLq::genLQProducts(GenParticle *lq, GenParticle *l, GenParticle *q, Jet *
   }
 
   if (0 == q || 0 == l) {
-    cout << "LQ found, but decay quark or lepton missing?!" << endl;
+    cout << "XXXXX LQ found, but decay quark or lepton missing?!" << endl;
     return;
   }
 

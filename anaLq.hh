@@ -62,7 +62,8 @@ public:
   virtual void jetSelection();
   virtual double jetMuonSeparation(Jet *j);
   virtual void preselection();
-  virtual void candSelection();
+  virtual void lqlqSelection();
+  virtual void lqSelection();
 
   // -- print utilities
   virtual void printSummary(int mode = 0); 
@@ -119,7 +120,10 @@ public:
   std::vector<lepton *> fLeptons;
   std::vector<jet *> fJets;
   std::vector<lq *> fLQ;
-  
+  int         fPos, fNeg; 
+
+  // -- cuts
+  int         TYPE; // 1 = single LQ production, 2 = LQ pair production
   int         CHANNEL; // 11 = electron; 13 = muon
   double      MUISODELTAR; 
   double      L0PT, L1PT;
@@ -127,6 +131,9 @@ public:
 
   int         fClass; 
   double      fW8;
+
+  bool        fPreselected;
+  double      fST, fMll, fMljetMin;
 
   static const int PTN   = 40; 
   static const int PTMAX = 800; 
