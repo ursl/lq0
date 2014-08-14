@@ -34,7 +34,7 @@ bool sortPtM(Muon *a, Muon *b) {
 void anaLq::startAnalysis() {
   cout << "==> anaLq: startAnalysis: ..." << endl;
   CHANNEL = 13; 
-  TYPE = 2; 
+  TYPE = 1; 
 
   MUISODELTAR = 0.3;
 
@@ -118,6 +118,7 @@ void anaLq::analysis() {
   if (!fPreselected) return;
 
   if (2 == TYPE) lqlqSelection();
+  if (1 == TYPE) lqSelection();
 }
 
 
@@ -208,6 +209,20 @@ void anaLq::preselection() {
     if (fST < 300) return;
 
     fPreselected = true;
+    return;
+  }
+
+
+  if (1 == TYPE) {
+    if (fLeptons.size() < 1) return;
+    if (fJets.size() < 1)    return;
+
+    if (fLeptons[0]->fP4.Pt() < L0PT) return;
+    if (fJets[0]->fP4.Pt() < J0PT)    return;
+
+    fST = fLeptons[0]->fP4.Pt() + fJets[0]->fP4.Pt();
+    fPreselected = true;
+    return;
   }
 
 }
@@ -272,7 +287,20 @@ void anaLq::lqlqSelection() {
 // ----------------------------------------------------------------------
 void anaLq::lqSelection() {
   
+  for (unsigned int i = 0; i < fLQ.size(); ++i) delete fLQ[i];
+  fLQ.clear();
+  
+  if (!fPreselected) return;
 
+  TLorentzVector lq0 = fLeptons[0]->fP4 + fJets[0]->fP4; 
+
+  // -- charge determination
+  fPos = (fLeptons[0]->q > 0?0:-1);  
+  fNeg = (fLeptons[0]->q < 0?0:-1);  
+
+  lq *Lq = new lq;
+  Lq->fP4 = lq0; 
+  fLQ.push_back(Lq); 
 }
 
 
@@ -329,7 +357,7 @@ void anaLq::bookHist() {
 
 // ----------------------------------------------------------------------
 void anaLq::initVariables() {
-  fW8 = 0.;
+  //  fW8 = getEvent(0)->Weight;
 }
 
 // ----------------------------------------------------------------------
@@ -468,8 +496,9 @@ void anaLq::setupReducedTree() {
 // ----------------------------------------------------------------------
 void anaLq::fillRedTreeData(int type) {
 
-  fRtd.type = fClass; 
-  fRtd.w8   = fW8;
+  fRtd.type    = TYPE; 
+  fRtd.channel = CHANNEL; 
+  fRtd.w8      = fW8;
 
   if (fGenLQp) {
     fRtd.gpm   = fGenLQp->Mass;
@@ -511,16 +540,30 @@ void anaLq::fillRedTreeData(int type) {
 
 
   if (fPreselected) {
-    fRtd.ljpm = fLQ[fPos]->fP4.M();  
-    fRtd.ljppt = fLQ[fPos]->fP4.Pt();  
-    fRtd.ljpeta = fLQ[fPos]->fP4.Eta();  
+    if (fPos > -1) {
+      fRtd.ljpm = fLQ[fPos]->fP4.M();  
+      fRtd.ljppt = fLQ[fPos]->fP4.Pt();  
+      fRtd.ljpeta = fLQ[fPos]->fP4.Eta();  
+    } else {
+      fRtd.ljpm = -9999.;
+      fRtd.ljppt = -9999.;  
+      fRtd.ljpeta = -9999.;  
+    }
+    
+    if (fNeg > -1) {
+      fRtd.ljnm = fLQ[fNeg]->fP4.M();  
+      fRtd.ljnpt = fLQ[fNeg]->fP4.Pt();  
+      fRtd.ljneta = fLQ[fNeg]->fP4.Eta();  
+    } else {
+      fRtd.ljnm = -9999.;  
+      fRtd.ljnpt = -9999.;  
+      fRtd.ljneta = -9999.;  
+    }
 
-    fRtd.ljnm = fLQ[fNeg]->fP4.M();  
-    fRtd.ljnpt = fLQ[fNeg]->fP4.Pt();  
-    fRtd.ljneta = fLQ[fNeg]->fP4.Eta();  
-
-    fRtd.mljetmin = fMljetMin; 
-    fRtd.mll      = fMll; 
+    if (2 == TYPE) {
+      fRtd.mljetmin = fMljetMin; 
+      fRtd.mll      = fMll; 
+    }
     fRtd.st       = fST; 
   } else {
     fRtd.ljpm = -9999.;
@@ -736,21 +779,13 @@ double anaLq::muonIso(Muon *m) {
     pT = getTrack(i); 
     t4.SetPtEtaPhiM(pT->PT, pT->Eta, pT->Phi, MPION); 
     if (pT->Particle == m->Particle) {
-      //       cout << "track matches muon, skipping " ;
-      //       cout << "track/muon: pT = " << pT->PT << "/" << m->PT 
-      // 	   << " eta = " << pT->Eta << "/" << m->Eta 
-      // 	   << " phi = " << pT->Phi << "/" << m->Phi 
-      // 	   << endl;
       continue;
     }
     if (m4.DeltaR(t4) < MUISODELTAR) {
-      //      cout << " pt = " << t4.Pt() << " -> iso = " << iso << " -> " ;
       iso += t4.Pt();
-      cout << iso << endl;
     }
   }
   iso /= m->PT; 
-  //  cout << "=> iso = " << iso << endl;
   return iso;
 }
 
