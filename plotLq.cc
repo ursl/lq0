@@ -356,13 +356,6 @@ void plotLq::overlay(string f1, string h1name, string f2, string h2name, bool le
 void plotLq::candAnalysis() {
   
   fGoodCand = true; 
-  if (fb.m < 100 && fb.m > 150) fGoodCand = false; 
-  if (fb.pt < 250) fGoodCand = false; 
-  if (TMath::Abs(fb.eta) > GETA) fGoodCand = false; 
-  if (fb.g0pt < G0PT) fGoodCand = false; 
-  if (fb.g1pt < G1PT) fGoodCand = false; 
-  if (fb.g0iso > G0ISO) fGoodCand = false; 
-  if (fb.g1iso > G1ISO) fGoodCand = false; 
 
 }
 
@@ -371,12 +364,6 @@ void plotLq::loopFunction() {
   char cds[100];
   sprintf(cds, "%s", fCds.c_str());
   if (fGoodCand) { 
-    fHists[Form("m_%s", cds)]->Fill(fb.m); 
-    fHists[Form("pt_%s", cds)]->Fill(fb.pt); 
-    fHists[Form("g0pt_%s", cds)]->Fill(fb.g0pt); 
-    fHists[Form("g1pt_%s", cds)]->Fill(fb.g1pt); 
-    fHists[Form("g0iso_%s", cds)]->Fill(fb.g0iso); 
-    fHists[Form("g1iso_%s", cds)]->Fill(fb.g1iso); 
   }
 }
 
@@ -429,31 +416,6 @@ void plotLq::loopOverTree(TTree *t, int nevts, int nstart) {
 // ----------------------------------------------------------------------
 void plotLq::setupTree(TTree *t) {
   t->SetBranchAddress("type", &fb.type);
-  t->SetBranchAddress("m", &fb.m); 
-  t->SetBranchAddress("w8", &fb.w8); 
-  t->SetBranchAddress("pt", &fb.pt);
-  t->SetBranchAddress("eta", &fb.eta);
-  t->SetBranchAddress("phi", &fb.phi);
-  t->SetBranchAddress("gm", &fb.gm);
-  t->SetBranchAddress("gpt", &fb.gpt);
-  t->SetBranchAddress("geta", &fb.geta);
-  t->SetBranchAddress("gphi", &fb.gphi);
-  t->SetBranchAddress("g0pt", &fb.g0pt);
-  t->SetBranchAddress("g0eta", &fb.g0eta);
-  t->SetBranchAddress("g0phi", &fb.g0phi);
-  t->SetBranchAddress("g0iso", &fb.g0iso);
-  t->SetBranchAddress("g1pt", &fb.g1pt);
-  t->SetBranchAddress("g1eta", &fb.g1eta);
-  t->SetBranchAddress("g1phi", &fb.g1phi);
-  t->SetBranchAddress("g1iso", &fb.g1iso);
-  t->SetBranchAddress("gg0pt", &fb.gg0pt);
-  t->SetBranchAddress("gg0eta", &fb.gg0eta);
-  t->SetBranchAddress("gg0phi", &fb.gg0phi);
-  t->SetBranchAddress("gg0iso", &fb.gg0iso);
-  t->SetBranchAddress("gg1pt", &fb.gg1pt);
-  t->SetBranchAddress("gg1eta", &fb.gg1eta);
-  t->SetBranchAddress("gg1phi", &fb.gg1phi);
-  t->SetBranchAddress("gg1iso", &fb.gg1iso);
 }
 
 
