@@ -17,11 +17,22 @@ struct redTreeData {
         
   double glqpm;  
   double gljpm;  
-  double ljpm;  
 
   double glqnm;  
   double gljnm;  
+
+  // -- reco 
+  double ljpm;  
+  double ljppt;  
+  double ljpeta;  
+
   double ljnm;  
+  double ljnpt;  
+  double ljneta;  
+
+  double st; 
+  double mll;
+  double mljetmin;
 
 };
 
