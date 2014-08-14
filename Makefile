@@ -32,6 +32,12 @@ DICTHEADERS = ${ANA:.o=Dict.h}
 $(addprefix obj/,%.o) : %.cc %.hh %.icc
 	$(CXX) $(CXXFLAGS) $(EXTHEADERS) -c $< -o $@
 
+$(addprefix obj/,%.o) : %.cc %.hh
+	$(CXX) $(CXXFLAGS) $(EXTHEADERS) -c $< -o $@
+
+$(addprefix obj/,%.o) : %.cc 
+	$(CXX) $(CXXFLAGS) $(EXTHEADERS) -c $< -o $@
+
 %Dict.cc : %.hh %LinkDef.h
 	$(ROOTCINT) -f $@ -c $(EXTHEADERS) $^ 
 
