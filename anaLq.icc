@@ -13,10 +13,11 @@ anaLq::anaLq(TChain *chain) {
 
 // ----------------------------------------------------------------------
 void anaLq::init() {
-  cout << "==> anaLq: init ..." << endl;
+  cout << "==> anaLq: init ExRootTreeReader ... ";
   fTR         = new ExRootTreeReader(fpChain);
   fNentries   = fTR->GetEntries();
   fbParticles = fTR->UseBranch("Particle");
+  fbGenJets   = fTR->UseBranch("GenJet");
   fbJets      = fTR->UseBranch("Jet");
   fbPhotons   = fTR->UseBranch("Photon");
   fbTracks    = fTR->UseBranch("Track");
@@ -26,7 +27,7 @@ void anaLq::init() {
   fbElectrons = fTR->UseBranch("Electron");
   fbMuons     = fTR->UseBranch("Muon");
   fbEvent     = fTR->UseBranch("Event");
-
+  cout << " done" << endl;
   initVariables();
 }
 

@@ -20,7 +20,7 @@
 
 // ----------------------------------------------------------------------
 // -- class for analysis of Delphes trees
-//    output is displayed by plotH
+//    output is displayed by plotLq
 // ----------------------------------------------------------------------
 
 
@@ -40,34 +40,38 @@ public:
   virtual int  loop(int nevents = 1, int start = -1);
   virtual void eventProcessing();
   virtual void initVariables(); 
-  virtual void genLevelAnalysis();
-  virtual void ggAnalysis();
-  virtual void llAnalysis();
-  virtual void ggReco();
-  virtual void llReco();
+
   virtual void fillHist(int type = 0);
   virtual void fillRedTreeData(int type = 0); 
+
+  // -- gen-level analysis
+  virtual void genLevelAnalysis();
+  virtual void genLQProducts(GenParticle *lq, GenParticle *l, GenParticle *q, Jet *j);
+  virtual int  genIndex(GenParticle *); 
+  virtual int isLeptonJet(Jet *j, double deltaR = 0.3); 
+  virtual double nearestLepton(Jet *j); 
+
+  virtual void printSummary(int mode = 0); 
   virtual void dumpGenBlock(bool withGluons=false); 
-
-  virtual void muonEfficiency(); 
-
+  virtual void dumpGenJets(); 
   virtual bool isAncestor(GenParticle *mo, GenParticle *dau);  
   virtual void printParticle(GenParticle *); 
   virtual void dumpDaughters(GenParticle *); 
 
-  double       iso(Photon *, double radius, double ptmin); 
-
+  // -- Delphes tree reader setup
   GenParticle* getParticle(int i) {return (GenParticle*)fbParticles->At(i);}
-  Photon*      getPhoton(int i) {return (Photon*)fbPhotons->At(i);}
+  Jet*         getGenJet(int i)   {return (Jet*)fbGenJets->At(i);}
+  Jet*         getJet(int i)      {return (Jet*)fbJets->At(i);}
+  Photon*      getPhoton(int i)   {return (Photon*)fbPhotons->At(i);}
   Electron*    getElectron(int i) {return (Electron*)fbElectrons->At(i);}
-  Muon*        getMuon(int i) {return (Muon*)fbMuons->At(i);}
-  HepMCEvent*  getEvent(int i) {return (HepMCEvent*)fbEvent->At(i);}
+  Muon*        getMuon(int i)     {return (Muon*)fbMuons->At(i);}
+  HepMCEvent*  getEvent(int i)    {return (HepMCEvent*)fbEvent->At(i);}
 
-  
   ExRootTreeReader *fTR;
   TClonesArray     
-  *fbParticles, 
-    *fbEvent,
+  *fbEvent,
+    *fbParticles, 
+    *fbGenJets, 
     *fbJets,
     *fbPhotons,  
     *fbTracks,
@@ -85,18 +89,21 @@ public:
   TChain      *fpChain; 
   int         fNentries;
 
-  GenParticle *fH0; // NLO Higgs
-  GenParticle *fH1; // `final' SMC Higgs
-  GenParticle *fG0, *fG1; // photons
+  // -- LQ(s) and daughter particles
+  GenParticle *fGenLQp, *fGenLQpL, *fGenLQpQ;
+  Jet         *fGenLQpJ;
+  TLorentzVector fP4GenLQp, fP4GenLQpL, fP4GenLQpQ, fP4GenLQpJ
+    , fP4GenLQpLQ, fP4GenLQpLJ;
 
-  TLorentzVector fp4genH0, fp4genH1, fp4genG0, fp4genG1,
-    fp4H, fp4G0, fp4G1; 
+  GenParticle *fGenLQn, *fGenLQnL, *fGenLQnQ; 
+  Jet         *fGenLQnJ;
+  TLorentzVector fP4GenLQn, fP4GenLQnL, fP4GenLQnQ, fP4GenLQnJ
+    , fP4GenLQnLQ, fP4GenLQnLJ;
   
-  int         fClass; // 0 gamma gamma, 1 (mu mu)  (mu mu), 2 (e e) (e e), 3 (e e) (mu mu), 4 l l 
-  double      fW8;
-  int         fNRecoPhotons;
+  
 
-  double      fG0Iso, fG1Iso, fgenG0Iso, fgenG1Iso;
+  int         fClass; 
+  double      fW8;
 
   static const int PTN   = 40; 
   static const int PTMAX = 800; 
