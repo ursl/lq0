@@ -1,3 +1,7 @@
+# -- define the command to run and the delphes output file
+$runCommand = "bin/runLq"; 
+$dfile      = "tag_1_delphes_events.root";
+
 # -- keep in the order given below
 tie %jobs, "Tie::IxHash";
 
@@ -5,7 +9,7 @@ tie %jobs, "Tie::IxHash";
 %jobs = (
 # -- background
     "bgpair Drell-Yan"      => "-C \"CHANNEL=13,TYPE=2\" -o $dir/dy_pair.root -c chains/cDY_3jets"
-    	    		        , "bgsingle Drell-Yan"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/dy_single.root -c chains/cDY_3jets"
+  , "bgsingle Drell-Yan"    => "-C \"CHANNEL=13,TYPE=1\" -o $dir/dy_single.root -c chains/cDY_3jets"
 # -- single LQ
     , "sgsingle LQ "        => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq01_single.root -f /STORE/LQ/single/Events/run_01/$dfile"
 # -- pair LQ
