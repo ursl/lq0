@@ -44,6 +44,7 @@ public:
   virtual int  loop(int nevents = 1, int start = -1);
   virtual void eventProcessing();
   virtual void initVariables(); 
+  virtual void setCuts(std::string cuts); 
 
   virtual void fillHist(int type = 0);
   virtual void fillRedTreeData(int type = 0); 

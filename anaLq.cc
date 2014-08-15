@@ -1,5 +1,7 @@
 #include "anaLq.hh"
 
+#include <sstream>
+
 #include <TProfile.h>
 
 #include "util.hh"
@@ -31,9 +33,38 @@ bool sortPtM(Muon *a, Muon *b) {
 }
 
 // ----------------------------------------------------------------------
+void anaLq::setCuts(string cuts) {
+  cout << "==> anaLq::setCuts: " << cuts << endl;
+
+  istringstream ss(cuts);
+  string token, name, sval;
+  
+  while (getline(ss, token, ',')) {
+    
+    string::size_type m1 = token.find("="); 
+    name = token.substr(0, m1);
+    sval = token.substr(m1+1);
+
+    if (string::npos != name.find("CHANNEL")) {
+      int val; 
+      val = atoi(sval.c_str()); 
+      CHANNEL = val;
+    }
+
+    if (string::npos != name.find("TYPE")) {
+      int val; 
+      val = atoi(sval.c_str()); 
+      TYPE = val;
+    }
+    
+  }
+
+}
+
+
+
+// ----------------------------------------------------------------------
 void anaLq::startAnalysis() {
-  CHANNEL = 13; 
-  TYPE = 2; 
   cout << "==> anaLq: startAnalysis: " << (TYPE==2?"LQ ***pair*** production":"LQ ***single*** production") 
        << " in the ***" << (CHANNEL==13?"muon":"electron") << "*** channel"
        << endl;
