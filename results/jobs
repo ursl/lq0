@@ -6,28 +6,29 @@ $dfile      = "tag_1_delphes_events.root";
 tie %jobs, "Tie::IxHash";
 
 # -- define all the jobs
-%jobs = (
+%jobs = ();
 
 # ---------
 # -- SIGNAL
 # ---------
 
 # -- single LQ
-"sg single LQ run01"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq01_single.root -f /STORE/LQ/single/Events/run_01/$dfile",
-"sg single LQ run02"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq02_single.root -f /STORE/LQ/single/Events/run_02/$dfile",
-"sg single LQ run03"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq03_single.root -f /STORE/LQ/single/Events/run_03/$dfile",
-"sg single LQ run04"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq04_single.root -f /STORE/LQ/single/Events/run_04/$dfile",
+for ($i = 1; $i <=32; $i++) {
+  $in = sprintf("%02d", $i);
+  $jobs{"sg single LQ run$in"} = "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq${in}_single.root -f /STORE/LQ/single/Events/run_$in/$dfile"; 
+}
+
 # -- pair LQ
-"sg pair LQ run01"    => "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq01_pair.root -f /STORE/LQ/pair/Events/run_01/$dfile",
-"sg pair LQ run02"    => "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq02_pair.root -f /STORE/LQ/pair/Events/run_02/$dfile",
-"sg pair LQ run03"    => "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq03_pair.root -f /STORE/LQ/pair/Events/run_03/$dfile",
-"sg pair LQ run04"    => "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq04_pair.root -f /STORE/LQ/pair/Events/run_04/$dfile",
+for ($i = 1; $i <=32; $i++) {
+  $in = sprintf("%02d", $i);
+  $jobs{"sg pair LQ run$in"} = "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq${in}_pair.root -f /STORE/LQ/pair/Events/run_$in/$dfile"; 
+}
+
 
 # -------------
 # -- background
 # -------------
-"bg pair Drell-Yan"    => "-C \"CHANNEL=13,TYPE=2\" -o $dir/dy_pair.root -c chains/cDY_3jets",
-"bg single Drell-Yan"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/dy_single.root -c chains/cDY_3jets"
+#"bg pair Drell-Yan"    => "-C \"CHANNEL=13,TYPE=2\" -o $dir/dy_pair.root -c chains/cDY_3jets",
+#"bg single Drell-Yan"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/dy_single.root -c chains/cDY_3jets"
 
-);
 
