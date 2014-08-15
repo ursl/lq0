@@ -1,0 +1,4 @@
+# name,m(LQ),lambda     xsec in pb
+type=dy_pair,-1,-1      xsec=211.0   file=results/tag_1_delphes_events.dy_pair.root
+type=lq_pair_01,500,1   xsec=0.060   file=results/tag_1_delphes_events.pair_01.root
+type=lq_single_01,500,1 xsec=0.060   file=results/tag_1_delphes_events.pair_01.root
