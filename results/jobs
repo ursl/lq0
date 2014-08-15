@@ -28,7 +28,7 @@ for ($i = 1; $i <=32; $i++) {
 # -------------
 # -- background
 # -------------
-#"bg pair Drell-Yan"    => "-C \"CHANNEL=13,TYPE=2\" -o $dir/dy_pair.root -c chains/cDY_3jets",
-#"bg single Drell-Yan"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/dy_single.root -c chains/cDY_3jets"
+  $jobs{"bg pair Drell-Yan"}   = "-C \"CHANNEL=13,TYPE=2\" -o $dir/dy_pair.root -c chains/cDY_3jets";
+  $jobs{"bg single Drell-Yan"} = "-C \"CHANNEL=13,TYPE=1\" -o $dir/dy_single.root -c chains/cDY_3jets";
 
 
