@@ -13,21 +13,21 @@ tie %jobs, "Tie::IxHash";
 # ---------
 
 # -- single LQ
-"sgsingle LQ "        => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq01_single.root -f /STORE/LQ/single/Events/run_01/$dfile",
-"sgsingle LQ "        => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq02_single.root -f /STORE/LQ/single/Events/run_02/$dfile",
-"sgsingle LQ "        => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq03_single.root -f /STORE/LQ/single/Events/run_03/$dfile",
-"sgsingle LQ "        => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq04_single.root -f /STORE/LQ/single/Events/run_04/$dfile",
+"sg single LQ run01"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq01_single.root -f /STORE/LQ/single/Events/run_01/$dfile",
+"sg single LQ run02"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq02_single.root -f /STORE/LQ/single/Events/run_02/$dfile",
+"sg single LQ run03"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq03_single.root -f /STORE/LQ/single/Events/run_03/$dfile",
+"sg single LQ run04"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/lq04_single.root -f /STORE/LQ/single/Events/run_04/$dfile",
 # -- pair LQ
-"sgpair LQ "          => "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq01_pair.root -f /STORE/LQ/single/Events/run_01/$dfile",
-"sgpair LQ "          => "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq02_pair.root -f /STORE/LQ/single/Events/run_02/$dfile",
-"sgpair LQ "          => "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq03_pair.root -f /STORE/LQ/single/Events/run_03/$dfile",
-"sgpair LQ "          => "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq04_pair.root -f /STORE/LQ/single/Events/run_04/$dfile",
+"sg pair LQ run01"    => "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq01_pair.root -f /STORE/LQ/pair/Events/run_01/$dfile",
+"sg pair LQ run02"    => "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq02_pair.root -f /STORE/LQ/pair/Events/run_02/$dfile",
+"sg pair LQ run03"    => "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq03_pair.root -f /STORE/LQ/pair/Events/run_03/$dfile",
+"sg pair LQ run04"    => "-C \"CHANNEL=13,TYPE=2\" -o $dir/lq04_pair.root -f /STORE/LQ/pair/Events/run_04/$dfile",
 
 # -------------
 # -- background
 # -------------
-"bgpair Drell-Yan"      => "-C \"CHANNEL=13,TYPE=2\" -o $dir/dy_pair.root -c chains/cDY_3jets",
-"bgsingle Drell-Yan"    => "-C \"CHANNEL=13,TYPE=1\" -o $dir/dy_single.root -c chains/cDY_3jets"
+"bg pair Drell-Yan"    => "-C \"CHANNEL=13,TYPE=2\" -o $dir/dy_pair.root -c chains/cDY_3jets",
+"bg single Drell-Yan"  => "-C \"CHANNEL=13,TYPE=1\" -o $dir/dy_single.root -c chains/cDY_3jets"
 
 );
 
