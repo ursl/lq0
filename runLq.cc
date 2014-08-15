@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
   // -- Some defaults
   string dirBase("./");               // this could point to "/home/ursl/data/root/."
   string dirName("."); dirspec = 0;   // and this to, e.g. "bmm", "bee", "bem", ...
-  string cutFile("default.cuts");
+  string cutString("nada");
 
   string treeName("Delphes");
 
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
         cout << "List of arguments:" << endl;
         cout << "-b {0,1}      run blind?" << endl; 
         cout << "-c filename   chain definition file" << endl;
-        cout << "-C filename   file with cuts" << endl;
+        cout << "-C cutstring  string with cuts" << endl;
         cout << "-D path       where to put the output" << endl;
         cout << "-f filename   single file instead of chain" << endl;
         cout << "-m            use MC information" << endl;
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     }
     if (!strcmp(argv[i],"-b"))  {blind      = atoi(argv[++i]); }                 // run blind?
     if (!strcmp(argv[i],"-c"))  {fileName   = string(argv[++i]); file = 0; }     // file with chain definition
-    if (!strcmp(argv[i],"-C"))  {cutFile    = string(argv[++i]);           }     // file with cuts
+    if (!strcmp(argv[i],"-C"))  {cutString  = string(argv[++i]);           }     // file with cuts
     if (!strcmp(argv[i],"-D"))  {dirName    = string(argv[++i]);  dirspec = 1; } // where to put the output
     if (!strcmp(argv[i],"-f"))  {fileName   = string(argv[++i]); file = 1; }     // single file instead of chain
     if (!strcmp(argv[i],"-j"))  {jsonName   = string(argv[++i]); json = 1; }     // single file instead of chain
@@ -89,21 +89,15 @@ int main(int argc, char *argv[]) {
   }
 
 
-  // -- Prepare histfilename variation with (part of) cut file name
-  TString fn(cutFile);
-  fn.ReplaceAll("cuts/", "");
-  fn.ReplaceAll(".cuts", "");
-  fn.ReplaceAll("tree", "");
-
   // -- Determine filename for output histograms and 'final' small/reduced tree
   TString meta = fileName;
-  if(histfile == "") {
+  if (histfile == "") {
     TString  barefile(fileName), chainFile, meta;
     if (file == 0) {
       // -- input from chain
       if (barefile.Contains("chains/")) {
         barefile.ReplaceAll("chains/", "");
-        histfile = barefile + "." + fn + ".root";
+        histfile = barefile + "." + ".root";
         if (dirspec) {
           if (dirName[0] == '/') {
             histfile = dirName + "/" + histfile;
@@ -112,7 +106,7 @@ int main(int argc, char *argv[]) {
           }
         }
       } else {
-        histfile =  barefile + "." + fn + ".root";
+        histfile =  barefile + "." + ".root";
         if (dirspec) {
           if (dirName[0] == '/') {
             histfile = dirName + "/" + histfile;
@@ -125,7 +119,7 @@ int main(int argc, char *argv[]) {
       int fl = barefile.Last('/');
       TString bla(barefile);
       bla.Replace(0, fl+1, ' '); bla.Strip(TString::kLeading, ' ');  bla.Remove(0,1);
-      histfile =  bla + "." + fn + ".root";
+      histfile =  bla + "." + ".root";
       if (dirspec) {
         histfile = dirBase + "/" + dirName + "/" + histfile;
       }
@@ -137,7 +131,7 @@ int main(int argc, char *argv[]) {
       bla.Replace(0, fl+1, ' '); bla.Strip(TString::kLeading, ' ');  bla.Remove(0,1);
       histfile =  bla;
       histfile.ReplaceAll(".root", "");
-      histfile +=  "." + fn + ".root";
+      histfile +=  "." + ".root";
       if (dirspec) {
         if (dirName[0] == '/') {
           histfile = dirName + "/" + histfile;
@@ -185,6 +179,10 @@ int main(int argc, char *argv[]) {
   if (a) {
     string shistfile = histfile.Data(); 
     a->openHistFile(shistfile); 
+    if (cutString.compare("nada")) {
+      cout << "setCuts(" << cutString << ")" << endl;
+      a->setCuts(cutString); 
+    }
 
     a->bookHist();
 
