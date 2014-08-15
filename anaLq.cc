@@ -32,9 +32,11 @@ bool sortPtM(Muon *a, Muon *b) {
 
 // ----------------------------------------------------------------------
 void anaLq::startAnalysis() {
-  cout << "==> anaLq: startAnalysis: ..." << endl;
   CHANNEL = 13; 
-  TYPE = 1; 
+  TYPE = 2; 
+  cout << "==> anaLq: startAnalysis: " << (TYPE==2?"LQ ***pair*** production":"LQ ***single*** production") 
+       << " in the ***" << (CHANNEL==13?"muon":"electron") << "*** channel"
+       << endl;
 
   MUISODELTAR = 0.3;
 
