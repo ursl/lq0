@@ -40,6 +40,7 @@ public :
 
   void   loadFiles(std::string afiles);
   TFile* loadFile(std::string afiles);
+  void   splitType(std::string stype, std::string &name, double &mass, double &lambda);
 
 
   // -- Main analysis methods 
@@ -70,22 +71,11 @@ private:
   std::string fDirectory, fSetup, fSuffix;   
 
   int    NBINS; 
-  double GETA;
-  double G0ISO, G1ISO; 
-  double G0PT, G1PT; 
-  double PTLO, PTHI; 
-  double MGGLO, MGGHI; 
 
-  double fLumi, fSg0Xs, fSg1Xs, fBgXs, fBgRf, fSgBF;
+  bool fPair;
+  bool fGoodEvent, fGoodCandLQp, fGoodCandLQn; 
 
-  bool fGoodCand; 
-
-  TH1D *fHistSg0, *fHistSg1, *fHistBg; 
-  TH2D *fHistBg2;
-
-  TTree* fTree;
-
-  struct redTreeData fb; 
+  struct redTreeData fRtd; 
 
   int             fOptMode; 
   std::map<std::string, TH1*> fHists;
