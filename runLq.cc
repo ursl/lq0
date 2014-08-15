@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
       bla.Replace(0, fl+1, ' '); bla.Strip(TString::kLeading, ' ');  bla.Remove(0,1);
       histfile =  bla;
       histfile.ReplaceAll(".root", "");
-      histfile +=  "." + ".root";
+      histfile +=  ".root";
       if (dirspec) {
         if (dirName[0] == '/') {
           histfile = dirName + "/" + histfile;
@@ -180,7 +180,6 @@ int main(int argc, char *argv[]) {
     string shistfile = histfile.Data(); 
     a->openHistFile(shistfile); 
     if (cutString.compare("nada")) {
-      cout << "setCuts(" << cutString << ")" << endl;
       a->setCuts(cutString); 
     }
 
