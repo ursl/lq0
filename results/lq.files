@@ -1,4 +1,11 @@
 # name,m(LQ),lambda     xsec in pb
-type=dy_pair,-1,-1      xsec=211.0   file=results/tag_1_delphes_events.dy_pair.root
-type=lq_pair_01,500,1   xsec=0.060   file=results/tag_1_delphes_events.pair_01.root
-type=lq_single_01,500,1 xsec=0.060   file=results/tag_1_delphes_events.pair_01.root
+#type=dy_pair,-1,-1      xsec=211.0   file=results/tag_1_delphes_events.dy_pair.root
+type=lq_pair_01,500,1   xsec=5.95749446160207183E-002  file=results/lq01_pair.root
+type=lq_pair_02,500,2   xsec=7.28309367680646524E-002  file=results/lq02_pair.root
+type=lq_pair_03,500,3   xsec=0.13333105078991217       file=results/lq03_pair.root
+type=lq_pair_04,500,0.3 xsec=5.89097600880104377E-002  file=results/lq04_pair.root
+#
+type=lq_single_01,500,1   xsec=5.91662664919526335E-002 file=results/lq01_single.root
+type=lq_single_02,500,2   xsec=0.27582803628029551      file=results/lq02_single.root
+type=lq_single_03,500,3   xsec=0.71143247463064618      file=results/lq03_single.root
+type=lq_single_04,500,0.3 xsec=5.23365620230081211E-003 file=results/lq04_single.root
