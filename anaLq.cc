@@ -163,7 +163,6 @@ void anaLq::leptonSelection() {
   
   if (13 == CHANNEL) {
     Muon *pM(0); 
-    double iso(0.); 
     TLorentzVector m4; 
     for (int i = 0; i < fbMuons->GetEntries(); ++i) {
       pM = getMuon(i); 
@@ -201,7 +200,6 @@ void anaLq::jetSelection() {
   fJets.clear();
 
   Jet *pJ(0); 
-  double iso(0.); 
   TLorentzVector j4; 
   for (int i = 0; i < fbJets->GetEntries(); ++i) {
     pJ = getJet(i); 
@@ -306,6 +304,13 @@ void anaLq::lqlqSelection() {
     cout << "XXXXXXXX problem with charge assignment, using positive muon only, i.e. pos = " << fPos << " neg = " << fNeg << endl;
   }
 
+  // -- leading lepton/jet determination
+  fL0 = (fLeptons[0]->fP4.Pt() > fLeptons[1]->fP4.Pt()? 0: 1);  
+  fL1 = (fLeptons[0]->fP4.Pt() > fLeptons[1]->fP4.Pt()? 1: 0);  
+
+  fJ0 = (fJets[0]->fP4.Pt() > fJets[1]->fP4.Pt()? 0: 1);  
+  fJ1 = (fJets[0]->fP4.Pt() > fJets[1]->fP4.Pt()? 1: 0);  
+
 
   lq *Lq = new lq;
   Lq->fP4 = lq0; 
@@ -358,24 +363,20 @@ void anaLq::bookHist() {
   cout << "==> anaLq: bookHist"  << endl;
 
   TH1D *h1(0); 
-  TH2D *h2(0); 
-  TProfile *hp(0);
+  (void)h1;
 
   //  fpHistFile->mkdir(Form("class%d", i)); 
   //  fpHistFile->cd(Form("class%d", i));
 
   h1 = new TH1D("pt",  "lq gen pt", PTN, 0., PTMAX); 
-  h1 = new TH1D("eta", "lq gen eta", PTN, -3., 3.); 
   h1 = new TH1D("phi", "lq gen phi", PTN, -3.15, 3.15); 
   h1 = new TH1D("m",   "lq gen m", PTN, 400., 1500.); 
 
   h1 = new TH1D("lqpt",  "l+q gen pt", PTN, 0., PTMAX); 
-  h1 = new TH1D("lqeta", "l+q gen eta", PTN, -3., 3.); 
   h1 = new TH1D("lqphi", "l+q gen phi", PTN, -3.15, 3.15); 
   h1 = new TH1D("lqm",   "l+q gen m", PTN, 400., 1500.); 
 
   h1 = new TH1D("ljpt",  "l+j gen pt", PTN, 0., PTMAX); 
-  h1 = new TH1D("ljeta", "l+j gen eta", PTN, -3., 3.); 
   h1 = new TH1D("ljphi", "l+j gen phi", PTN, -3.15, 3.15); 
   h1 = new TH1D("ljm",   "l+j gen m", PTN, 400., 1500.); 
 
@@ -496,12 +497,10 @@ void anaLq::setupReducedTree() {
   fTree->Branch("gpm",     &fRtd.gpm,             "gpm/D");
   fTree->Branch("gpm2",    &fRtd.gpm2,            "gpm2/D");
   fTree->Branch("gppt",    &fRtd.gppt,            "gppt/D");
-  fTree->Branch("gpeta",   &fRtd.gpeta,           "gpeta/D");
 
   fTree->Branch("gnm",     &fRtd.gnm,             "gnm/D");
   fTree->Branch("gnm2",    &fRtd.gnm2,            "gnm2/D");
   fTree->Branch("gnpt",    &fRtd.gnpt,            "gnpt/D");
-  fTree->Branch("gneta",   &fRtd.gneta,           "gneta/D");
 
   fTree->Branch("glqpm",   &fRtd.glqpm,           "glqpm/D");
   fTree->Branch("gljpm",   &fRtd.gljpm,           "gljpm/D");
@@ -512,11 +511,16 @@ void anaLq::setupReducedTree() {
   
   fTree->Branch("ljnm",    &fRtd.ljnm,            "ljnm/D");
   fTree->Branch("ljnpt",   &fRtd.ljnpt,           "ljnpt/D");
-  fTree->Branch("ljneta",  &fRtd.ljneta,          "ljneta/D");
 
   fTree->Branch("ljpm",    &fRtd.ljpm,            "ljpm/D");
   fTree->Branch("ljppt",   &fRtd.ljppt,           "ljppt/D");
-  fTree->Branch("ljpeta",  &fRtd.ljpeta,          "ljpeta/D");
+
+  fTree->Branch("l0pt",    &fRtd.l0pt,            "l0pt/D");
+  fTree->Branch("l1pt",    &fRtd.l1pt,            "l1pt/D");
+
+  fTree->Branch("j0pt",    &fRtd.j0pt,            "j0pt/D");
+  fTree->Branch("j1pt",    &fRtd.j1pt,            "j1pt/D");
+
 
   fTree->Branch("st",      &fRtd.st,              "st/D");
   fTree->Branch("mll",     &fRtd.mll,             "mll/D");
@@ -537,7 +541,6 @@ void anaLq::fillRedTreeData(int type) {
     fRtd.gpm   = fGenLQp->Mass;
     fRtd.gpm2  = fP4GenLQp.M();
     fRtd.gppt  = fGenLQp->PT;
-    fRtd.gpeta = fGenLQp->Eta;
 
     fRtd.glqpm = fP4GenLQpLQ.M();  
     fRtd.gljpm = fP4GenLQpLJ.M();  
@@ -546,7 +549,6 @@ void anaLq::fillRedTreeData(int type) {
     fRtd.gpm   = -9999.;
     fRtd.gpm2  = -9999.;
     fRtd.gppt  = -9999.;
-    fRtd.gpeta = -9999.;
 
     fRtd.glqpm = -9999.;
     fRtd.gljpm = -9999.;
@@ -556,7 +558,6 @@ void anaLq::fillRedTreeData(int type) {
     fRtd.gnm   = fGenLQn->Mass;
     fRtd.gnm2  = fP4GenLQn.M();
     fRtd.gnpt  = fGenLQn->PT;
-    fRtd.gneta = fGenLQn->Eta;
 
     fRtd.glqnm = fP4GenLQnLQ.M();  
     fRtd.gljnm = fP4GenLQnLJ.M();  
@@ -565,7 +566,6 @@ void anaLq::fillRedTreeData(int type) {
     fRtd.gnm   = -9999.;
     fRtd.gnm2  = -9999.;
     fRtd.gnpt  = -9999.;
-    fRtd.gneta = -9999.;
 
     fRtd.glqnm = -9999.;
     fRtd.gljnm = -9999.;
@@ -576,36 +576,42 @@ void anaLq::fillRedTreeData(int type) {
     if (fPos > -1) {
       fRtd.ljpm = fLQ[fPos]->fP4.M();  
       fRtd.ljppt = fLQ[fPos]->fP4.Pt();  
-      fRtd.ljpeta = fLQ[fPos]->fP4.Eta();  
     } else {
       fRtd.ljpm = -9999.;
       fRtd.ljppt = -9999.;  
-      fRtd.ljpeta = -9999.;  
     }
     
     if (fNeg > -1) {
       fRtd.ljnm = fLQ[fNeg]->fP4.M();  
       fRtd.ljnpt = fLQ[fNeg]->fP4.Pt();  
-      fRtd.ljneta = fLQ[fNeg]->fP4.Eta();  
     } else {
       fRtd.ljnm = -9999.;  
       fRtd.ljnpt = -9999.;  
-      fRtd.ljneta = -9999.;  
     }
+    
+    fRtd.l0pt = fLeptons[fL0]->fP4.Pt();
+    fRtd.j0pt = fJets[fL0]->fP4.Pt();
 
     if (2 == TYPE) {
+      fRtd.l1pt = fLeptons[fL1]->fP4.Pt();
+      fRtd.j1pt = fJets[fL1]->fP4.Pt();
+
       fRtd.mljetmin = fMljetMin; 
       fRtd.mll      = fMll; 
-    }
+    } 
     fRtd.st       = fST; 
   } else {
     fRtd.ljpm = -9999.;
     fRtd.ljppt = -9999.;  
-    fRtd.ljpeta = -9999.;  
 
     fRtd.ljnm = -9999.;  
     fRtd.ljnpt = -9999.;  
-    fRtd.ljneta = -9999.;  
+
+    fRtd.l0pt = -9999.;  
+    fRtd.l1pt = -9999.;  
+
+    fRtd.j0pt = -9999.;  
+    fRtd.j1pt = -9999.;  
 
     fRtd.mljetmin = -9999.; 
     fRtd.mll      = -9999.; 
@@ -651,9 +657,9 @@ void anaLq::genLQProducts(GenParticle *lq, GenParticle *l, GenParticle *q, Jet *
 
   // -- find gen-jet for quark
   Jet *pJet(0); 
-  double dRMin(9999.), dPtMin(9999.);
-  int dRBest(-1), dPtBest(-1); 
-  double dR(0.), dPt(0.);
+  double dRMin(9999.);
+  int dRBest(-1); 
+  double dR(0.);
   TLorentzVector p4J; 
   double dr(0.3);
   for (int i = 0; i < fbGenJets->GetEntries(); ++i) {
@@ -665,14 +671,9 @@ void anaLq::genLQProducts(GenParticle *lq, GenParticle *l, GenParticle *q, Jet *
 
     p4J.SetPtEtaPhiM(pJet->PT, pJet->Eta, pJet->Phi, pJet->Mass);
     dR = p4Q.DeltaR(p4J); 
-    dPt = TMath::Abs(p4J.Pt() - p4Q.Pt());
     if (dR < dRMin) {
       dRMin = dR; 
       dRBest = i; 
-    }
-    if (dPt < dPtMin) {
-      dPtMin = dPt; 
-      dPtBest = i; 
     }
   }    
 

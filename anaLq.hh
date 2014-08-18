@@ -122,6 +122,7 @@ public:
   std::vector<jet *> fJets;
   std::vector<lq *> fLQ;
   int         fPos, fNeg; 
+  int         fL0, fL1, fJ0, fJ1; 
 
   // -- cuts
   int         TYPE; // 1 = single LQ production, 2 = LQ pair production

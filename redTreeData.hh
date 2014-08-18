@@ -8,12 +8,10 @@ struct redTreeData {
   double gpm;    
   double gpm2;    
   double gppt;   
-  double gpeta;  
        
   double gnm;    
   double gnm2;    
   double gnpt;   
-  double gneta;  
         
   double glqpm;  
   double gljpm;  
@@ -24,11 +22,15 @@ struct redTreeData {
   // -- reco 
   double ljpm;  
   double ljppt;  
-  double ljpeta;  
 
   double ljnm;  
   double ljnpt;  
-  double ljneta;  
+
+  double l0pt; 
+  double l1pt; 
+
+  double j0pt; 
+  double j1pt; 
 
   double st; 
   double mll;
