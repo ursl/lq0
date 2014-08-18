@@ -33,7 +33,6 @@ plotLq::plotLq(string dir,  string files, string setup) {
   fEpsilon = 0.00001; 
 
   NBINS = 50; 
-
   c0 = (TCanvas*)gROOT->FindObject("c0"); 
   if (!c0) c0 = new TCanvas("c0","--c0--",0,0,656,700);
 
@@ -50,9 +49,15 @@ plotLq::~plotLq() {
 void plotLq::bookHist(string name) {
   fHists.insert(make_pair(Form("m_%s", name.c_str()), 
 			  new TH1D(Form("m_%s", name.c_str()), Form("m_%s", name.c_str()), NBINS, 0, 2000.))); 
+  setTitles(fHists[Form("m_%s", name.c_str())], "m [GeV]", "Entries/bin");
+  setHist(fHists[Form("m_%s", name.c_str())], fDS[name]);
+  
+
 
   fHists.insert(make_pair(Form("pt_%s", name.c_str()), 
 			  new TH1D(Form("pt_%s", name.c_str()), Form("pt_%s", name.c_str()), 100, 0, 1000.))); 
+  setHist(fHists[Form("pt_%s", name.c_str())], fDS[name]);
+  setTitles(fHists[Form("pt_%s", name.c_str())], "p_{T} [GeV]", "Entries/bin");
 
 }
 
@@ -66,31 +71,34 @@ void plotLq::makeAll(int bitmask) {
 // ----------------------------------------------------------------------
 void plotLq::treeAnalysis() {
 
-  string ds("lq_pair_01");
+  //  string ds0 = "lq_pair_01";
+  string ds0 = "dy_pair";
   fPair = true;
-  fCds = ds; 
-  bookHist(ds); 
-  TTree *t = getTree(ds); 
+  fCds = ds0; 
+  bookHist(ds0); 
+  TTree *t = getTree(ds0); 
   setupTree(t); 
   loopOverTree(t); 
 
-  ds = "lq_pair_02"; 
+  string ds1 = "lq_pair_05"; 
   fPair = true;
-  fCds = ds; 
-  bookHist(ds); 
-  t = getTree(ds); 
+  fCds = ds1; 
+  bookHist(ds1); 
+  t = getTree(ds1); 
   setupTree(t);
   loopOverTree(t); 
 
+  overlay(fHists[Form("m_%s", ds0.c_str())], ds0, fHists[Form("m_%s", ds1.c_str())], ds1); 
 
-  fHists["m_lq_pair_01"]->Draw(); 
-  fHists["m_lq_pair_02"]->Draw("same"); 
+  //  overlayAll();
+//   fHists["m_lq_pair_01"]->Draw(); 
+//   fHists["m_lq_pair_02"]->Draw("same"); 
 
 }
 
 
 // ----------------------------------------------------------------------
-void plotLq::normHist(TH1D *h, double integral, string type) {
+void plotLq::normHist(TH1 *h, double integral, string type) {
   double scale(1.); 
   if (TMath::Abs(integral - 1.) < fEpsilon) {
     // -- normalize to 1
@@ -121,19 +129,28 @@ void plotLq::overlayAll() {
 
   // -- simple overlays
   c0->cd(1); 
-  overlay("lq_pair_01", "bla", "lq_pair_02", "bla"); 
 
 }
 
 // ----------------------------------------------------------------------
-void plotLq::overlay(TH1D* h1, string f1, TH1D* h2, string f2, bool legend) {
+void plotLq::overlay(string f1, string h1name, string f2, string h2name, bool legend) {
 
-  bool log(false); 
+  TH1D *h1 = fDS[f1]->getHist(Form("%s", h1name.c_str())); 
+  TH1D *h2 = fDS[f2]->getHist(Form("%s", h2name.c_str())); 
+
+  overlay(h1, f1, h2, f2, legend); 
+
+}
+
+// ----------------------------------------------------------------------
+void plotLq::overlay(TH1* h1, string f1, TH1* h2, string f2, bool legend) {
+
+  bool log(true); 
 
   normHist(h1, -1., f1); 
   normHist(h2, -1., f2); 
 
-  double hmax(h1->GetMaximum()); 
+  double hmax(1.2*h1->GetMaximum()); 
   if (h2->GetMaximum() > hmax) hmax = 1.2*h2->GetMaximum(); 
   if (log) {
     gPad->SetLogy(1); 
@@ -159,17 +176,6 @@ void plotLq::overlay(TH1D* h1, string f1, TH1D* h2, string f2, bool legend) {
 
 
 // ----------------------------------------------------------------------
-void plotLq::overlay(string f1, string h1name, string f2, string h2name, bool legend) {
-
-  TH1D *h1 = fDS[f1]->getHist(Form("%s", h1name.c_str())); 
-  TH1D *h2 = fDS[f2]->getHist(Form("%s", h2name.c_str())); 
-
-  overlay(h1, f1, h2, f2, legend); 
-
-}
-
-
-// ----------------------------------------------------------------------
 void plotLq::candAnalysis() {
 
   fGoodEvent   = false; 
@@ -179,9 +185,12 @@ void plotLq::candAnalysis() {
 
   if (fRtd.ljnm > 0.) fGoodCandLQn = true; 
   if (fRtd.ljpm > 0.) fGoodCandLQp = true; 
-
+  
   if (fPair) {
     if (fGoodCandLQn && fGoodCandLQp) fGoodEvent = true;
+    if (fRtd.st < 685.)       fGoodEvent = false;
+    if (fRtd.mll < 150.)      fGoodEvent = false;
+    if (fRtd.mljetmin < 155.) fGoodEvent = false;
   } else {
     if (fGoodCandLQn || fGoodCandLQp) fGoodEvent = true;
   }
@@ -329,8 +338,11 @@ void plotLq::loadFiles(string afiles) {
   while (is.getline(buffer, 1000, '\n')) {
     if (buffer[0] == '#') {continue;}
     if (buffer[0] == '/') {continue;}
+    if (buffer[0] == '\n') {continue;}
     
     string sbuffer = string(buffer); 
+    replaceAll(sbuffer, "\t", " ");
+    replaceAll(sbuffer, "  ", " ");
 
     string::size_type m1 = sbuffer.find("xsec="); 
     string stype = sbuffer.substr(5, m1-6); 
@@ -361,8 +373,9 @@ void plotLq::loadFiles(string afiles) {
       ds->fMass   = -1.;
       ds->fLambda = -1.;
       ds->fLumi   = nevt/ds->fXsec/ds->fBf;
-      ds->fName   = "MadGraph " + sdecay; 
-      ds->fFillstyle = 3365; 
+      //      ds->fName   = "MadGraph " + sdecay; 
+      ds->fName   = sdecay; 
+      ds->fFillStyle = 3365; 
       ds->fSize = 1; 
       ds->fWidth = 2; 
       fDS.insert(make_pair(sname, ds)); 
@@ -374,6 +387,7 @@ void plotLq::loadFiles(string afiles) {
       dataset *ds = new dataset(); 
       sdecay = "LQ";
       if (string::npos != sname.find("pair")) sdecay = "LQ LQ";
+      sdecay = Form("%s (%.0fGeV, #Lambda=%2.1f)", sdecay.c_str(), mass, lambda);
       ds->fColor = kBlue; 
       ds->fLcolor = kBlue; 
       ds->fFcolor = kBlue; 
@@ -385,8 +399,9 @@ void plotLq::loadFiles(string afiles) {
       ds->fMass   = mass;
       ds->fLambda = lambda;
       ds->fLumi   = nevt/ds->fXsec/ds->fBf;
-      ds->fName   = "MadGraph " + sdecay; 
-      ds->fFillstyle = 3356; 
+      //      ds->fName   = "MadGraph " + sdecay; 
+      ds->fName   = sdecay; 
+      ds->fFillStyle = 3356; 
       ds->fSize = 1; 
       ds->fWidth = 2; 
       fDS.insert(make_pair(sname, ds)); 
@@ -399,7 +414,7 @@ void plotLq::loadFiles(string afiles) {
 	 << " = " << fDS[sname]->fXsec
 	 << ", equivalent lumi = " << fDS[sname]->fLumi/1000. << "/fb"
 	 << endl;
-    
+
   }
 
 }
