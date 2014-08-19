@@ -72,13 +72,13 @@ void plotLq::bookHist(string name) {
   // -- mll
   fHists.insert(make_pair(Form("mll_%s", name.c_str()), 
 			  new TH1D(Form("mll_%s", name.c_str()), Form("mll_%s", name.c_str()), NBINS, 0, 2000.))); 
-  setTitles(fHists[Form("mll_%s", name.c_str())], "m_{#ell #ell} [GeV]", "Entries/bin");
+  setTitles(fHists[Form("mll_%s", name.c_str())], "m_{l l} [GeV]", "Entries/bin");
   setHist(fHists[Form("mll_%s", name.c_str())], fDS[name]);
 
   // -- mljetmin
   fHists.insert(make_pair(Form("mljetmin_%s", name.c_str()), 
 			  new TH1D(Form("mljetmin_%s", name.c_str()), Form("mljetmin_%s", name.c_str()), 15, 0, 1500.))); 
-  setTitles(fHists[Form("mljetmin_%s", name.c_str())], "m_{#ell jet}^{min} [GeV]", "Entries/bin");
+  setTitles(fHists[Form("mljetmin_%s", name.c_str())], "m_{l jet}^{min} [GeV]", "Entries/bin");
   setHist(fHists[Form("mljetmin_%s", name.c_str())], fDS[name]);
   
 
@@ -145,22 +145,22 @@ void plotLq::normHist(TH1 *h, string ds, int method) {
   double scale(1.); 
   // -- normalize to 1
   if (method == UNITY) {
-    scale = (h->GetSumOfWeights() > 0 ? 1./h->GetSumOfWeights() : 1.); 
+    scale = (h->Integral() > 0 ? 1./h->Integral() : 1.); 
     setTitles(h, h->GetXaxis()->GetTitle(), "normalized to 1");
   } else if (method == SOMETHING) {
-    scale = fNorm * (h->GetSumOfWeights() > 0 ? fNorm/h->GetSumOfWeights() : 1.); 
+    scale = fNorm * (h->Integral() > 0 ? fNorm/h->Integral() : 1.); 
     setTitles(h, h->GetXaxis()->GetTitle(), "weighted events");
   } else if (method == XSECTION) {
     // -- normalize to xsec*bf
     //    n = xsec * L
     //    "integral" over histogram should be xsec
-    scale = (h->GetSumOfWeights() > 0 ? fDS[ds]->fXsec*fDS[ds]->fBf/h->Integral() : 1.); 
+    scale = (h->Integral() > 0 ? fDS[ds]->fXsec*fDS[ds]->fBf/h->Integral() : 1.); 
     setTitles(h, h->GetXaxis()->GetTitle(), "pb");
   } else if (method == LUMI) {
     // -- normalize to xsec*bf
     //    n = xsec * L
     //    "integral" over histogram should be events expected in fLumi
-    scale = (h->GetSumOfWeights() > 0 ? fLumi * fDS[ds]->fXsec*fDS[ds]->fBf/h->Integral() : 1.); 
+    scale = (h->Integral() > 0 ? fLumi/fDS[ds]->fLumi : 1.); 
     setTitles(h, h->GetXaxis()->GetTitle(), Form("events in %4.0f/pb", fLumi));
   } else if (method == NONORM) {
     scale = 1.;
