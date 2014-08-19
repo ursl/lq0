@@ -31,6 +31,16 @@ plotLq::plotLq(string dir,  string files, string setup) {
   gRandom = (TRandom*) new TRandom3;
 
   fEpsilon = 0.00001; 
+  fLumi = 20000.; // 20000/pb!
+
+  legg = 0;
+  c0 = c1 = c2 = c3 = c4 = c5 =0;
+  tl = 0;
+  box = 0;
+  pa = 0;
+  pl = 0; 
+  legge = 0;
+
 
   NBINS = 50; 
   c0 = (TCanvas*)gROOT->FindObject("c0"); 
@@ -47,10 +57,29 @@ plotLq::~plotLq() {
 
 // ----------------------------------------------------------------------
 void plotLq::bookHist(string name) {
+  // -- m
   fHists.insert(make_pair(Form("m_%s", name.c_str()), 
 			  new TH1D(Form("m_%s", name.c_str()), Form("m_%s", name.c_str()), NBINS, 0, 2000.))); 
   setTitles(fHists[Form("m_%s", name.c_str())], "m [GeV]", "Entries/bin");
   setHist(fHists[Form("m_%s", name.c_str())], fDS[name]);
+
+  // -- st
+  fHists.insert(make_pair(Form("st_%s", name.c_str()), 
+			  new TH1D(Form("st_%s", name.c_str()), Form("st_%s", name.c_str()), 14, 0, 3500.))); 
+  setTitles(fHists[Form("st_%s", name.c_str())], "S_{T} [GeV]", "Entries/bin");
+  setHist(fHists[Form("st_%s", name.c_str())], fDS[name]);
+
+  // -- mll
+  fHists.insert(make_pair(Form("mll_%s", name.c_str()), 
+			  new TH1D(Form("mll_%s", name.c_str()), Form("mll_%s", name.c_str()), NBINS, 0, 2000.))); 
+  setTitles(fHists[Form("mll_%s", name.c_str())], "m_{#ell #ell} [GeV]", "Entries/bin");
+  setHist(fHists[Form("mll_%s", name.c_str())], fDS[name]);
+
+  // -- mljetmin
+  fHists.insert(make_pair(Form("mljetmin_%s", name.c_str()), 
+			  new TH1D(Form("mljetmin_%s", name.c_str()), Form("mljetmin_%s", name.c_str()), 15, 0, 1500.))); 
+  setTitles(fHists[Form("mljetmin_%s", name.c_str())], "m_{#ell jet}^{min} [GeV]", "Entries/bin");
+  setHist(fHists[Form("mljetmin_%s", name.c_str())], fDS[name]);
   
 
 
@@ -80,7 +109,7 @@ void plotLq::treeAnalysis() {
   setupTree(t); 
   loopOverTree(t); 
 
-  string ds1 = "lq_pair_05"; 
+  string ds1 = "lq_pair_01"; 
   fPair = true;
   fCds = ds1; 
   bookHist(ds1); 
@@ -88,31 +117,57 @@ void plotLq::treeAnalysis() {
   setupTree(t);
   loopOverTree(t); 
 
-  overlay(fHists[Form("m_%s", ds0.c_str())], ds0, fHists[Form("m_%s", ds1.c_str())], ds1); 
+  string hist("m");
+  overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
+  c0->SaveAs(Form("%s.pdf", hist.c_str()));
 
-  //  overlayAll();
-//   fHists["m_lq_pair_01"]->Draw(); 
-//   fHists["m_lq_pair_02"]->Draw("same"); 
+  hist = "pt";
+  overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
+  c0->SaveAs(Form("%s.pdf", hist.c_str()));
+
+  hist = "st";
+  overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
+  c0->SaveAs(Form("%s.pdf", hist.c_str()));
+
+  hist = "mljetmin";
+  overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
+  c0->SaveAs(Form("%s.pdf", hist.c_str()));
+
+  hist = "mll";
+  overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
+  c0->SaveAs(Form("%s.pdf", hist.c_str()));
 
 }
 
 
 // ----------------------------------------------------------------------
-void plotLq::normHist(TH1 *h, double integral, string type) {
+void plotLq::normHist(TH1 *h, string ds, int method) {
   double scale(1.); 
-  if (TMath::Abs(integral - 1.) < fEpsilon) {
-    // -- normalize to 1
-    scale = (h->GetSumOfWeights() > 0 ? integral/h->GetSumOfWeights() : 1.); 
-  } else if (TMath::Abs(integral + 1.) < fEpsilon) {
+  // -- normalize to 1
+  if (method == UNITY) {
+    scale = (h->GetSumOfWeights() > 0 ? 1./h->GetSumOfWeights() : 1.); 
+    setTitles(h, h->GetXaxis()->GetTitle(), "normalized to 1");
+  } else if (method == SOMETHING) {
+    scale = fNorm * (h->GetSumOfWeights() > 0 ? fNorm/h->GetSumOfWeights() : 1.); 
+    setTitles(h, h->GetXaxis()->GetTitle(), "weighted events");
+  } else if (method == XSECTION) {
     // -- normalize to xsec*bf
     //    n = xsec * L
     //    "integral" over histogram should be xsec
-
-    scale = (h->GetSumOfWeights() > 0 ? fDS[type]->fXsec*fDS[type]->fBf/h->Integral() : 1.); 
+    scale = (h->GetSumOfWeights() > 0 ? fDS[ds]->fXsec*fDS[ds]->fBf/h->Integral() : 1.); 
     setTitles(h, h->GetXaxis()->GetTitle(), "pb");
+  } else if (method == LUMI) {
+    // -- normalize to xsec*bf
+    //    n = xsec * L
+    //    "integral" over histogram should be events expected in fLumi
+    scale = (h->GetSumOfWeights() > 0 ? fLumi * fDS[ds]->fXsec*fDS[ds]->fBf/h->Integral() : 1.); 
+    setTitles(h, h->GetXaxis()->GetTitle(), Form("events in %4.0f/pb", fLumi));
+  } else if (method == NONORM) {
+    scale = 1.;
   } else {
     scale = 1.;
   }
+
   double c(0.), e(0.); 
   for (int i = 0; i <= h->GetNbinsX(); ++i) {
     c = h->GetBinContent(i); 
@@ -133,7 +188,7 @@ void plotLq::overlayAll() {
 }
 
 // ----------------------------------------------------------------------
-void plotLq::overlay(string f1, string h1name, string f2, string h2name, bool legend) {
+void plotLq::overlay(string h1name, string f1, string h2name, string f2, bool legend) {
 
   TH1D *h1 = fDS[f1]->getHist(Form("%s", h1name.c_str())); 
   TH1D *h2 = fDS[f2]->getHist(Form("%s", h2name.c_str())); 
@@ -147,19 +202,22 @@ void plotLq::overlay(TH1* h1, string f1, TH1* h2, string f2, bool legend) {
 
   bool log(true); 
 
-  normHist(h1, -1., f1); 
-  normHist(h2, -1., f2); 
+  normHist(h1, f1, LUMI); 
+  normHist(h2, f2, LUMI); 
 
   double hmax(1.2*h1->GetMaximum()); 
   if (h2->GetMaximum() > hmax) hmax = 1.2*h2->GetMaximum(); 
   if (log) {
     gPad->SetLogy(1); 
     hmax *= 2.;
+    h1->SetMinimum(0.5); 
   }
   h1->SetMaximum(hmax); 
+
   h1->DrawCopy("e"); 
   h2->DrawCopy("histsame");
-  cout << "overlay(" << f1 << ", " << h1->GetName() << ", " << f2 << ", " << h2->GetName() 
+  cout << "overlay(" << f1 << ", " << h1->GetName() << " integral= " << h1->Integral()
+       << ", " << f2 << ", " << h2->GetName() << " integral= " << h2->Integral()
        << ") legend = " << legend << " log: " << log 
        << endl;
   
@@ -205,6 +263,10 @@ void plotLq::loopFunction() {
   //  cout << "goodEvent: " << fGoodEvent << " m = " << fRtd.ljnm << " and " << fRtd.ljpm << endl;
 
   if (fGoodEvent) { 
+    fHists[Form("st_%s", cds)]->Fill(fRtd.st); 
+    fHists[Form("mll_%s", cds)]->Fill(fRtd.mll); 
+    fHists[Form("mljetmin_%s", cds)]->Fill(fRtd.mljetmin); 
+      
     if (fRtd.ljnm > 0.) {
       fHists[Form("m_%s", cds)]->Fill(fRtd.ljnm); 
       fHists[Form("pt_%s", cds)]->Fill(fRtd.ljnpt); 
