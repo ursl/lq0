@@ -31,48 +31,48 @@
 class anaLq {
 public:
   anaLq(TChain *tree);
-  virtual      ~anaLq();
-  virtual void init();
+  ~anaLq();
+  void init();
   
-  virtual void openHistFile(std::string filename);
-  virtual void closeHistFile();
-  virtual void bookHist();
-  virtual void setupReducedTree();
+  void openHistFile(std::string filename);
+  void closeHistFile();
+  void bookHist();
+  void setupReducedTree();
   
-  virtual void startAnalysis();
-  virtual void endAnalysis();
-  virtual int  loop(int nevents = 1, int start = -1);
-  virtual void eventProcessing();
-  virtual void initVariables(); 
-  virtual void setCuts(std::string cuts); 
-
-  virtual void fillHist(int type = 0);
-  virtual void fillRedTreeData(int type = 0); 
-
+  void startAnalysis();
+  void endAnalysis();
+  int  loop(int nevents = 1, int start = -1);
+  void eventProcessing();
+  void initVariables(); 
+  void setCuts(std::string cuts); 
+  
+  void fillHist(int type = 0);
+  void fillRedTreeData(int type = 0); 
+  
   // -- gen-level analysis
-  virtual void genLevelAnalysis();
-  virtual void genLQProducts(GenParticle *lq, GenParticle *l, GenParticle *q, Jet *j);
-  virtual int  genIndex(GenParticle *); 
-  virtual int isLeptonJet(Jet *j, double deltaR = 0.3); 
-  virtual double nearestLepton(Jet *j); 
+  void genLevelAnalysis();
+  void genLQProducts(GenParticle *lq, GenParticle *l, GenParticle *q, Jet *j);
+  int  genIndex(GenParticle *); 
+  int isLeptonJet(Jet *j, double deltaR = 0.3); 
+  double nearestLepton(Jet *j); 
 
   // -- reco-level analysis
-  virtual void analysis();
-  virtual void leptonSelection();
-  virtual double muonIso(Muon *m);
-  virtual void jetSelection();
-  virtual double jetMuonSeparation(Jet *j);
-  virtual void preselection();
-  virtual void lqlqSelection();
-  virtual void lqSelection();
+  void analysis();
+  void leptonSelection();
+  double muonIso(Muon *m);
+  void jetSelection();
+  double jetMuonSeparation(Jet *j);
+  void preselection();
+  void lqlqSelection();
+  void lqSelection();
 
   // -- print utilities
-  virtual void printSummary(int mode = 0); 
-  virtual void dumpGenBlock(bool withGluons=false); 
-  virtual void dumpGenJets(); 
-  virtual bool isAncestor(GenParticle *mo, GenParticle *dau);  
-  virtual void printParticle(GenParticle *); 
-  virtual void dumpDaughters(GenParticle *); 
+  void printSummary(int mode = 0); 
+  void dumpGenBlock(bool withGluons=false); 
+  void dumpGenJets(); 
+  bool isAncestor(GenParticle *mo, GenParticle *dau);  
+  void printParticle(GenParticle *); 
+  void dumpDaughters(GenParticle *); 
 
   // -- Delphes tree reader setup
   GenParticle* getParticle(int i) {return (GenParticle*)fbParticles->At(i);}
