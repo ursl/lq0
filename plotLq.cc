@@ -331,12 +331,10 @@ void plotLq::setupTree(TTree *t) {
   t->SetBranchAddress("gpm",     &fRtd.gpm);
   t->SetBranchAddress("gpm2",    &fRtd.gpm2);
   t->SetBranchAddress("gppt",    &fRtd.gppt);
-  t->SetBranchAddress("gpeta",   &fRtd.gpeta);
 
   t->SetBranchAddress("gnm",     &fRtd.gnm);
   t->SetBranchAddress("gnm2",    &fRtd.gnm2);
   t->SetBranchAddress("gnpt",    &fRtd.gnpt);
-  t->SetBranchAddress("gneta",   &fRtd.gneta);
 
   t->SetBranchAddress("glqpm",   &fRtd.glqpm);
   t->SetBranchAddress("gljpm",   &fRtd.gljpm);
@@ -347,11 +345,9 @@ void plotLq::setupTree(TTree *t) {
   
   t->SetBranchAddress("ljnm",    &fRtd.ljnm);
   t->SetBranchAddress("ljnpt",   &fRtd.ljnpt);
-  t->SetBranchAddress("ljneta",  &fRtd.ljneta);
 
   t->SetBranchAddress("ljpm",    &fRtd.ljpm);
   t->SetBranchAddress("ljppt",   &fRtd.ljppt);
-  t->SetBranchAddress("ljpeta",  &fRtd.ljpeta);
 
   t->SetBranchAddress("st",      &fRtd.st);
   t->SetBranchAddress("mll",     &fRtd.mll);
