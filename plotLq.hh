@@ -46,6 +46,7 @@ public :
   // -- Main analysis methods 
   void makeAll(int bitmask = 0);
   void treeAnalysis(); 
+  void normOverlay(std::string f1, std::string f2); 
 
   void overlayAll();
   void overlay(TH1* h1, std::string f1, TH1 *h2, std::string f2, bool legend = true);
@@ -69,11 +70,12 @@ private:
   enum HistNorm {NONORM,     // do not touch the normalization
 		 SOMETHING,  // normalize to what is given in fNorm
 		 UNITY,      // normalize all to 1
-		 XSECTION,   // the resulting histograms will be cross sections
-		 LUMI        // according to the number provided in fLumi
+		 XSECTION,   // the resulting histograms will be cross sections [ pb]!!
+		 LUMI        // according to the number provided in fLumi       [/fb]!!
   };
-  double fNorm, fLumi;
+  double fNorm, fLumi; // [fLumi] = 1/fb!!!
 
+  bool   fDBX;
   int    fVerbose; 
   double fEpsilon; 
 

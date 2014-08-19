@@ -23,6 +23,9 @@ using namespace std;
 // ----------------------------------------------------------------------
 plotLq::plotLq(string dir,  string files, string setup) {
 
+  fDBX = true; 
+  fVerbose = true;
+
   fDirectory = dir; 
 
   loadFiles(files);
@@ -31,14 +34,14 @@ plotLq::plotLq(string dir,  string files, string setup) {
   gRandom = (TRandom*) new TRandom3;
 
   fEpsilon = 0.00001; 
-  fLumi = 20000.; // 20000/pb!
+  fLumi = 20.; 
 
   legg = 0;
   c0 = c1 = c2 = c3 = c4 = c5 =0;
-  tl = 0;
-  box = 0;
-  pa = 0;
-  pl = 0; 
+  tl = new TLatex();
+  box = new TBox();
+  pa = new TArrow();
+  pl = new TLine(); 
   legge = 0;
 
 
@@ -71,7 +74,7 @@ void plotLq::bookHist(string name) {
 
   // -- mll
   fHists.insert(make_pair(Form("mll_%s", name.c_str()), 
-			  new TH1D(Form("mll_%s", name.c_str()), Form("mll_%s", name.c_str()), NBINS, 0, 2000.))); 
+			  new TH1D(Form("mll_%s", name.c_str()), Form("mll_%s", name.c_str()), 30, 0, 1500.))); 
   setTitles(fHists[Form("mll_%s", name.c_str())], "m_{l l} [GeV]", "Entries/bin");
   setHist(fHists[Form("mll_%s", name.c_str())], fDS[name]);
 
@@ -97,11 +100,18 @@ void plotLq::makeAll(int bitmask) {
 }
 
 
+
+
+
 // ----------------------------------------------------------------------
 void plotLq::treeAnalysis() {
 
-  //  string ds0 = "lq_pair_01";
-  string ds0 = "dy_pair";
+}
+
+// ----------------------------------------------------------------------
+
+void plotLq::normOverlay(std::string ds0, std::string ds1) {
+  //  string ds0 = "dy_pair";
   fPair = true;
   fCds = ds0; 
   bookHist(ds0); 
@@ -109,7 +119,7 @@ void plotLq::treeAnalysis() {
   setupTree(t); 
   loopOverTree(t); 
 
-  string ds1 = "lq_pair_01"; 
+  //  string ds1 = "lq_pair_01"; 
   fPair = true;
   fCds = ds1; 
   bookHist(ds1); 
@@ -119,23 +129,23 @@ void plotLq::treeAnalysis() {
 
   string hist("m");
   overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
-  c0->SaveAs(Form("%s.pdf", hist.c_str()));
+  c0->SaveAs(Form("%s-%s-%s.pdf", hist.c_str(), ds0.c_str(), ds1.c_str()));
 
   hist = "pt";
   overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
-  c0->SaveAs(Form("%s.pdf", hist.c_str()));
+  c0->SaveAs(Form("%s-%s-%s.pdf", hist.c_str(), ds0.c_str(), ds1.c_str()));
 
   hist = "st";
   overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
-  c0->SaveAs(Form("%s.pdf", hist.c_str()));
+  c0->SaveAs(Form("%s-%s-%s.pdf", hist.c_str(), ds0.c_str(), ds1.c_str()));
 
   hist = "mljetmin";
   overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
-  c0->SaveAs(Form("%s.pdf", hist.c_str()));
-
+  c0->SaveAs(Form("%s-%s-%s.pdf", hist.c_str(), ds0.c_str(), ds1.c_str()));
+  
   hist = "mll";
   overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
-  c0->SaveAs(Form("%s.pdf", hist.c_str()));
+  c0->SaveAs(Form("%s-%s-%s.pdf", hist.c_str(), ds0.c_str(), ds1.c_str()));
 
 }
 
@@ -161,7 +171,7 @@ void plotLq::normHist(TH1 *h, string ds, int method) {
     //    n = xsec * L
     //    "integral" over histogram should be events expected in fLumi
     scale = (h->Integral() > 0 ? fLumi/fDS[ds]->fLumi : 1.); 
-    setTitles(h, h->GetXaxis()->GetTitle(), Form("events in %4.0f/pb", fLumi));
+    setTitles(h, h->GetXaxis()->GetTitle(), Form("events in %4.0f/fb", fLumi));
   } else if (method == NONORM) {
     scale = 1.;
   } else {
@@ -226,6 +236,14 @@ void plotLq::overlay(TH1* h1, string f1, TH1* h2, string f2, bool legend) {
     legg->AddEntry(h1, fDS[f1]->fName.c_str(), "p"); 
     legg->AddEntry(h2, fDS[f2]->fName.c_str(), "l"); 
     legg->Draw();
+    if (fDBX) {
+      tl->SetNDC(kTRUE);
+      tl->SetTextSize(0.02);
+      tl->SetTextColor(fDS[f1]->fColor); 
+      tl->DrawLatex(0.90, 0.88, Form("%.1e", h1->Integral())); 
+      tl->SetTextColor(fDS[f2]->fColor); 
+      tl->DrawLatex(0.90, 0.82, Form("%.1e", h2->Integral())); 
+    }
     cout << "  drawing legend" << endl;
   }
 
@@ -426,11 +444,11 @@ void plotLq::loadFiles(string afiles) {
       ds->fSymbol = 25; 
 
       ds->fF      = pF; 
-      ds->fXsec   = atof(sxsec.c_str());
+      ds->fXsec   = atof(sxsec.c_str());          // [xsec] = pb
       ds->fBf     = 1.;
       ds->fMass   = -1.;
       ds->fLambda = -1.;
-      ds->fLumi   = nevt/ds->fXsec/ds->fBf;
+      ds->fLumi   = nevt/ds->fXsec/ds->fBf/1000.; // [lumi] = 1/fb
       //      ds->fName   = "MadGraph " + sdecay; 
       ds->fName   = sdecay; 
       ds->fFillStyle = 3365; 
@@ -444,7 +462,7 @@ void plotLq::loadFiles(string afiles) {
     if (string::npos != sname.find("lq")) {
       dataset *ds = new dataset(); 
       sdecay = "LQ";
-      if (string::npos != sname.find("pair")) sdecay = "LQ LQ";
+      if (string::npos != sname.find("pair")) sdecay = "LQ #bar{LQ}";
       sdecay = Form("%s (%.0fGeV, #Lambda=%2.1f)", sdecay.c_str(), mass, lambda);
       ds->fColor = kBlue; 
       ds->fLcolor = kBlue; 
@@ -452,12 +470,11 @@ void plotLq::loadFiles(string afiles) {
       ds->fSymbol = 24; 
 
       ds->fF      = pF; 
-      ds->fXsec   = atof(sxsec.c_str());
+      ds->fXsec   = atof(sxsec.c_str());          // [xsec] = pb
       ds->fBf     = 1.;
       ds->fMass   = mass;
       ds->fLambda = lambda;
-      ds->fLumi   = nevt/ds->fXsec/ds->fBf;
-      //      ds->fName   = "MadGraph " + sdecay; 
+      ds->fLumi   = nevt/ds->fXsec/ds->fBf/1000.; // [lumi] = 1/fb
       ds->fName   = sdecay; 
       ds->fFillStyle = 3356; 
       ds->fSize = 1; 
@@ -469,8 +486,8 @@ void plotLq::loadFiles(string afiles) {
 
     // mb ub nb pb fb 
     cout << "opened MC file "  << sfile  << " as " << sname << " (" << stype << ") with xsec = " << sxsec
-	 << " = " << fDS[sname]->fXsec
-	 << ", equivalent lumi = " << fDS[sname]->fLumi/1000. << "/fb"
+	 << Form(" = %8.5f", fDS[sname]->fXsec)
+	 << Form(", equivalent lumi = %5.1f/fb", fDS[sname]->fLumi)
 	 << endl;
 
   }
