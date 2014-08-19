@@ -232,6 +232,8 @@ void anaLq::preselection() {
     if (fLeptons[0]->fP4.Pt() < L0PT) return;
     if (fJets[0]->fP4.Pt() < J0PT)    return;
 
+    if (fLeptons[0]->fP4.DeltaR(fLeptons[1]->fP4) < 0.3) return;
+
     TLorentzVector ll4; 
     ll4 = fLeptons[0]->fP4 + fLeptons[1]->fP4;
     if (ll4.M() < 50.)  return;
