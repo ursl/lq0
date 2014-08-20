@@ -356,8 +356,8 @@ void anaLq::candAnalysis() {
   fGoodCandLQp = false; 
   fGoodCandLQn = false; 
 
-  if (fLQ[fNeg]->fP4.M() > 0.) fGoodCandLQn = true; 
-  if (fLQ[fPos]->fP4.M() > 0.) fGoodCandLQp = true; 
+  if (fNeg > -1 && fLQ[fNeg]->fP4.M() > 0.) fGoodCandLQn = true; 
+  if (fPos > -1 && fLQ[fPos]->fP4.M() > 0.) fGoodCandLQp = true; 
   
   if (2 == TYPE) {
     if (fGoodCandLQn && fGoodCandLQp) fGoodEvent = true;
