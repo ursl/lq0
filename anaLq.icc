@@ -27,7 +27,11 @@ void anaLq::init() {
   fbMuons     = fTR->UseBranch("Muon");
   fbEvent     = fTR->UseBranch("Event");
   cout << " done" << endl;
-  initVariables();
+
+  CHANNEL = -1; 
+  TYPE = -1; 
+  fName = ""; 
+
 }
 
 // ----------------------------------------------------------------------

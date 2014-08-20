@@ -38,7 +38,7 @@ void anaLq::setCuts(string cuts) {
 
   istringstream ss(cuts);
   string token, name, sval;
-  
+
   while (getline(ss, token, ',')) {
     
     string::size_type m1 = token.find("="); 
@@ -56,6 +56,10 @@ void anaLq::setCuts(string cuts) {
       val = atoi(sval.c_str()); 
       TYPE = val;
     }
+
+    if (string::npos != name.find("NAME")) {
+      fName = name;
+    }
     
   }
 
@@ -66,7 +70,7 @@ void anaLq::setCuts(string cuts) {
 // ----------------------------------------------------------------------
 void anaLq::startAnalysis() {
   cout << "==> anaLq: startAnalysis: " << (TYPE==2?"LQ ***pair*** production":"LQ ***single*** production") 
-       << " in the ***" << (CHANNEL==13?"muon":"electron") << "*** channel"
+       << " in the ***" << (CHANNEL==13?"muon":"electron") << "*** channel with name " << fName
        << endl;
 
   MUISODELTAR = 0.3;
@@ -152,6 +156,8 @@ void anaLq::analysis() {
 
   if (2 == TYPE) lqlqSelection();
   if (1 == TYPE) lqSelection();
+
+  candAnalysis();
 }
 
 
@@ -345,15 +351,76 @@ void anaLq::lqSelection() {
 
 
 // ----------------------------------------------------------------------
-void anaLq::fillHist(int cat) {
+// -- this is the identical selection as in plotLq.cc:candAnalysis, coded w/o the reduced tree for consistency checks!
+void anaLq::candAnalysis() {
+
+  fGoodEvent   = false; 
+  
+  fGoodCandLQp = false; 
+  fGoodCandLQn = false; 
+
+  if (fLQ[fNeg]->fP4.M() > 0.) fGoodCandLQn = true; 
+  if (fLQ[fPos]->fP4.M() > 0.) fGoodCandLQp = true; 
+  
+  if (2 == TYPE) {
+    if (fGoodCandLQn && fGoodCandLQp) fGoodEvent = true;
+    if (fST < 685.)       fGoodEvent = false;
+    if (fMll < 150.)      fGoodEvent = false;
+    if (fMljetMin < 155.) fGoodEvent = false;
+  } else {
+    if (fGoodCandLQn || fGoodCandLQp) fGoodEvent = true;
+  }
+
+}
+
+
+// ----------------------------------------------------------------------
+void anaLq::fillHist() {
 
   fillRedTreeData(); 
   fTree->Fill();
 
-  string histdir("");
-  //  histdir = Form("class%d", cat); 
-  //  cout << histdir << endl;
- 
+  char cds[200]; 
+  sprintf(cds, "%s", fName.c_str());
+
+  if (fPreselected) { 
+    fHists[Form("pre_l0pt_%s", cds)]->Fill(fLeptons[0]->fP4.Pt()); 
+    if (2 == TYPE) fHists[Form("pre_l1pt_%s", cds)]->Fill(fLeptons[1]->fP4.Pt()); 
+
+    fHists[Form("pre_j0pt_%s", cds)]->Fill(fJets[0]->fP4.Pt()); 
+    if (2 == TYPE) fHists[Form("pre_j1pt_%s", cds)]->Fill(fJets[1]->fP4.Pt()); 
+
+    fHists[Form("pre_st_%s", cds)]->Fill(fRtd.st); 
+    fHists[Form("pre_mll_%s", cds)]->Fill(fMll); 
+    fHists[Form("pre_mljetmin_%s", cds)]->Fill(fMljetMin); 
+      
+    if (fLQ[fNeg]->fP4.M() > 0.) {
+      fHists[Form("pre_m_%s", cds)]->Fill(fLQ[fNeg]->fP4.M()); 
+      fHists[Form("pre_pt_%s", cds)]->Fill(fLQ[fNeg]->fP4.Pt()); 
+    }
+    if (fLQ[fPos]->fP4.M() > 0.) {
+      fHists[Form("pre_m_%s", cds)]->Fill(fLQ[fPos]->fP4.M()); 
+      fHists[Form("pre_pt_%s", cds)]->Fill(fLQ[fPos]->fP4.Pt()); 
+    }
+
+  }
+
+  if (fGoodEvent) { 
+    fHists[Form("sel_st_%s", cds)]->Fill(fRtd.st); 
+    fHists[Form("sel_mll_%s", cds)]->Fill(fMll); 
+    fHists[Form("sel_mljetmin_%s", cds)]->Fill(fMljetMin); 
+      
+    if (fLQ[fNeg]->fP4.M() > 0.) {
+      fHists[Form("sel_m_%s", cds)]->Fill(fLQ[fNeg]->fP4.M()); 
+      fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[fNeg]->fP4.Pt()); 
+    }
+    if (fLQ[fPos]->fP4.M() > 0.) {
+      fHists[Form("sel_m_%s", cds)]->Fill(fLQ[fPos]->fP4.M()); 
+      fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[fPos]->fP4.Pt()); 
+    }
+  }
+
+
 
 }
 
@@ -370,18 +437,89 @@ void anaLq::bookHist() {
   //  fpHistFile->mkdir(Form("class%d", i)); 
   //  fpHistFile->cd(Form("class%d", i));
 
-  h1 = new TH1D("pt",  "lq gen pt", PTN, 0., PTMAX); 
-  h1 = new TH1D("phi", "lq gen phi", PTN, -3.15, 3.15); 
-  h1 = new TH1D("m",   "lq gen m", PTN, 400., 1500.); 
+  h1 = new TH1D("pt",  "lq gen pt", 40, 0., 400.); 
+  h1 = new TH1D("phi", "lq gen phi", 40, -3.15, 3.15); 
+  h1 = new TH1D("m",   "lq gen m", 22, 400., 1500.); 
 
-  h1 = new TH1D("lqpt",  "l+q gen pt", PTN, 0., PTMAX); 
-  h1 = new TH1D("lqphi", "l+q gen phi", PTN, -3.15, 3.15); 
-  h1 = new TH1D("lqm",   "l+q gen m", PTN, 400., 1500.); 
+  h1 = new TH1D("lqpt",  "l+q gen pt", 40, 0., 400); 
+  h1 = new TH1D("lqphi", "l+q gen phi", 40, -3.15, 3.15); 
+  h1 = new TH1D("lqm",   "l+q gen m", 22, 400., 1500.); 
 
-  h1 = new TH1D("ljpt",  "l+j gen pt", PTN, 0., PTMAX); 
-  h1 = new TH1D("ljphi", "l+j gen phi", PTN, -3.15, 3.15); 
-  h1 = new TH1D("ljm",   "l+j gen m", PTN, 400., 1500.); 
+  h1 = new TH1D("ljpt",  "l+j gen pt", 40, 0., 400); 
+  h1 = new TH1D("ljphi", "l+j gen phi", 40, -3.15, 3.15); 
+  h1 = new TH1D("ljm",   "l+j gen m", 40, 400., 1500.); 
 
+
+  vector<string> levels; 
+  levels.push_back("pre"); 
+  levels.push_back("sel"); 
+
+  for (unsigned int i = 0; i < levels.size(); ++i) {
+  
+    // -- histograms as in plotLq:
+
+    // -- m
+    fHists.insert(make_pair(Form("%s_m_%s", levels[i].c_str(), fName.c_str()), 
+			    new TH1D(Form("%s_m_%s", levels[i].c_str(), fName.c_str()), 
+				     Form("%s_m_%s", levels[i].c_str(), fName.c_str()), 
+				     40, 0, 2000.))); 
+    setTitles(fHists[Form("%s_m_%s", levels[i].c_str(), fName.c_str())], "m [GeV]", "Entries/bin");
+    
+    // -- st
+    fHists.insert(make_pair(Form("%s_st_%s", levels[i].c_str(), fName.c_str()), 
+			    new TH1D(Form("%s_st_%s", levels[i].c_str(), fName.c_str()), 
+				     Form("%s_st_%s", levels[i].c_str(), fName.c_str()), 
+				     14, 0, 3500.))); 
+    setTitles(fHists[Form("%s_st_%s", levels[i].c_str(), fName.c_str())], "S_{T} [GeV]", "Entries/bin");
+    
+    // -- mll
+    fHists.insert(make_pair(Form("%s_mll_%s", levels[i].c_str(), fName.c_str()), 
+			    new TH1D(Form("%s_mll_%s", levels[i].c_str(), fName.c_str()), 
+				     Form("%s_mll_%s", levels[i].c_str(), fName.c_str()), 
+				     30, 0, 1500.))); 
+    setTitles(fHists[Form("%s_mll_%s", levels[i].c_str(), fName.c_str())], "m_{l l} [GeV]", "Entries/bin");
+    
+    // -- mljetmin
+    fHists.insert(make_pair(Form("%s_mljetmin_%s", levels[i].c_str(), fName.c_str()), 
+			    new TH1D(Form("%s_mljetmin_%s", levels[i].c_str(), fName.c_str()), 
+				     Form("%s_mljetmin_%s", levels[i].c_str(), fName.c_str()),
+				     15, 0, 1500.))); 
+    setTitles(fHists[Form("%s_mljetmin_%s", levels[i].c_str(), fName.c_str())], "m_{l jet}^{min} [GeV]", "Entries/bin");
+    
+    
+    // -- pt
+    fHists.insert(make_pair(Form("%s_pt_%s", levels[i].c_str(), fName.c_str()), 
+			    new TH1D(Form("%s_pt_%s", levels[i].c_str(), fName.c_str()), 
+				     Form("%s_pt_%s", levels[i].c_str(), fName.c_str()), 
+				     100, 0, 1000.))); 
+    setTitles(fHists[Form("%s_pt_%s", levels[i].c_str(), fName.c_str())], "p_{T} [GeV]", "Entries/bin");
+
+    // -- lepton pt
+    fHists.insert(make_pair(Form("%s_l0pt_%s", levels[i].c_str(), fName.c_str()), 
+			    new TH1D(Form("%s_l0pt_%s", levels[i].c_str(), fName.c_str()), 
+				     Form("%s_l0pt_%s", levels[i].c_str(), fName.c_str()), 
+				     64, 0, 1600.))); 
+    setTitles(fHists[Form("%s_l0pt_%s", levels[i].c_str(), fName.c_str())], "p_{T}(l_{0}) [GeV]", "Entries/bin");
+
+    fHists.insert(make_pair(Form("%s_l1pt_%s", levels[i].c_str(), fName.c_str()), 
+			    new TH1D(Form("%s_l1pt_%s", levels[i].c_str(), fName.c_str()), 
+				     Form("%s_l1pt_%s", levels[i].c_str(), fName.c_str()), 
+				     40, 0, 800.))); 
+    setTitles(fHists[Form("%s_l1pt_%s", levels[i].c_str(), fName.c_str())], "p_{T}(l_{1}) [GeV]", "Entries/bin");
+
+    // -- jet pt
+    fHists.insert(make_pair(Form("%s_j0pt_%s", levels[i].c_str(), fName.c_str()), 
+			    new TH1D(Form("%s_j0pt_%s", levels[i].c_str(), fName.c_str()), 
+				     Form("%s_j0pt_%s", levels[i].c_str(), fName.c_str()), 
+				     64, 0, 1600.))); 
+    setTitles(fHists[Form("%s_j0pt_%s", levels[i].c_str(), fName.c_str())], "p_{T}(j_{0}) [GeV]", "Entries/bin");
+
+    fHists.insert(make_pair(Form("%s_j1pt_%s", levels[i].c_str(), fName.c_str()), 
+			    new TH1D(Form("%s_j1pt_%s", levels[i].c_str(), fName.c_str()), 
+				     Form("%s_j1pt_%s", levels[i].c_str(), fName.c_str()), 
+				     40, 0, 800.))); 
+    setTitles(fHists[Form("%s_j1pt_%s", levels[i].c_str(), fName.c_str())], "p_{T}(j_{1}) [GeV]", "Entries/bin");
+  }
   
   // -- Reduced Tree
   fTree = new TTree("events", "events");
@@ -394,6 +532,7 @@ void anaLq::bookHist() {
 // ----------------------------------------------------------------------
 void anaLq::initVariables() {
   //  fW8 = getEvent(0)->Weight;
+
 }
 
 // ----------------------------------------------------------------------
@@ -533,7 +672,7 @@ void anaLq::setupReducedTree() {
 
 
 // ----------------------------------------------------------------------
-void anaLq::fillRedTreeData(int type) {
+void anaLq::fillRedTreeData() {
 
   fRtd.type    = TYPE; 
   fRtd.channel = CHANNEL; 

@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <string>
+#include <map>
+#include <vector>
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -46,8 +48,8 @@ public:
   void initVariables(); 
   void setCuts(std::string cuts); 
   
-  void fillHist(int type = 0);
-  void fillRedTreeData(int type = 0); 
+  void fillHist();
+  void fillRedTreeData(); 
   
   // -- gen-level analysis
   void genLevelAnalysis();
@@ -65,6 +67,8 @@ public:
   void preselection();
   void lqlqSelection();
   void lqSelection();
+
+  void candAnalysis();
 
   // -- print utilities
   void printSummary(int mode = 0); 
@@ -106,6 +110,8 @@ public:
   TChain      *fpChain; 
   int         fNentries;
 
+  std::map<std::string, TH1*> fHists;
+
   // -- LQ(s) and daughter particles
   GenParticle *fGenLQp, *fGenLQpL, *fGenLQpQ;
   Jet         *fGenLQpJ;
@@ -127,18 +133,17 @@ public:
   // -- cuts
   int         TYPE; // 1 = single LQ production, 2 = LQ pair production
   int         CHANNEL; // 11 = electron; 13 = muon
+
   double      MUISODELTAR; 
   double      L0PT, L1PT;
   double      J0PT, J1PT;
 
-  int         fClass; 
+  std::string fName;
   double      fW8;
 
-  bool        fPreselected;
+  bool        fPreselected, fGoodEvent, fGoodCandLQp, fGoodCandLQn;
   double      fST, fMll, fMljetMin;
 
-  static const int PTN   = 40; 
-  static const int PTMAX = 800; 
 };
 
 // ----------------------------------------------------------------------
