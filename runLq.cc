@@ -19,14 +19,13 @@ using namespace std;
 
 
 // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-// %% Usage: ./runH -f test.root
-// %%        ./runH -c chains/bg-test -D root
+// %% Usage: please see https://github.com/ursl/lq0
 // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 int main(int argc, char *argv[]) {
 
   int processID = gSystem->GetPid();
-  cout << "Running under process ID  " << processID << endl;
+  cout << "==> runLq: Running under process ID  " << processID << endl;
 
   string progName  = argv[0]; 
   string writeName, fileName, jsonName;
@@ -142,8 +141,8 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  cout << "Opening " << histfile.Data() << " for output histograms" << endl;
-  cout << "Opening " << fileName.c_str() << " for input" << endl;
+  cout << "==> runLq: Opening " << histfile.Data() << " for output histograms" << endl;
+  cout << "==> runLq: Opening " << fileName.c_str() << " for input" << endl;
 
 
   // -- Set up chain
