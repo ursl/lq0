@@ -37,5 +37,13 @@ have github access and a tcsh):
 
 * run user code
 ```
-  bin/runLq -f /STORE/LQ/pair/Events/run_01/tag_1_delphes_events.root
+  bin/runLq -C "NAME=lq_pair_01,CHANNEL=13,TYPE=2" -o results/lq_pair_01.root -f /STORE/LQ/pair/Events/run_01/tag_1_delphes_events.root
 ```
+
+* since there are many signal samples, a run script is provided that
+  runs all of them (-d does not run the jobs, but prints what would be
+  run, with -s the jobs that are run can be restricted): 
+```
+  ../util/perl/runAll -o results [-d] [-s "sg pair"]
+```
+  
