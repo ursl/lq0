@@ -391,11 +391,11 @@ void anaLq::fillHist() {
     fHists[Form("pre_mll_%s", cds)]->Fill(fMll); 
     fHists[Form("pre_mljetmin_%s", cds)]->Fill(fMljetMin); 
       
-    if (fLQ[fNeg]->fP4.M() > 0.) {
+    if (fNeg > -1 && fLQ[fNeg]->fP4.M() > 0.) {
       fHists[Form("pre_m_%s", cds)]->Fill(fLQ[fNeg]->fP4.M()); 
       fHists[Form("pre_pt_%s", cds)]->Fill(fLQ[fNeg]->fP4.Pt()); 
     }
-    if (fLQ[fPos]->fP4.M() > 0.) {
+    if (fPos > -1 && fLQ[fPos]->fP4.M() > 0.) {
       fHists[Form("pre_m_%s", cds)]->Fill(fLQ[fPos]->fP4.M()); 
       fHists[Form("pre_pt_%s", cds)]->Fill(fLQ[fPos]->fP4.Pt()); 
     }
@@ -406,11 +406,11 @@ void anaLq::fillHist() {
       fHists[Form("sel_mll_%s", cds)]->Fill(fMll); 
       fHists[Form("sel_mljetmin_%s", cds)]->Fill(fMljetMin); 
       
-      if (fLQ[fNeg]->fP4.M() > 0.) {
+      if (fNeg > -1 && fLQ[fNeg]->fP4.M() > 0.) {
 	fHists[Form("sel_m_%s", cds)]->Fill(fLQ[fNeg]->fP4.M()); 
 	fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[fNeg]->fP4.Pt()); 
       }
-      if (fLQ[fPos]->fP4.M() > 0.) {
+      if (fPos > -1 && fLQ[fPos]->fP4.M() > 0.) {
 	fHists[Form("sel_m_%s", cds)]->Fill(fLQ[fPos]->fP4.M()); 
 	fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[fPos]->fP4.Pt()); 
       }
