@@ -55,9 +55,11 @@ public :
   void bookHist(std::string name); 
   TTree* getTree(std::string ds); 
   void setupTree(TTree *t); 
-  void loopOverTree(TTree *t, int nevts = -1, int nstart = 0); 
-  void candAnalysis(); 
-  void loopFunction(); 
+  void loopOverTree(TTree *t, int ifunc, int nevts = -1, int nstart = 0); 
+  void loopFunction1(); 
+  void loopFunction2(); 
+
+  void optimizePairCuts(std::string sg, std::string bg); 
 
   void cd(std::string dataset) {fDS[dataset]->cd("");}
   void replaceAll(std::string &sInput, const std::string &oldString, const std::string &newString);
@@ -112,6 +114,5 @@ private:
   ClassDef(plotLq,1) 
 
 };
-
 
 #endif

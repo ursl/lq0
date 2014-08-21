@@ -62,25 +62,25 @@ plotLq::~plotLq() {
 void plotLq::bookHist(string name) {
   // -- m
   fHists.insert(make_pair(Form("m_%s", name.c_str()), 
-			  new TH1D(Form("m_%s", name.c_str()), Form("m_%s", name.c_str()), NBINS, 0, 2000.))); 
+			  new TH1D(Form("m_%s", name.c_str()), Form("m_%s", name.c_str()), 100, 0, 2000.))); 
   setTitles(fHists[Form("m_%s", name.c_str())], "m [GeV]", "Entries/bin");
   setHist(fHists[Form("m_%s", name.c_str())], fDS[name]);
 
   // -- st
   fHists.insert(make_pair(Form("st_%s", name.c_str()), 
-			  new TH1D(Form("st_%s", name.c_str()), Form("st_%s", name.c_str()), 14, 0, 3500.))); 
+			  new TH1D(Form("st_%s", name.c_str()), Form("st_%s", name.c_str()), 35, 0, 3500.))); 
   setTitles(fHists[Form("st_%s", name.c_str())], "S_{T} [GeV]", "Entries/bin");
   setHist(fHists[Form("st_%s", name.c_str())], fDS[name]);
 
   // -- mll
   fHists.insert(make_pair(Form("mll_%s", name.c_str()), 
-			  new TH1D(Form("mll_%s", name.c_str()), Form("mll_%s", name.c_str()), 30, 0, 1500.))); 
+			  new TH1D(Form("mll_%s", name.c_str()), Form("mll_%s", name.c_str()), 50, 0, 1500.))); 
   setTitles(fHists[Form("mll_%s", name.c_str())], "m_{l l} [GeV]", "Entries/bin");
   setHist(fHists[Form("mll_%s", name.c_str())], fDS[name]);
 
   // -- mljetmin
   fHists.insert(make_pair(Form("mljetmin_%s", name.c_str()), 
-			  new TH1D(Form("mljetmin_%s", name.c_str()), Form("mljetmin_%s", name.c_str()), 15, 0, 1500.))); 
+			  new TH1D(Form("mljetmin_%s", name.c_str()), Form("mljetmin_%s", name.c_str()), 60, 0, 1500.))); 
   setTitles(fHists[Form("mljetmin_%s", name.c_str())], "m_{l jet}^{min} [GeV]", "Entries/bin");
   setHist(fHists[Form("mljetmin_%s", name.c_str())], fDS[name]);
   
@@ -117,7 +117,7 @@ void plotLq::normOverlay(std::string ds0, std::string ds1) {
   bookHist(ds0); 
   TTree *t = getTree(ds0); 
   setupTree(t); 
-  loopOverTree(t); 
+  loopOverTree(t, 1); 
 
   //  string ds1 = "lq_pair_01"; 
   fPair = true;
@@ -125,7 +125,7 @@ void plotLq::normOverlay(std::string ds0, std::string ds1) {
   bookHist(ds1); 
   t = getTree(ds1); 
   setupTree(t);
-  loopOverTree(t); 
+  loopOverTree(t, 1); 
 
   string hist("m");
   overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
@@ -177,6 +177,8 @@ void plotLq::normHist(TH1 *h, string ds, int method) {
   } else {
     scale = 1.;
   }
+
+  cout << "==> normHist: scaling by " << scale << ", based on method " << method << endl;
 
   double c(0.), e(0.); 
   for (int i = 0; i <= h->GetNbinsX(); ++i) {
@@ -251,9 +253,31 @@ void plotLq::overlay(TH1* h1, string f1, TH1* h2, string f2, bool legend) {
 }
 
 
-// ----------------------------------------------------------------------
-void plotLq::candAnalysis() {
 
+// ----------------------------------------------------------------------
+void plotLq::optimizePairCuts(string sg, string bg) {
+
+  fPair = true;
+  fCds = sg; 
+  bookHist(sg); 
+  TTree *ts = getTree(sg); 
+  setupTree(ts); 
+  loopOverTree(ts, 2); 
+
+  fPair = true;
+  fCds = bg; 
+  bookHist(bg); 
+  TTree *tb = getTree(bg); 
+  setupTree(tb); 
+  loopOverTree(tb, 2); 
+
+}
+
+
+// ----------------------------------------------------------------------
+void plotLq::loopFunction1() {
+
+  // -- cuts
   fGoodEvent   = false; 
   
   fGoodCandLQp = false; 
@@ -271,14 +295,9 @@ void plotLq::candAnalysis() {
     if (fGoodCandLQn || fGoodCandLQp) fGoodEvent = true;
   }
 
-}
 
-// ----------------------------------------------------------------------
-void plotLq::loopFunction() {
   char cds[200];
   sprintf(cds, "%s", fCds.c_str());
-
-  //  cout << "goodEvent: " << fGoodEvent << " m = " << fRtd.ljnm << " and " << fRtd.ljpm << endl;
 
   if (fGoodEvent) { 
     fHists[Form("st_%s", cds)]->Fill(fRtd.st); 
@@ -294,10 +313,17 @@ void plotLq::loopFunction() {
       fHists[Form("pt_%s", cds)]->Fill(fRtd.ljppt); 
     }
   }
+
 }
 
+
 // ----------------------------------------------------------------------
-void plotLq::loopOverTree(TTree *t, int nevts, int nstart) {
+void plotLq::loopFunction2() {
+}
+
+
+// ----------------------------------------------------------------------
+void plotLq::loopOverTree(TTree *t, int ifunc, int nevts, int nstart) {
   int nentries = Int_t(t->GetEntries());
   int nbegin(0), nend(nentries); 
   if (nevts > 0 && nentries > nevts) {
@@ -328,13 +354,18 @@ void plotLq::loopOverTree(TTree *t, int nevts, int nstart) {
        << " with " << nentries << " entries"  << " looping from  " << nbegin << " .. " << nend
        << endl;
 
+  // -- setup loopfunction through pointer to member functions
+  void (plotLq::*pF)(void);
+  if (ifunc == 1) pF = &plotLq::loopFunction1;
+  if (ifunc == 2) pF = &plotLq::loopFunction2;
+
+  cout << "pF: " << pF << endl;
+
   // -- the real loop starts here
   for (int jentry = nbegin; jentry < nend; jentry++) {
     t->GetEntry(jentry);
     if (jentry%step == 0) cout << Form(" .. evt = %d", jentry) << endl;
-    
-    candAnalysis();
-    loopFunction();
+    (this->*pF)();
   }
 
 }
