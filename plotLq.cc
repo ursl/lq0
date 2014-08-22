@@ -281,7 +281,7 @@ void plotLq::optimizePairCuts(string sg, string bg, double lumi) {
   fCds = bg; 
   bookHist(bg); 
   fOptMode = 2; 
-  double bgScale = lumi/fDS[sg]->fLumi;
+  double bgScale = lumi/fDS[bg]->fLumi;
   TTree *tb = getTree(bg); 
   setupTree(tb); 
   loopOverTree(tb, 2); 
