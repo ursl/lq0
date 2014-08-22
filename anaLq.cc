@@ -58,7 +58,7 @@ void anaLq::setCuts(string cuts) {
     }
 
     if (string::npos != name.find("NAME")) {
-      fName = name;
+      fName = sval;
     }
     
   }
@@ -152,12 +152,11 @@ void anaLq::analysis() {
   jetSelection();
   preselection();
 
-  if (!fPreselected) return;
-
-  if (2 == TYPE) lqlqSelection();
-  if (1 == TYPE) lqSelection();
-
-  candAnalysis();
+  if (fPreselected) {
+    if (2 == TYPE) lqlqSelection();
+    if (1 == TYPE) lqSelection();
+    candAnalysis();
+  }
 }
 
 
@@ -228,6 +227,10 @@ void anaLq::jetSelection() {
 // ----------------------------------------------------------------------
 void anaLq::preselection() {
 
+  fGoodEvent   = false; 
+  fGoodCandLQp = false; 
+  fGoodCandLQn = false; 
+
   fPreselected = false;
   fST = -9999.; 
 
@@ -271,9 +274,6 @@ void anaLq::lqlqSelection() {
 
   for (unsigned int i = 0; i < fLQ.size(); ++i) delete fLQ[i];
   fLQ.clear();
-
-  
-  if (!fPreselected) return;
 
   int iBest(-1);
   double mdiff(99999.), mdiffBest(99999.); 
@@ -336,8 +336,6 @@ void anaLq::lqSelection() {
   for (unsigned int i = 0; i < fLQ.size(); ++i) delete fLQ[i];
   fLQ.clear();
   
-  if (!fPreselected) return;
-
   TLorentzVector lq0 = fLeptons[0]->fP4 + fJets[0]->fP4; 
 
   // -- charge determination
@@ -355,12 +353,11 @@ void anaLq::lqSelection() {
 void anaLq::candAnalysis() {
 
   fGoodEvent   = false; 
-  
   fGoodCandLQp = false; 
   fGoodCandLQn = false; 
 
-  if (fLQ[fNeg]->fP4.M() > 0.) fGoodCandLQn = true; 
-  if (fLQ[fPos]->fP4.M() > 0.) fGoodCandLQp = true; 
+  if (fNeg > -1 && fLQ[fNeg]->fP4.M() > 0.) fGoodCandLQn = true; 
+  if (fPos > -1 && fLQ[fPos]->fP4.M() > 0.) fGoodCandLQp = true; 
   
   if (2 == TYPE) {
     if (fGoodCandLQn && fGoodCandLQp) fGoodEvent = true;
@@ -394,33 +391,32 @@ void anaLq::fillHist() {
     fHists[Form("pre_mll_%s", cds)]->Fill(fMll); 
     fHists[Form("pre_mljetmin_%s", cds)]->Fill(fMljetMin); 
       
-    if (fLQ[fNeg]->fP4.M() > 0.) {
+    if (fNeg > -1 && fLQ[fNeg]->fP4.M() > 0.) {
       fHists[Form("pre_m_%s", cds)]->Fill(fLQ[fNeg]->fP4.M()); 
       fHists[Form("pre_pt_%s", cds)]->Fill(fLQ[fNeg]->fP4.Pt()); 
     }
-    if (fLQ[fPos]->fP4.M() > 0.) {
+    if (fPos > -1 && fLQ[fPos]->fP4.M() > 0.) {
       fHists[Form("pre_m_%s", cds)]->Fill(fLQ[fPos]->fP4.M()); 
       fHists[Form("pre_pt_%s", cds)]->Fill(fLQ[fPos]->fP4.Pt()); 
     }
 
-  }
 
-  if (fGoodEvent) { 
-    fHists[Form("sel_st_%s", cds)]->Fill(fRtd.st); 
-    fHists[Form("sel_mll_%s", cds)]->Fill(fMll); 
-    fHists[Form("sel_mljetmin_%s", cds)]->Fill(fMljetMin); 
+    if (fGoodEvent) { 
+      fHists[Form("sel_st_%s", cds)]->Fill(fRtd.st); 
+      fHists[Form("sel_mll_%s", cds)]->Fill(fMll); 
+      fHists[Form("sel_mljetmin_%s", cds)]->Fill(fMljetMin); 
       
-    if (fLQ[fNeg]->fP4.M() > 0.) {
-      fHists[Form("sel_m_%s", cds)]->Fill(fLQ[fNeg]->fP4.M()); 
-      fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[fNeg]->fP4.Pt()); 
+      if (fNeg > -1 && fLQ[fNeg]->fP4.M() > 0.) {
+	fHists[Form("sel_m_%s", cds)]->Fill(fLQ[fNeg]->fP4.M()); 
+	fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[fNeg]->fP4.Pt()); 
+      }
+      if (fPos > -1 && fLQ[fPos]->fP4.M() > 0.) {
+	fHists[Form("sel_m_%s", cds)]->Fill(fLQ[fPos]->fP4.M()); 
+	fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[fPos]->fP4.Pt()); 
+      }
     }
-    if (fLQ[fPos]->fP4.M() > 0.) {
-      fHists[Form("sel_m_%s", cds)]->Fill(fLQ[fPos]->fP4.M()); 
-      fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[fPos]->fP4.Pt()); 
-    }
+
   }
-
-
 
 }
 
