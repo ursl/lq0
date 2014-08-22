@@ -26,7 +26,6 @@ ANA = plotLq.o
 DICTFILES = ${ANA:.o=Dict.o}
 DICTHEADERS = ${ANA:.o=Dict.h}
 
-
 # -- Default rules
 $(addprefix obj/,%.o) : %.cc %.hh %.icc
 	$(CXX) $(CXXFLAGS) $(EXTHEADERS) -c $< -o $@
@@ -68,7 +67,6 @@ prep:
 clean:
 	rm -f $(addprefix obj/,$(ANA) $(READER) $(DICTFILES)) 
 	rm -f $(DICTHEADERS) 
-#	rm -f delphes/classes
 	rm -f bin/runLq
 	rm -f lib/*
 
