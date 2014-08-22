@@ -1,6 +1,5 @@
 # prerequisites: 
 # DELPHES, an environment variable pointing to a DELPHES-3.1.2 release build
-# CMSSW_BASE, an environment variable pointing to a CMSSW release
 # ../util, containing utilities
 
 ROOTCINT      = $(ROOTSYS)/bin/rootcint

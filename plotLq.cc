@@ -13,7 +13,6 @@
 #include "TPad.h"
 #include "TF1.h"
 
-#include "dataset.hh"
 #include "util.hh"
 
 ClassImp(plotLq)
@@ -49,14 +48,24 @@ plotLq::plotLq(string dir,  string files, string setup) {
   c0 = (TCanvas*)gROOT->FindObject("c0"); 
   if (!c0) c0 = new TCanvas("c0","--c0--",0,0,656,700);
 
+  fHistFile = TFile::Open(Form("%s/plotLq.root", dir.c_str()), "RECREATE"); 
+
 }
 
 
 // ----------------------------------------------------------------------
 plotLq::~plotLq() {
-
 }
 
+
+// ----------------------------------------------------------------------
+// see http://root.cern.ch/phpBB3/viewtopic.php?f=3&t=15054
+void plotLq::closeHistFile() {
+  fHistFile->cd();
+  fHistFile->Write(); 
+  fHistFile->Close(); 
+
+}
 
 // ----------------------------------------------------------------------
 void plotLq::bookHist(string name) {
@@ -255,22 +264,58 @@ void plotLq::overlay(TH1* h1, string f1, TH1* h2, string f2, bool legend) {
 
 
 // ----------------------------------------------------------------------
-void plotLq::optimizePairCuts(string sg, string bg) {
+void plotLq::optimizePairCuts(string sg, string bg, double lumi) {
 
   fPair = true;
+
+  // -- signal
   fCds = sg; 
   bookHist(sg); 
+  fOptMode = 1; 
+  double sgScale = lumi/fDS[sg]->fLumi;
   TTree *ts = getTree(sg); 
   setupTree(ts); 
   loopOverTree(ts, 2); 
 
-  fPair = true;
+  // -- background
   fCds = bg; 
   bookHist(bg); 
+  fOptMode = 2; 
+  double bgScale = lumi/fDS[sg]->fLumi;
   TTree *tb = getTree(bg); 
   setupTree(tb); 
   loopOverTree(tb, 2); 
 
+
+  fHistFile->cd();
+  TTree *t = new TTree("opt", "opt");
+  double s, b, s0, b0; 
+  double st, mll, mlj;
+  double ssb, sb;
+  t->Branch("s",    &s,     "s/D");
+  t->Branch("b",    &b,     "b/D");
+  t->Branch("s0",   &s0,    "s0/D");
+  t->Branch("b0",   &b0,    "b0/D");
+  t->Branch("ssb",  &ssb,   "ssb/D");
+  t->Branch("sb",   &sb,    "sb/D");
+
+  t->Branch("st",   &st,    "st/D");
+  t->Branch("mll",  &mll,   "mll/D");
+  t->Branch("mlj",  &mlj,   "mlj/D");
+  
+  for (unsigned int i = 0; i < fSelPoints.size(); ++i) {
+    s0  = fSelPoints[i].fSgCnt;
+    b0  = fSelPoints[i].fBgCnt;
+    s   = sgScale * fSelPoints[i].fSgCnt;
+    b   = bgScale * fSelPoints[i].fBgCnt;
+    ssb = (s+b>0? s/TMath::Sqrt(s+b):0.);
+    sb  = (b>0?   s/TMath::Sqrt(b)  :0.);
+    st  = fSelPoints[i].fLargerThan[0].second;
+    mll = fSelPoints[i].fLargerThan[1].second;
+    mlj = fSelPoints[i].fLargerThan[2].second;
+    t->Fill();
+  }
+  
 }
 
 
@@ -319,8 +364,55 @@ void plotLq::loopFunction1() {
 
 // ----------------------------------------------------------------------
 void plotLq::loopFunction2() {
-}
 
+  static bool first(true); 
+
+  if (first) {
+    first = false; 
+
+    static const double stArr[] = { 300.,  320.,  340.,  360.,  380.,  400.,  420.,  440.,  460.,  480.,
+				    500.,  520.,  540.,  560.,  580.,  600.,  620.,  640.,  660.,  680.,
+				    700.,  750.,  800.,  850.,  900.,  950., 1000., 1050., 1100., 1150.,
+                                   1200., 1250., 1300., 1350., 1400., 1450., 1500.
+    };
+    vector<double> stCuts(stArr, stArr + sizeof(stArr)/sizeof(stArr[0]));
+
+    static const double mllArr[] = {100., 110., 120., 130., 140., 150., 160., 170., 180., 190., 
+				    200., 210., 220., 230., 240., 250., 260., 270., 280., 290., 
+				    300.
+    };
+    vector<double> mllCuts(mllArr, mllArr + sizeof(mllArr)/sizeof(mllArr[0]));
+
+
+    static const double mljArr[] = {100., 110., 120., 130., 140., 150., 160., 170., 180., 190., 
+				    200., 220., 240., 260., 280., 300., 320., 340., 360., 380., 
+				    400., 450., 500., 550., 600., 650., 700., 750.
+    };
+    vector<double> mljCuts(mljArr, mljArr + sizeof(mljArr)/sizeof(mljArr[0]));
+
+
+    for (unsigned int i = 0; i < stCuts.size(); ++i) {
+      for (unsigned int j = 0; j < mljCuts.size(); ++j) {
+	for (unsigned int k = 0; k < mllCuts.size(); ++k) {
+	  selpoint s; 
+	  s.fLargerThan.push_back(make_pair(&fRtd.st, stCuts[i])); 
+	  s.fLargerThan.push_back(make_pair(&fRtd.mll, mllCuts[k])); 
+	  s.fLargerThan.push_back(make_pair(&fRtd.mljetmin, mljCuts[j])); 
+	  fSelPoints.push_back(s); 
+	}
+      }
+    }
+  }
+
+  for (unsigned int i = 0; i < fSelPoints.size(); ++i) {
+    if (1 == fOptMode) {
+      fSelPoints[i].eval(true);
+    } else {
+      fSelPoints[i].eval(false);
+    }
+  }
+
+}
 
 // ----------------------------------------------------------------------
 void plotLq::loopOverTree(TTree *t, int ifunc, int nevts, int nstart) {
@@ -349,6 +441,7 @@ void plotLq::loopOverTree(TTree *t, int ifunc, int nevts, int nstart) {
   if (nentries < 100000)   step = 10000; 
   if (nentries < 10000)    step = 1000; 
   if (nentries < 1000)     step = 100; 
+  if (2 == ifunc)          step = 10000; 
   cout << "==> plotLq::loopOverTree> loop over dataset " << fCds << " in file " 
        << t->GetDirectory()->GetName() 
        << " with " << nentries << " entries"  << " looping from  " << nbegin << " .. " << nend

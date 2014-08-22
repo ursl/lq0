@@ -29,6 +29,7 @@
 #include <map>
 
 #include "dataset.hh"
+#include "selpoint.hh"
 #include "redTreeData.hh"
 
 // ----------------------------------------------------------------------
@@ -37,6 +38,7 @@ class plotLq: public TObject {
 public :
   plotLq(std::string dir = "hpt0", std::string files = "plotLq.files", std::string setup = "m");
   ~plotLq();
+  void closeHistFile();
 
   void   loadFiles(std::string afiles);
   TFile* loadFile(std::string afiles);
@@ -59,7 +61,7 @@ public :
   void loopFunction1(); 
   void loopFunction2(); 
 
-  void optimizePairCuts(std::string sg, std::string bg); 
+  void optimizePairCuts(std::string sg, std::string bg, double lumi = 20.); 
 
   void cd(std::string dataset) {fDS[dataset]->cd("");}
   void replaceAll(std::string &sInput, const std::string &oldString, const std::string &newString);
@@ -68,6 +70,8 @@ public :
   void normHist(TH1 *, std::string ds="", int method = NONORM); 
 
 private: 
+
+  TFile *fHistFile; 
 
   enum HistNorm {NONORM,     // do not touch the normalization
 		 SOMETHING,  // normalize to what is given in fNorm
@@ -90,7 +94,11 @@ private:
 
   struct redTreeData fRtd; 
 
-  int             fOptMode; 
+  // -- optimizing 
+  int                   fOptMode; 
+  std::vector<selpoint> fSelPoints;
+  
+
   std::map<std::string, TH1*> fHists;
 
   // -- datasets (files and associated information)
