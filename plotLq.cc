@@ -20,51 +20,16 @@ ClassImp(plotLq)
 using namespace std; 
 
 // ----------------------------------------------------------------------
-plotLq::plotLq(string dir,  string files, string setup) {
-
-  fDBX = true; 
-  fVerbose = true;
-
-  fDirectory = dir; 
+plotLq::plotLq(string dir,  string files, string setup): plotClass(dir, files, setup) {
 
   loadFiles(files);
 
-  delete gRandom;
-  gRandom = (TRandom*) new TRandom3;
-
-  fEpsilon = 0.00001; 
-  fLumi = 20.; 
-
-  legg = 0;
-  c0 = c1 = c2 = c3 = c4 = c5 =0;
-  tl = new TLatex();
-  box = new TBox();
-  pa = new TArrow();
-  pl = new TLine(); 
-  legge = 0;
-
-
-  NBINS = 50; 
-  c0 = (TCanvas*)gROOT->FindObject("c0"); 
-  if (!c0) c0 = new TCanvas("c0","--c0--",0,0,656,700);
-
   fHistFile = TFile::Open(Form("%s/plotLq.root", dir.c_str()), "RECREATE"); 
-
 }
 
 
 // ----------------------------------------------------------------------
 plotLq::~plotLq() {
-}
-
-
-// ----------------------------------------------------------------------
-// see http://root.cern.ch/phpBB3/viewtopic.php?f=3&t=15054
-void plotLq::closeHistFile() {
-  fHistFile->cd();
-  fHistFile->Write(); 
-  fHistFile->Close(); 
-
 }
 
 // ----------------------------------------------------------------------
@@ -93,13 +58,10 @@ void plotLq::bookHist(string name) {
   setTitles(fHists[Form("mljetmin_%s", name.c_str())], "m_{l jet}^{min} [GeV]", "Entries/bin");
   setHist(fHists[Form("mljetmin_%s", name.c_str())], fDS[name]);
   
-
-
   fHists.insert(make_pair(Form("pt_%s", name.c_str()), 
 			  new TH1D(Form("pt_%s", name.c_str()), Form("pt_%s", name.c_str()), 100, 0, 1000.))); 
   setHist(fHists[Form("pt_%s", name.c_str())], fDS[name]);
   setTitles(fHists[Form("pt_%s", name.c_str())], "p_{T} [GeV]", "Entries/bin");
-
 }
 
 
@@ -108,17 +70,12 @@ void plotLq::makeAll(int bitmask) {
   if (bitmask & 0x1) treeAnalysis();
 }
 
-
-
-
-
 // ----------------------------------------------------------------------
 void plotLq::treeAnalysis() {
 
 }
 
 // ----------------------------------------------------------------------
-
 void plotLq::normOverlay(std::string ds0, std::string ds1) {
   //  string ds0 = "dy_pair";
   fPair = true;
@@ -158,114 +115,14 @@ void plotLq::normOverlay(std::string ds0, std::string ds1) {
 
 }
 
-
-// ----------------------------------------------------------------------
-void plotLq::normHist(TH1 *h, string ds, int method) {
-  double scale(1.); 
-  // -- normalize to 1
-  if (method == UNITY) {
-    scale = (h->Integral() > 0 ? 1./h->Integral() : 1.); 
-    setTitles(h, h->GetXaxis()->GetTitle(), "normalized to 1");
-  } else if (method == SOMETHING) {
-    scale = fNorm * (h->Integral() > 0 ? fNorm/h->Integral() : 1.); 
-    setTitles(h, h->GetXaxis()->GetTitle(), "weighted events");
-  } else if (method == XSECTION) {
-    // -- normalize to xsec*bf
-    //    n = xsec * L
-    //    "integral" over histogram should be xsec
-    scale = (h->Integral() > 0 ? fDS[ds]->fXsec*fDS[ds]->fBf/h->Integral() : 1.); 
-    setTitles(h, h->GetXaxis()->GetTitle(), "pb");
-  } else if (method == LUMI) {
-    // -- normalize to xsec*bf
-    //    n = xsec * L
-    //    "integral" over histogram should be events expected in fLumi
-    scale = (h->Integral() > 0 ? fLumi/fDS[ds]->fLumi : 1.); 
-    setTitles(h, h->GetXaxis()->GetTitle(), Form("events in %4.0f/fb", fLumi));
-  } else if (method == NONORM) {
-    scale = 1.;
-  } else {
-    scale = 1.;
-  }
-
-  cout << "==> normHist: scaling by " << scale << ", based on method " << method << endl;
-
-  double c(0.), e(0.); 
-  for (int i = 0; i <= h->GetNbinsX(); ++i) {
-    c = h->GetBinContent(i); 
-    e = h->GetBinError(i); 
-    h->SetBinContent(i, c*scale);
-    h->SetBinError(i, e*scale);
-  }
-  
-}
-
-
 // ----------------------------------------------------------------------
 void plotLq::overlayAll() {
-
   // -- simple overlays
   c0->cd(1); 
-
 }
-
-// ----------------------------------------------------------------------
-void plotLq::overlay(string h1name, string f1, string h2name, string f2, bool legend) {
-
-  TH1D *h1 = fDS[f1]->getHist(Form("%s", h1name.c_str())); 
-  TH1D *h2 = fDS[f2]->getHist(Form("%s", h2name.c_str())); 
-
-  overlay(h1, f1, h2, f2, legend); 
-
-}
-
-// ----------------------------------------------------------------------
-void plotLq::overlay(TH1* h1, string f1, TH1* h2, string f2, bool legend) {
-
-  bool log(true); 
-
-  normHist(h1, f1, LUMI); 
-  normHist(h2, f2, LUMI); 
-
-  double hmax(1.2*h1->GetMaximum()); 
-  if (h2->GetMaximum() > hmax) hmax = 1.2*h2->GetMaximum(); 
-  if (log) {
-    gPad->SetLogy(1); 
-    hmax *= 2.;
-    h1->SetMinimum(0.5); 
-  }
-  h1->SetMaximum(hmax); 
-
-  h1->DrawCopy("e"); 
-  h2->DrawCopy("histsame");
-  cout << "overlay(" << f1 << ", " << h1->GetName() << " integral= " << h1->Integral()
-       << ", " << f2 << ", " << h2->GetName() << " integral= " << h2->Integral()
-       << ") legend = " << legend << " log: " << log 
-       << endl;
-  
-  if (legend) {
-    newLegend(0.40, 0.75, 0.7, 0.85); 
-    legg->AddEntry(h1, fDS[f1]->fName.c_str(), "p"); 
-    legg->AddEntry(h2, fDS[f2]->fName.c_str(), "l"); 
-    legg->Draw();
-    if (fDBX) {
-      tl->SetNDC(kTRUE);
-      tl->SetTextSize(0.02);
-      tl->SetTextColor(fDS[f1]->fColor); 
-      tl->DrawLatex(0.90, 0.88, Form("%.1e", h1->Integral())); 
-      tl->SetTextColor(fDS[f2]->fColor); 
-      tl->DrawLatex(0.90, 0.82, Form("%.1e", h2->Integral())); 
-    }
-    cout << "  drawing legend" << endl;
-  }
-
-
-}
-
-
 
 // ----------------------------------------------------------------------
 void plotLq::optimizePairCuts(string sg, string bg, double lumi) {
-
   fPair = true;
 
   // -- signal
@@ -275,7 +132,7 @@ void plotLq::optimizePairCuts(string sg, string bg, double lumi) {
   double sgScale = lumi/fDS[sg]->fLumi;
   TTree *ts = getTree(sg); 
   setupTree(ts); 
-  loopOverTree(ts, 2); 
+  loopOverTree(ts, 2, 1000); 
 
   // -- background
   fCds = bg; 
@@ -284,7 +141,7 @@ void plotLq::optimizePairCuts(string sg, string bg, double lumi) {
   double bgScale = lumi/fDS[bg]->fLumi;
   TTree *tb = getTree(bg); 
   setupTree(tb); 
-  loopOverTree(tb, 2); 
+  loopOverTree(tb, 2, 1000); 
 
 
   fHistFile->cd();
@@ -340,7 +197,6 @@ void plotLq::loopFunction1() {
     if (fGoodCandLQn || fGoodCandLQp) fGoodEvent = true;
   }
 
-
   char cds[200];
   sprintf(cds, "%s", fCds.c_str());
 
@@ -364,9 +220,7 @@ void plotLq::loopFunction1() {
 
 // ----------------------------------------------------------------------
 void plotLq::loopFunction2() {
-
   static bool first(true); 
-
   if (first) {
     first = false; 
 
@@ -389,7 +243,6 @@ void plotLq::loopFunction2() {
 				    400., 450., 500., 550., 600., 650., 700., 750.
     };
     vector<double> mljCuts(mljArr, mljArr + sizeof(mljArr)/sizeof(mljArr[0]));
-
 
     for (unsigned int i = 0; i < stCuts.size(); ++i) {
       for (unsigned int j = 0; j < mljCuts.size(); ++j) {
@@ -448,11 +301,10 @@ void plotLq::loopOverTree(TTree *t, int ifunc, int nevts, int nstart) {
        << endl;
 
   // -- setup loopfunction through pointer to member functions
+  //    (this is the reason why this function is NOT in plotClass!)
   void (plotLq::*pF)(void);
   if (ifunc == 1) pF = &plotLq::loopFunction1;
   if (ifunc == 2) pF = &plotLq::loopFunction2;
-
-  cout << "pF: " << pF << endl;
 
   // -- the real loop starts here
   for (int jentry = nbegin; jentry < nend; jentry++) {
@@ -462,7 +314,6 @@ void plotLq::loopOverTree(TTree *t, int ifunc, int nevts, int nstart) {
   }
 
 }
-
 
 // ----------------------------------------------------------------------
 void plotLq::setupTree(TTree *t) {
@@ -497,14 +348,6 @@ void plotLq::setupTree(TTree *t) {
 
 }
 
-
-// ----------------------------------------------------------------------
-TTree* plotLq::getTree(string ds) {
-  TTree *t(0);
-  t = (TTree*)fDS[ds]->fF->Get("events"); 
-  return t; 
-}
-
 // ----------------------------------------------------------------------
 void plotLq::splitType(string stype, string &name, double &mass, double &lambda) {    
   istringstream ss(stype);
@@ -522,7 +365,6 @@ void plotLq::splitType(string stype, string &name, double &mass, double &lambda)
   lambda = atof(token.c_str());
   cout << "lambda: " << lambda << endl;
 }
-
 
 // ----------------------------------------------------------------------
 void plotLq::loadFiles(string afiles) {
@@ -606,8 +448,6 @@ void plotLq::loadFiles(string afiles) {
       fDS.insert(make_pair(sname, ds)); 
     }
 
-
-
     // mb ub nb pb fb 
     cout << "opened MC file "  << sfile  << " as " << sname << " (" << stype << ") with xsec = " << sxsec
 	 << Form(" = %8.5f", fDS[sname]->fXsec)
@@ -619,55 +459,3 @@ void plotLq::loadFiles(string afiles) {
 }
 
 
-// ----------------------------------------------------------------------
-TFile* plotLq::loadFile(string file) {
-  TFile *f = TFile::Open(file.c_str());
-  return f; 
-}
-
-
-
-// ----------------------------------------------------------------------
-void plotLq::replaceAll(string &sInput, const string &oldString, const string &newString) {
-  string::size_type foundpos = sInput.find(oldString);
-  while (foundpos != string::npos)  {
-    sInput.replace(sInput.begin() + foundpos, sInput.begin() + foundpos + oldString.length(), newString);
-    foundpos = sInput.find(oldString);
-  }
-}
-
-// ----------------------------------------------------------------------
-void plotLq::newLegend(double x1, double y1, double x2, double y2, string title) {
-  if (legg) delete legg;
-  legg = new TLegend(x1, y1, x2, y2, title.c_str());
-  legg->SetFillStyle(0); 
-  legg->SetBorderSize(0); 
-  legg->SetTextSize(0.04);  
-  legg->SetFillColor(0); 
-  legg->SetTextFont(42); 
-}
-
-// ----------------------------------------------------------------------
-void plotLq::makeCanvas(int i) {
-  if (i & 16) { 
-    c5 = new TCanvas("c5", "c5", 210,   0, 800, 1000);
-    c5->ToggleEventStatus();
-  }
-  if (i & 8) { 
-    c4 = new TCanvas("c4", "c4", 210,   0, 800, 600);
-    c4->ToggleEventStatus();
-  }
-  if (i & 4) {
-    c3 = new TCanvas("c3", "c3", 200,  20, 800, 800);
-    c3->ToggleEventStatus();
-  }
-  if (i & 1) {
-    //    c1 = new TCanvas("c1", "c1", 20,  60, 1200, 400);
-    c1 = new TCanvas("c1", "c1", 20,  60, 1000, 400);
-    c1->ToggleEventStatus();
-  }
-  if (i & 2) { 
-    c2 = new TCanvas("c2", "c2", 300, 200, 400, 800);
-    c2->ToggleEventStatus();
-  }
-}
