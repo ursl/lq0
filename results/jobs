@@ -13,13 +13,14 @@ tie %jobs, "Tie::IxHash";
 # ---------
 
 # -- pair LQ
-for ($i = 1; $i <=32; $i++) {
+my $njobs = 4; # make this 32 if you want the full setup
+for ($i = 1; $i <= $njobs; $i++) {
   $in = sprintf("%02d", $i);
   $jobs{"sg pair LQ run$in"} = "-C \"NAME=lq_pair_${in},CHANNEL=13,TYPE=2\" -o $dir/lq_pair_${in}.root -f /STORE/LQ/pair/Events/run_$in/$dfile"; 
 }
 
 # -- single LQ
-for ($i = 1; $i <=32; $i++) {
+for ($i = 1; $i <= $njobs; $i++) {
   $in = sprintf("%02d", $i);
   $jobs{"sg single LQ run$in"} = "-C \"NAME=lq_single_${in},CHANNEL=13,TYPE=1\" -o $dir/lq_single_${in}.root -f /STORE/LQ/single/Events/run_$in/$dfile"; 
 }
