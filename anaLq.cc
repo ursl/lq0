@@ -112,12 +112,31 @@ void anaLq::eventProcessing() {
 // ----------------------------------------------------------------------
 void anaLq::genLevelAnalysis() {
 
+  fGenLQp = fGenLQpL = fGenLQpQ = fGenLQn = fGenLQnL = fGenLQnQ; 
+  fGenLQpJ = fGenLQnJ = 0; 
+
+  fP4GenLQp.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  fP4GenLQpL.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  fP4GenLQpQ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  fP4GenLQpJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  fP4GenLQpLQ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  fP4GenLQpLJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+
+  fP4GenLQn.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  fP4GenLQnL.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  fP4GenLQnQ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  fP4GenLQnJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  fP4GenLQnLQ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  fP4GenLQnLJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+
   static int first(1); 
-  if (0) {
+  if (1) {
     cout << "======================================================================" << endl;
     dumpGenBlock(true); 
     cout << "----------------------------------------------------------------------" << endl;
   }
+
+  return;
 
   if (first) {
     first = 0; 
@@ -130,17 +149,39 @@ void anaLq::genLevelAnalysis() {
   fGenLQp = fGenLQn = 0; 
   const int LQID(9000006); 
   // -- find LQ
-  GenParticle *pGen(0);
+  GenParticle *pGen(0), *pGen0(0), *pGen1(0);
+
   for (int i = 0; i < fbParticles->GetEntries(); ++i) {
     pGen = getParticle(i); 
     if (LQID == TMath::Abs(pGen->PID)) {
-      if (pGen->PID < 0) {
-	fGenLQn = pGen; 
-	genLQProducts(fGenLQn, fGenLQnL, fGenLQnQ, fGenLQnJ); 
+      if (0 == pGen0) {
+	pGen0 = pGen;
       } else {
-	fGenLQp = pGen; 
-	genLQProducts(fGenLQp, fGenLQpL, fGenLQpQ, fGenLQpJ); 
+	pGen1 = pGen;
+	break;
       }
+    }
+  }
+
+  if (0 != pGen1) {
+    if (pGen0->PID < 0) {
+      fGenLQn = pGen0; 
+      genLQProducts(fGenLQn);
+      fGenLQp = pGen1; 
+      genLQProducts(fGenLQp);
+    } else {
+      fGenLQn = pGen1; 
+      genLQProducts(fGenLQn);
+      fGenLQp = pGen0; 
+      genLQProducts(fGenLQp);
+    }
+  } else {
+    if (pGen0->PID < 0) {
+      fGenLQn = pGen0; 
+      genLQSingle(fGenLQn);
+    } else {
+      fGenLQp = pGen0; 
+      genLQSingle(fGenLQp);
     }
   }
 }
@@ -345,6 +386,9 @@ void anaLq::lqSelection() {
   lq *Lq = new lq;
   Lq->fP4 = lq0; 
   fLQ.push_back(Lq); 
+
+  fL0 = 0; 
+  fJ0 = 0; 
 }
 
 
@@ -727,11 +771,11 @@ void anaLq::fillRedTreeData() {
     }
     
     fRtd.l0pt = fLeptons[fL0]->fP4.Pt();
-    fRtd.j0pt = fJets[fL0]->fP4.Pt();
+    fRtd.j0pt = fJets[fJ0]->fP4.Pt();
 
     if (2 == TYPE) {
       fRtd.l1pt = fLeptons[fL1]->fP4.Pt();
-      fRtd.j1pt = fJets[fL1]->fP4.Pt();
+      fRtd.j1pt = fJets[fJ1]->fP4.Pt();
 
       fRtd.mljetmin = fMljetMin; 
       fRtd.mll      = fMll; 
@@ -759,10 +803,11 @@ void anaLq::fillRedTreeData() {
 
 
 // ----------------------------------------------------------------------
-void anaLq::genLQProducts(GenParticle *lq, GenParticle *l, GenParticle *q, Jet *j) {
+void anaLq::genLQProducts(GenParticle *lq) {
 
-  l = q = 0; 
-  j = 0; 
+  GenParticle *l(0); 
+  GenParticle *q(0); 
+  Jet *j(0); 
   int lqIdx = genIndex(lq); 
 
   // -- find gen-level direct daughters of LQ
@@ -788,11 +833,8 @@ void anaLq::genLQProducts(GenParticle *lq, GenParticle *l, GenParticle *q, Jet *
   TLorentzVector p4Q; 
   p4Q.SetPtEtaPhiM(q->PT, q->Eta, q->Phi, q->Mass); 
 
-  //   printParticle(lq); 
-  //   printParticle(l); 
-  //   printParticle(q); 
-
   // -- find gen-jet for quark
+  // FIXME use "TRefArray Particles" instead of dR matching!
   Jet *pJet(0); 
   double dRMin(9999.);
   int dRBest(-1); 
@@ -837,13 +879,6 @@ void anaLq::genLQProducts(GenParticle *lq, GenParticle *l, GenParticle *q, Jet *
       fP4GenLQnJ.SetPtEtaPhiM(j->PT, j->Eta,  j->Phi,  j->Mass);
       fP4GenLQnLJ = fP4GenLQnL + fP4GenLQnJ;
 
-      if (0 && fP4GenLQnLJ.M() < 300) {
-	printSummary(3); 
-	cout << "dRMin = " << dRMin << " gen jet " << dRBest 
-	     << " and q " << genIndex(q) 
-	     << " and l " << genIndex(l) 
-	     << endl;
-      }
     } else {
       fGenLQnJ = 0; 
       fP4GenLQnJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
@@ -865,13 +900,6 @@ void anaLq::genLQProducts(GenParticle *lq, GenParticle *l, GenParticle *q, Jet *
       fGenLQpJ = j;
       fP4GenLQpJ.SetPtEtaPhiM(j->PT, j->Eta,  j->Phi,  j->Mass);
       fP4GenLQpLJ = fP4GenLQpL + fP4GenLQpJ;
-      if (0 && fP4GenLQpLJ.M() < 300) { 
-	printSummary(3); 
-	cout << "dRMin = " << dRMin << " gen jet " << dRBest 
-	     << " and q " << genIndex(q) 
-	     << " and l " << genIndex(l) 
-	     << endl;
-      }
     } else {
       fGenLQpJ = 0; 
       fP4GenLQpJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
@@ -879,6 +907,33 @@ void anaLq::genLQProducts(GenParticle *lq, GenParticle *l, GenParticle *q, Jet *
     }
   }
 }
+
+
+// ----------------------------------------------------------------------
+void anaLq::genLQSingle(GenParticle *lq) {
+
+  // -- Fill LQ into single variables
+  genLQProducts(lq); 
+
+  // -- find gen-level bachelor lepton K to LQ
+  int lqMomIdx = lq->M1;
+  GenParticle *pGen(0);
+  for (int i = 0; i < fbParticles->GetEntries(); ++i) {
+    pGen = getParticle(i); 
+    if (pGen->M1 == lqMomIdx) {
+      break;
+    }
+  }
+
+  if (lq->PID < 0) {
+    fGenLQnK = pGen;
+    fP4GenLQnK.SetPtEtaPhiM(pGen->PT, pGen->Eta,  pGen->Phi,  pGen->Mass);
+  } else {
+    fGenLQpK = pGen;
+    fP4GenLQpK.SetPtEtaPhiM(pGen->PT, pGen->Eta,  pGen->Phi,  pGen->Mass);
+  }
+}
+
 
 
 // ----------------------------------------------------------------------

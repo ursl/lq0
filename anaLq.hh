@@ -53,7 +53,8 @@ public:
   
   // -- gen-level analysis
   void genLevelAnalysis();
-  void genLQProducts(GenParticle *lq, GenParticle *l, GenParticle *q, Jet *j);
+  void genLQProducts(GenParticle *lq);
+  void genLQSingle(GenParticle *lq);
   int  genIndex(GenParticle *); 
   int isLeptonJet(Jet *j, double deltaR = 0.3); 
   double nearestLepton(Jet *j); 
@@ -112,7 +113,7 @@ public:
 
   std::map<std::string, TH1*> fHists;
 
-  // -- LQ(s) and daughter particles
+  // -- LQ PAIRS and daughter particles
   GenParticle *fGenLQp, *fGenLQpL, *fGenLQpQ;
   Jet         *fGenLQpJ;
   TLorentzVector fP4GenLQp, fP4GenLQpL, fP4GenLQpQ, fP4GenLQpJ
@@ -122,6 +123,10 @@ public:
   Jet         *fGenLQnJ;
   TLorentzVector fP4GenLQn, fP4GenLQnL, fP4GenLQnQ, fP4GenLQnJ
     , fP4GenLQnLQ, fP4GenLQnLJ;
+
+  // -- additional variables for bachelor lepton in single LQ production
+  GenParticle    *fGenLQpK, *fGenLQnK; 
+  TLorentzVector fP4GenLQpK, fP4GenLQnK;
 
   // -- reco vectors
   std::vector<lepton *> fLeptons;
