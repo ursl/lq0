@@ -8,7 +8,7 @@ ROOTLIBS      = $(shell $(ROOTSYS)/bin/root-config --libs)
 ROOTGLIBS     = $(shell $(ROOTSYS)/bin/root-config --glibs)
 
 # -- simple non-optimized compilation
-CXXFLAGS      = -g -O0 -Wall -fPIC -pipe -Wuninitialized -O 
+CXXFLAGS      = -std=c++03 -g -O0 -Wall -fPIC -pipe -Wuninitialized -O 
 LD            = $(CXX)
 LDFLAGS       = -g 
 SOFLAGS       = -g -shared
