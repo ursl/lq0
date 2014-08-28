@@ -21,11 +21,11 @@ bool sortPtP(GenParticle *a, GenParticle *b) {
 }
 
 bool sortPtLepton(lepton *a, lepton *b) {
-  return ( a->fP4.Pt() > b->fP4.Pt() );
+  return ( a->p4.Pt() > b->p4.Pt() );
 }
 
 bool sortPtJet(jet *a, jet *b) {
-  return ( a->fP4.Pt() > b->fP4.Pt() );
+  return ( a->p4.Pt() > b->p4.Pt() );
 }
 
 bool sortPtM(Muon *a, Muon *b) {
@@ -112,32 +112,18 @@ void anaLq::eventProcessing() {
 // ----------------------------------------------------------------------
 void anaLq::genLevelAnalysis() {
 
-  fGenLQp = fGenLQpL = fGenLQpQ = fGenLQn = fGenLQnL = fGenLQnQ; 
-  fGenLQpJ = fGenLQnJ = 0; 
+  for (unsigned int i = 0; i < fGenLQ.size(); ++i) delete fGenLQ[i];
+  fGenLQ.clear();
 
-  fP4GenLQp.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-  fP4GenLQpL.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-  fP4GenLQpQ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-  fP4GenLQpJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-  fP4GenLQpLQ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-  fP4GenLQpLJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
 
-  fP4GenLQn.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-  fP4GenLQnL.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-  fP4GenLQnQ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-  fP4GenLQnJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-  fP4GenLQnLQ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-  fP4GenLQnLJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-
-  static int first(1); 
-  if (1) {
+  if (0) {
     cout << "======================================================================" << endl;
     dumpGenBlock(true); 
     cout << "----------------------------------------------------------------------" << endl;
   }
 
-  return;
 
+  static int first(1); 
   if (first) {
     first = 0; 
     for (int i = 0; i < 15; ++i) {
@@ -145,8 +131,6 @@ void anaLq::genLevelAnalysis() {
     }
   }
     
-
-  fGenLQp = fGenLQn = 0; 
   const int LQID(9000006); 
   // -- find LQ
   GenParticle *pGen(0), *pGen0(0), *pGen1(0);
@@ -163,26 +147,11 @@ void anaLq::genLevelAnalysis() {
     }
   }
 
-  if (0 != pGen1) {
-    if (pGen0->PID < 0) {
-      fGenLQn = pGen0; 
-      genLQProducts(fGenLQn);
-      fGenLQp = pGen1; 
-      genLQProducts(fGenLQp);
-    } else {
-      fGenLQn = pGen1; 
-      genLQProducts(fGenLQn);
-      fGenLQp = pGen0; 
-      genLQProducts(fGenLQp);
-    }
+  if (pGen1) {
+    genLQProducts(pGen0);
+    genLQProducts(pGen1);
   } else {
-    if (pGen0->PID < 0) {
-      fGenLQn = pGen0; 
-      genLQSingle(fGenLQn);
-    } else {
-      fGenLQp = pGen0; 
-      genLQSingle(fGenLQp);
-    }
+    genLQSingle(pGen0);
   }
 }
 
@@ -217,10 +186,10 @@ void anaLq::leptonSelection() {
       if (muonIso(pM) > 0.1) continue;
       lepton *l = new lepton;
       m4.SetPtEtaPhiM(pM->PT, pM->Eta, pM->Phi, MMUON); 
-      l->fP4 = m4;
-      l->q   = pM->Charge;
-      l->fpMuon = pM;
-      l->fpElectron = 0; 
+      l->p4        = m4;
+      l->q         = pM->Charge;
+      l->pMuon     = pM;
+      l->pElectron = 0; 
       fLeptons.push_back(l);
     }      
 
@@ -254,8 +223,8 @@ void anaLq::jetSelection() {
     if (jetMuonSeparation(pJ) < 0.3) continue;
     jet *j = new jet;
     j4.SetPtEtaPhiM(pJ->PT, pJ->Eta, pJ->Phi, pJ->Mass); 
-    j->fP4 = j4;
-    j->fpJet = pJ; 
+    j->p4   = j4;
+    j->pJet = pJ; 
     fJets.push_back(j);
   }
   
@@ -279,16 +248,16 @@ void anaLq::preselection() {
     if (fLeptons.size() < 2) return;
     if (fJets.size() < 2)    return;
 
-    if (fLeptons[0]->fP4.Pt() < L0PT) return;
-    if (fJets[0]->fP4.Pt() < J0PT)    return;
+    if (fLeptons[0]->p4.Pt() < L0PT) return;
+    if (fJets[0]->p4.Pt() < J0PT)    return;
 
-    if (fLeptons[0]->fP4.DeltaR(fLeptons[1]->fP4) < 0.3) return;
+    if (fLeptons[0]->p4.DeltaR(fLeptons[1]->p4) < 0.3) return;
 
     TLorentzVector ll4; 
-    ll4 = fLeptons[0]->fP4 + fLeptons[1]->fP4;
+    ll4 = fLeptons[0]->p4 + fLeptons[1]->p4;
     if (ll4.M() < 50.)  return;
 
-    fST = fLeptons[0]->fP4.Pt() + fLeptons[1]->fP4.Pt() + fJets[0]->fP4.Pt() + fJets[1]->fP4.Pt();
+    fST = fLeptons[0]->p4.Pt() + fLeptons[1]->p4.Pt() + fJets[0]->p4.Pt() + fJets[1]->p4.Pt();
     if (fST < 300) return;
 
     fPreselected = true;
@@ -300,10 +269,10 @@ void anaLq::preselection() {
     if (fLeptons.size() < 1) return;
     if (fJets.size() < 1)    return;
 
-    if (fLeptons[0]->fP4.Pt() < L0PT) return;
-    if (fJets[0]->fP4.Pt() < J0PT)    return;
+    if (fLeptons[0]->p4.Pt() < L0PT) return;
+    if (fJets[0]->p4.Pt() < J0PT)    return;
 
-    fST = fLeptons[0]->fP4.Pt() + fJets[0]->fP4.Pt();
+    fST = fLeptons[0]->p4.Pt() + fJets[0]->p4.Pt();
     fPreselected = true;
     return;
   }
@@ -320,8 +289,8 @@ void anaLq::lqlqSelection() {
   double mdiff(99999.), mdiffBest(99999.); 
   TLorentzVector lq0, lq1; 
   for (int i = 0; i < 2; ++i) {
-    lq0 = fLeptons[0]->fP4 + fJets[i]->fP4; 
-    lq1 = fLeptons[1]->fP4 + fJets[1-i]->fP4; 
+    lq0 = fLeptons[0]->p4 + fJets[i]->p4; 
+    lq1 = fLeptons[1]->p4 + fJets[1-i]->p4; 
     //    cout << "i = " << i << " LQ0: " << lq0.M() << " LQ1: " << lq1.M() << endl;
     mdiff = TMath::Abs(lq0.M() - lq1.M()); 
     if (mdiff < mdiffBest) {
@@ -330,65 +299,56 @@ void anaLq::lqlqSelection() {
     }
   }
 
-  lq0 = fLeptons[0]->fP4 + fJets[iBest]->fP4; 
-  lq1 = fLeptons[1]->fP4 + fJets[1-iBest]->fP4; 
+  lq0 = fLeptons[0]->p4 + fJets[iBest]->p4; 
+  lq1 = fLeptons[1]->p4 + fJets[1-iBest]->p4; 
   //  cout << "iBest = " << iBest << " LQ0 = " << lq0.M() << "  LQ1 = " << lq1.M() << endl;
 
-  fMll = (fLeptons[0]->fP4 + fLeptons[1]->fP4).M();
+  fMll = (fLeptons[0]->p4 + fLeptons[1]->p4).M();
 
   // -- I hope the following is correct
   double mlq0 = lq0.M();
   double mlq1 = lq1.M();
   if (mlq0 < mlq1) {
-    fMljetMin = mlq0;
+    fMljMin = mlq0;
   } else {
-    fMljetMin = mlq1;
+    fMljMin = mlq1;
   }  
-
-  // -- charge determination
-  fPos = (fLeptons[0]->q > 0?0:1);  
-  fNeg = (fLeptons[1]->q > 0?0:1);  
-  if (fPos == fNeg) {
-    fNeg = 1 - fPos; 
-    cout << "XXXXXXXX problem with charge assignment, using positive muon only, i.e. pos = " << fPos << " neg = " << fNeg << endl;
-  }
-
-  // -- leading lepton/jet determination
-  fL0 = (fLeptons[0]->fP4.Pt() > fLeptons[1]->fP4.Pt()? 0: 1);  
-  fL1 = (fLeptons[0]->fP4.Pt() > fLeptons[1]->fP4.Pt()? 1: 0);  
-
-  fJ0 = (fJets[0]->fP4.Pt() > fJets[1]->fP4.Pt()? 0: 1);  
-  fJ1 = (fJets[0]->fP4.Pt() > fJets[1]->fP4.Pt()? 1: 0);  
 
 
   lq *Lq = new lq;
-  Lq->fP4 = lq0; 
+  Lq->p4   = lq0; 
+  Lq->q    = fLeptons[0]->q; 
+  Lq->idxL = 0; 
+  Lq->idxK = -1; 
+  Lq->idxJ = iBest; 
   fLQ.push_back(Lq); 
 
   Lq = new lq;
-  Lq->fP4 = lq1; 
+  Lq->p4   = lq1; 
+  Lq->q    = fLeptons[1]->q; 
+  Lq->idxL = 1; 
+  Lq->idxK = -1; 
+  Lq->idxJ = 1-iBest; 
   fLQ.push_back(Lq); 
       
 }
 
 // ----------------------------------------------------------------------
 void anaLq::lqSelection() {
-  
+  // FIXME this has to be improved!
   for (unsigned int i = 0; i < fLQ.size(); ++i) delete fLQ[i];
   fLQ.clear();
   
-  TLorentzVector lq0 = fLeptons[0]->fP4 + fJets[0]->fP4; 
-
-  // -- charge determination
-  fPos = (fLeptons[0]->q > 0?0:-1);  
-  fNeg = (fLeptons[0]->q < 0?0:-1);  
+  TLorentzVector lq0 = fLeptons[0]->p4 + fJets[0]->p4; 
 
   lq *Lq = new lq;
-  Lq->fP4 = lq0; 
+  Lq->p4 = lq0; 
+  Lq->q    = fLeptons[0]->q; 
+  Lq->idxL = 0; 
+  Lq->idxK = (fLeptons.size() > 1? 1:-1); 
+  Lq->idxJ = 0;
   fLQ.push_back(Lq); 
 
-  fL0 = 0; 
-  fJ0 = 0; 
 }
 
 
@@ -397,19 +357,14 @@ void anaLq::lqSelection() {
 void anaLq::candAnalysis() {
 
   fGoodEvent   = false; 
-  fGoodCandLQp = false; 
-  fGoodCandLQn = false; 
-
-  if (fNeg > -1 && fLQ[fNeg]->fP4.M() > 0.) fGoodCandLQn = true; 
-  if (fPos > -1 && fLQ[fPos]->fP4.M() > 0.) fGoodCandLQp = true; 
   
   if (2 == TYPE) {
-    if (fGoodCandLQn && fGoodCandLQp) fGoodEvent = true;
+    if (2 == fLQ.size() && fLQ[0]->p4.M() > 0. && fLQ[1]->p4.M() > 0.) fGoodEvent = true;
     if (fST < 685.)       fGoodEvent = false;
     if (fMll < 150.)      fGoodEvent = false;
-    if (fMljetMin < 155.) fGoodEvent = false;
+    if (fMljMin < 155.)   fGoodEvent = false;
   } else {
-    if (fGoodCandLQn || fGoodCandLQp) fGoodEvent = true;
+    if (1 == fLQ.size() && fLQ[0]->p4.M() > 0.) fGoodEvent = true;
   }
 
 }
@@ -425,38 +380,38 @@ void anaLq::fillHist() {
   sprintf(cds, "%s", fName.c_str());
 
   if (fPreselected) { 
-    fHists[Form("pre_l0pt_%s", cds)]->Fill(fLeptons[0]->fP4.Pt()); 
-    if (2 == TYPE) fHists[Form("pre_l1pt_%s", cds)]->Fill(fLeptons[1]->fP4.Pt()); 
+    fHists[Form("pre_l0pt_%s", cds)]->Fill(fLeptons[0]->p4.Pt()); 
+    if (2 == TYPE) fHists[Form("pre_l1pt_%s", cds)]->Fill(fLeptons[1]->p4.Pt()); 
 
-    fHists[Form("pre_j0pt_%s", cds)]->Fill(fJets[0]->fP4.Pt()); 
-    if (2 == TYPE) fHists[Form("pre_j1pt_%s", cds)]->Fill(fJets[1]->fP4.Pt()); 
+    fHists[Form("pre_j0pt_%s", cds)]->Fill(fJets[0]->p4.Pt()); 
+    if (2 == TYPE) fHists[Form("pre_j1pt_%s", cds)]->Fill(fJets[1]->p4.Pt()); 
 
     fHists[Form("pre_st_%s", cds)]->Fill(fRtd.st); 
     fHists[Form("pre_mll_%s", cds)]->Fill(fMll); 
-    fHists[Form("pre_mljetmin_%s", cds)]->Fill(fMljetMin); 
+    fHists[Form("pre_mljetmin_%s", cds)]->Fill(fMljMin); 
       
-    if (fNeg > -1 && fLQ[fNeg]->fP4.M() > 0.) {
-      fHists[Form("pre_m_%s", cds)]->Fill(fLQ[fNeg]->fP4.M()); 
-      fHists[Form("pre_pt_%s", cds)]->Fill(fLQ[fNeg]->fP4.Pt()); 
+    if (fLQ[0]->p4.M() > 0.) {
+      fHists[Form("pre_m_%s", cds)]->Fill(fLQ[0]->p4.M()); 
+      fHists[Form("pre_pt_%s", cds)]->Fill(fLQ[0]->p4.Pt()); 
     }
-    if (fPos > -1 && fLQ[fPos]->fP4.M() > 0.) {
-      fHists[Form("pre_m_%s", cds)]->Fill(fLQ[fPos]->fP4.M()); 
-      fHists[Form("pre_pt_%s", cds)]->Fill(fLQ[fPos]->fP4.Pt()); 
+    if (2 == fLQ.size() && fLQ[1]->p4.M() > 0.) {
+      fHists[Form("pre_m_%s", cds)]->Fill(fLQ[1]->p4.M()); 
+      fHists[Form("pre_pt_%s", cds)]->Fill(fLQ[1]->p4.Pt()); 
     }
 
 
     if (fGoodEvent) { 
       fHists[Form("sel_st_%s", cds)]->Fill(fRtd.st); 
       fHists[Form("sel_mll_%s", cds)]->Fill(fMll); 
-      fHists[Form("sel_mljetmin_%s", cds)]->Fill(fMljetMin); 
+      fHists[Form("sel_mljetmin_%s", cds)]->Fill(fMljMin); 
       
-      if (fNeg > -1 && fLQ[fNeg]->fP4.M() > 0.) {
-	fHists[Form("sel_m_%s", cds)]->Fill(fLQ[fNeg]->fP4.M()); 
-	fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[fNeg]->fP4.Pt()); 
+      if (fLQ[0]->p4.M() > 0.) {
+	fHists[Form("sel_m_%s", cds)]->Fill(fLQ[0]->p4.M()); 
+	fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[0]->p4.Pt()); 
       }
-      if (fPos > -1 && fLQ[fPos]->fP4.M() > 0.) {
-	fHists[Form("sel_m_%s", cds)]->Fill(fLQ[fPos]->fP4.M()); 
-	fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[fPos]->fP4.Pt()); 
+      if (2 == fLQ.size() && fLQ[1]->p4.M() > 0.) {
+	fHists[Form("sel_m_%s", cds)]->Fill(fLQ[1]->p4.M()); 
+	fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[1]->p4.Pt()); 
       }
     }
 
@@ -609,6 +564,7 @@ int anaLq::genIndex(GenParticle *p) {
 
 
 // ----------------------------------------------------------------------
+// FIXME: This does not work for jets!
 bool anaLq::isAncestor(GenParticle *mo, GenParticle *dau) {
 
   if (mo == dau)  return true;
@@ -675,37 +631,53 @@ void anaLq::setupReducedTree() {
   fTree->Branch("type",    &fRtd.type,            "type/I");
   fTree->Branch("w8",      &fRtd.w8,              "w8/D");
 
-  fTree->Branch("gpm",     &fRtd.gpm,             "gpm/D");
-  fTree->Branch("gpm2",    &fRtd.gpm2,            "gpm2/D");
-  fTree->Branch("gppt",    &fRtd.gppt,            "gppt/D");
+  fTree->Branch("ngen",    &fRtd.ngen,            "ngen/I");
+  fTree->Branch("gm",       fRtd.gm,              "gm[ngen]/D");
+  fTree->Branch("gpt",      fRtd.gpt,             "gpt[ngen]/D");
+  fTree->Branch("geta",     fRtd.geta,            "geta[ngen]/D");
+  fTree->Branch("gphi",     fRtd.gphi,            "gphi[ngen]/D");
+  fTree->Branch("gmlj",     fRtd.gmlj,            "gmlj[ngen]/D");
+  fTree->Branch("glq",      fRtd.glq,             "glq[ngen]/I");
 
-  fTree->Branch("gnm",     &fRtd.gnm,             "gnm/D");
-  fTree->Branch("gnm2",    &fRtd.gnm2,            "gnm2/D");
-  fTree->Branch("gnpt",    &fRtd.gnpt,            "gnpt/D");
+  fTree->Branch("glpt",     &fRtd.glpt,           "glpt[ngen]/D");
+  fTree->Branch("gleta",    &fRtd.gleta,          "gleta[ngen]/D");
+  fTree->Branch("glphi",    &fRtd.glphi,          "glphi[ngen]/D");
 
-  fTree->Branch("glqpm",   &fRtd.glqpm,           "glqpm/D");
-  fTree->Branch("gljpm",   &fRtd.gljpm,           "gljpm/D");
+  fTree->Branch("gqpt",     &fRtd.gqpt,           "gqpt[ngen]/D");
+  fTree->Branch("gqeta",    &fRtd.gqeta,          "gqeta[ngen]/D");
+  fTree->Branch("gqphi",    &fRtd.gqphi,          "gqphi[ngen]/D");
 
-  fTree->Branch("glqnm",   &fRtd.glqnm,           "glqnm/D");
-  fTree->Branch("gljnm",   &fRtd.gljnm,           "gljnm/D");
+  fTree->Branch("gjpt",     &fRtd.gjpt,           "gjpt[ngen]/D");
+  fTree->Branch("gjeta",    &fRtd.gjeta,          "gjeta[ngen]/D");
+  fTree->Branch("gjphi",    &fRtd.gjphi,          "gjphi[ngen]/D");
 
-  
-  fTree->Branch("ljnm",    &fRtd.ljnm,            "ljnm/D");
-  fTree->Branch("ljnpt",   &fRtd.ljnpt,           "ljnpt/D");
+  fTree->Branch("gkpt",     &fRtd.gkpt,           "gkpt[ngen]/D");
+  fTree->Branch("gketa",    &fRtd.gketa,          "gketa[ngen]/D");
+  fTree->Branch("gkphi",    &fRtd.gkphi,          "gkphi[ngen]/D");
 
-  fTree->Branch("ljpm",    &fRtd.ljpm,            "ljpm/D");
-  fTree->Branch("ljppt",   &fRtd.ljppt,           "ljppt/D");
+  fTree->Branch("nrec",    &fRtd.nrec,            "nrec/I");
+  fTree->Branch("m",       &fRtd.m,               "ljm[nrec]/D");
+  fTree->Branch("pt",      &fRtd.pt,              "pt[nrec]/D");
+  fTree->Branch("eta" ,    &fRtd.eta,             "eta[nrec]/D");
+  fTree->Branch("phi",     &fRtd.phi,             "phi[nrec]/D");
+  fTree->Branch("q",       &fRtd.lq,              "lq[nrec]/I");
 
-  fTree->Branch("l0pt",    &fRtd.l0pt,            "l0pt/D");
-  fTree->Branch("l1pt",    &fRtd.l1pt,            "l1pt/D");
+  fTree->Branch("lpt",      &fRtd.lpt,              "lpt[nrec]/D");
+  fTree->Branch("leta" ,    &fRtd.leta,             "leta[nrec]/D");
+  fTree->Branch("lphi",     &fRtd.lphi,             "lphi[nrec]/D");
 
-  fTree->Branch("j0pt",    &fRtd.j0pt,            "j0pt/D");
-  fTree->Branch("j1pt",    &fRtd.j1pt,            "j1pt/D");
+  fTree->Branch("jpt",      &fRtd.jpt,              "jpt[nrec]/D");
+  fTree->Branch("jeta" ,    &fRtd.jeta,             "jeta[nrec]/D");
+  fTree->Branch("jphi",     &fRtd.jphi,             "jphi[nrec]/D");
 
+  fTree->Branch("kpt",      &fRtd.kpt,              "kpt[nrec]/D");
+  fTree->Branch("keta" ,    &fRtd.keta,             "keta[nrec]/D");
+  fTree->Branch("kphi",     &fRtd.kphi,             "kphi[nrec]/D");
 
-  fTree->Branch("st",      &fRtd.st,              "st/D");
-  fTree->Branch("mll",     &fRtd.mll,             "mll/D");
-  fTree->Branch("mljetmin",&fRtd.mljetmin,        "mljetmin/D");
+  fTree->Branch("st",       &fRtd.st,              "st/D");
+  fTree->Branch("mll" ,     &fRtd.mll,             "mll/D");
+  fTree->Branch("mljmin",   &fRtd.mljmin,          "mljmin/D");
+
 
 
 }
@@ -718,92 +690,80 @@ void anaLq::fillRedTreeData() {
   fRtd.channel = CHANNEL; 
   fRtd.w8      = fW8;
 
-  if (fGenLQp) {
-    fRtd.gpm   = fGenLQp->Mass;
-    fRtd.gpm2  = fP4GenLQp.M();
-    fRtd.gppt  = fGenLQp->PT;
+  for (unsigned int i = 0; i < fGenLQ.size(); ++i) {
+    fRtd.gm[i]   = fGenLQ[i]->p4LQ.M(); 
+    fRtd.gpt[i]  = fGenLQ[i]->p4LQ.Pt(); 
+    fRtd.geta[i] = fGenLQ[i]->p4LQ.Eta(); 
+    fRtd.gphi[i] = fGenLQ[i]->p4LQ.Phi(); 
 
-    fRtd.glqpm = fP4GenLQpLQ.M();  
-    fRtd.gljpm = fP4GenLQpLJ.M();  
+    fRtd.glq[i]  = fGenLQ[i]->q; 
 
-  } else {
-    fRtd.gpm   = -9999.;
-    fRtd.gpm2  = -9999.;
-    fRtd.gppt  = -9999.;
+    fRtd.glpt[i]  = fGenLQ[i]->p4L.Pt(); 
+    fRtd.gleta[i] = fGenLQ[i]->p4L.Eta(); 
+    fRtd.glphi[i] = fGenLQ[i]->p4L.Phi(); 
 
-    fRtd.glqpm = -9999.;
-    fRtd.gljpm = -9999.;
+    fRtd.gqpt[i]  = fGenLQ[i]->p4Q.Pt(); 
+    fRtd.gqeta[i] = fGenLQ[i]->p4Q.Eta(); 
+    fRtd.gqphi[i] = fGenLQ[i]->p4Q.Phi(); 
+
+    if (fGenLQ[i]->pJ) {
+      fRtd.gmlj[i]  = fGenLQ[i]->p4LJ.M(); 
+      fRtd.gjpt[i]  = fGenLQ[i]->p4J.Pt(); 
+      fRtd.gjeta[i] = fGenLQ[i]->p4J.Eta(); 
+      fRtd.gjphi[i] = fGenLQ[i]->p4J.Phi(); 
+    } else {
+      fRtd.gmlj[i]  = -9999.;
+    }
+
+    if (fGenLQ[i]->pK) {
+      fRtd.gkpt[i]  = fGenLQ[i]->p4K.Pt(); 
+      fRtd.gketa[i] = fGenLQ[i]->p4K.Eta(); 
+      fRtd.gkphi[i] = fGenLQ[i]->p4K.Phi(); 
+    } else {
+      fRtd.gkpt[i]  = -9999.;
+      fRtd.gketa[i] = -9999.;
+      fRtd.gkphi[i] = -9999.;
+    }
   }
-
-  if (fGenLQn) {
-    fRtd.gnm   = fGenLQn->Mass;
-    fRtd.gnm2  = fP4GenLQn.M();
-    fRtd.gnpt  = fGenLQn->PT;
-
-    fRtd.glqnm = fP4GenLQnLQ.M();  
-    fRtd.gljnm = fP4GenLQnLJ.M();  
-
-  } else {
-    fRtd.gnm   = -9999.;
-    fRtd.gnm2  = -9999.;
-    fRtd.gnpt  = -9999.;
-
-    fRtd.glqnm = -9999.;
-    fRtd.gljnm = -9999.;
-  }
-
+  fRtd.ngen = fGenLQ.size(); 
 
   if (fPreselected) {
-    if (fPos > -1) {
-      fRtd.ljpm = fLQ[fPos]->fP4.M();  
-      fRtd.ljppt = fLQ[fPos]->fP4.Pt();  
-    } else {
-      fRtd.ljpm = -9999.;
-      fRtd.ljppt = -9999.;  
+    for (unsigned int i = 0; i < fLQ.size(); ++i) {
+      fRtd.m[i]    = fLQ[i]->p4.M();
+      fRtd.pt[i]   = fLQ[i]->p4.Pt();
+      fRtd.eta[i]  = fLQ[i]->p4.Eta();
+      fRtd.phi[i]  = fLQ[i]->p4.Phi();
+
+      fRtd.lq[i]    = fLeptons[fLQ[i]->idxL]->q;
+      fRtd.lpt[i]   = fLeptons[fLQ[i]->idxL]->p4.Pt();
+      fRtd.leta[i]  = fLeptons[fLQ[i]->idxL]->p4.Phi();
+      fRtd.lphi[i]  = fLeptons[fLQ[i]->idxL]->p4.Eta();
+
+      fRtd.jpt[i]   = fJets[fLQ[i]->idxJ]->p4.Pt();
+      fRtd.jeta[i]  = fJets[fLQ[i]->idxJ]->p4.Phi();
+      fRtd.jphi[i]  = fJets[fLQ[i]->idxJ]->p4.Eta();
+
+      if (fLQ[i]->idxK > -1) {
+	fRtd.kpt[i]   = fLeptons[fLQ[i]->idxK]->p4.Pt();
+	fRtd.keta[i]  = fLeptons[fLQ[i]->idxK]->p4.Phi();
+	fRtd.kphi[i]  = fLeptons[fLQ[i]->idxK]->p4.Eta();
+      } else {
+	fRtd.kpt[i]   = -9999.;
+	fRtd.keta[i]  = -9999.;
+	fRtd.kphi[i]  = -9999.;
+      }
     }
-    
-    if (fNeg > -1) {
-      fRtd.ljnm = fLQ[fNeg]->fP4.M();  
-      fRtd.ljnpt = fLQ[fNeg]->fP4.Pt();  
-    } else {
-      fRtd.ljnm = -9999.;  
-      fRtd.ljnpt = -9999.;  
-    }
-    
-    fRtd.l0pt = fLeptons[fL0]->fP4.Pt();
-    fRtd.j0pt = fJets[fJ0]->fP4.Pt();
-
-    if (2 == TYPE) {
-      fRtd.l1pt = fLeptons[fL1]->fP4.Pt();
-      fRtd.j1pt = fJets[fJ1]->fP4.Pt();
-
-      fRtd.mljetmin = fMljetMin; 
-      fRtd.mll      = fMll; 
-    } 
-    fRtd.st       = fST; 
-  } else {
-    fRtd.ljpm = -9999.;
-    fRtd.ljppt = -9999.;  
-
-    fRtd.ljnm = -9999.;  
-    fRtd.ljnpt = -9999.;  
-
-    fRtd.l0pt = -9999.;  
-    fRtd.l1pt = -9999.;  
-
-    fRtd.j0pt = -9999.;  
-    fRtd.j1pt = -9999.;  
-
-    fRtd.mljetmin = -9999.; 
-    fRtd.mll      = -9999.; 
-    fRtd.st       = -9999.;
   }
+  fRtd.nrec = fLQ.size(); 
+
 
 }
 
 
 // ----------------------------------------------------------------------
 void anaLq::genLQProducts(GenParticle *lq) {
+
+  genLq *gen = new genLq(); 
 
   GenParticle *l(0); 
   GenParticle *q(0); 
@@ -854,58 +814,51 @@ void anaLq::genLQProducts(GenParticle *lq) {
       dRMin = dR; 
       dRBest = i; 
     }
+    
+    // FIXME: Need to fix isAncestor to work with jets!
+    //     GenParticle *pGen = (GenParticle*)pJet->Particles.At(0);
+    //     cout << "genJet " << i << " has npart = " << pJet->Particles.GetEntriesFast()  
+    // 	 << ", 0 is at index " << genIndex(pGen)
+    // 	 << endl;
+    //     if (isAncestor(lq, pGen)) cout << "  THIS IS FROM LQ " << lqIdx << endl;
+
   }    
 
   // -- so far choose on best delta(R) match!
   if (dRBest > -1 && dRMin < 0.3) {
     j = getGenJet(dRBest);
+    //    cout << " xx choosing jet = " << dRBest << " with ET = " << j->PT << " for jet of LQ " << lqIdx << endl;
   }
 
-  // -- now fill data members, chosing according to charge of lepton
-  if (l->Charge < 0) {
-    fGenLQn  = lq; 
-    fP4GenLQn.SetPtEtaPhiM(lq->PT, lq->Eta, lq->Phi, lq->Mass);
+  // -- fill struct
+  gen->q = l->Charge;
 
-    fGenLQnL = l;
-    fP4GenLQnL.SetPtEtaPhiM(l->PT, l->Eta,  l->Phi,  l->Mass);
+  gen->pLQ = lq;
+  gen->p4LQ.SetPtEtaPhiM(lq->PT, lq->Eta, lq->Phi, lq->Mass);
+  
+  gen->pL = l; 
+  gen->p4L.SetPtEtaPhiM(l->PT, l->Eta, l->Phi, l->Mass);
+  
+  gen->pQ = q; 
+  gen->p4Q.SetPtEtaPhiM(q->PT, q->Eta, q->Phi, q->Mass);
 
-    fGenLQnQ = q; 
-    fP4GenLQnQ.SetPtEtaPhiM(q->PT, q->Eta,  q->Phi,  q->Mass);
-
-    fP4GenLQnLQ = fP4GenLQnL + fP4GenLQnQ;    
-
-    if (0 != j) {
-      fGenLQnJ = j;
-      fP4GenLQnJ.SetPtEtaPhiM(j->PT, j->Eta,  j->Phi,  j->Mass);
-      fP4GenLQnLJ = fP4GenLQnL + fP4GenLQnJ;
-
-    } else {
-      fGenLQnJ = 0; 
-      fP4GenLQnJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-      fP4GenLQnLJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-    }
+  if (j) {
+    gen->pJ = j;
+    gen->p4J.SetPtEtaPhiM(j->PT, j->Eta,  j->Phi,  j->Mass);
+    
+    TLorentzVector lj = gen->p4L + gen->p4J; 
+    gen->p4LJ = lj; 
   } else {
-    fGenLQp  = lq; 
-    fP4GenLQp.SetPtEtaPhiM(lq->PT, lq->Eta, lq->Phi, lq->Mass);
-
-    fGenLQpL = l;
-    fP4GenLQpL.SetPtEtaPhiM(l->PT, l->Eta,  l->Phi,  l->Mass);
-
-    fGenLQpQ = q; 
-    fP4GenLQpQ.SetPtEtaPhiM(q->PT, q->Eta,  q->Phi,  q->Mass);
-
-    fP4GenLQpLQ = fP4GenLQpL + fP4GenLQpQ;    
-
-    if (0 != j) {
-      fGenLQpJ = j;
-      fP4GenLQpJ.SetPtEtaPhiM(j->PT, j->Eta,  j->Phi,  j->Mass);
-      fP4GenLQpLJ = fP4GenLQpL + fP4GenLQpJ;
-    } else {
-      fGenLQpJ = 0; 
-      fP4GenLQpJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-      fP4GenLQpLJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
-    }
+    gen->pJ = 0;
+    gen->p4J.SetPtEtaPhiM(-9999., -9999., -9999., -9999.); 
+    gen->p4LJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.); 
   }
+
+  // -- this will be reset in genLqSingle for single LQ processing
+  gen->pK = 0;
+  gen->p4K.SetPtEtaPhiM(-9999., -9999., -9999., -9999.); 
+
+  fGenLQ.push_back(gen);
 }
 
 
@@ -916,22 +869,20 @@ void anaLq::genLQSingle(GenParticle *lq) {
   genLQProducts(lq); 
 
   // -- find gen-level bachelor lepton K to LQ
+  int lqIdx = genIndex(lq);
   int lqMomIdx = lq->M1;
   GenParticle *pGen(0);
   for (int i = 0; i < fbParticles->GetEntries(); ++i) {
+    if (i == lqIdx) continue;
     pGen = getParticle(i); 
     if (pGen->M1 == lqMomIdx) {
       break;
     }
   }
 
-  if (lq->PID < 0) {
-    fGenLQnK = pGen;
-    fP4GenLQnK.SetPtEtaPhiM(pGen->PT, pGen->Eta,  pGen->Phi,  pGen->Mass);
-  } else {
-    fGenLQpK = pGen;
-    fP4GenLQpK.SetPtEtaPhiM(pGen->PT, pGen->Eta,  pGen->Phi,  pGen->Mass);
-  }
+  genLq *gen = fGenLQ.back(); 
+  gen->pK = pGen;
+  gen->p4K.SetPtEtaPhiM(pGen->PT, pGen->Eta, pGen->Phi, pGen->Mass);
 }
 
 

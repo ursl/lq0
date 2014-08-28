@@ -19,6 +19,7 @@
 
 #include "masses.hh"
 #include "redTreeData.hh"
+#include "genLq.hh"
 #include "lepton.hh"
 #include "jet.hh"
 #include "lq.hh"
@@ -113,27 +114,13 @@ public:
 
   std::map<std::string, TH1*> fHists;
 
-  // -- LQ PAIRS and daughter particles
-  GenParticle *fGenLQp, *fGenLQpL, *fGenLQpQ;
-  Jet         *fGenLQpJ;
-  TLorentzVector fP4GenLQp, fP4GenLQpL, fP4GenLQpQ, fP4GenLQpJ
-    , fP4GenLQpLQ, fP4GenLQpLJ;
-
-  GenParticle *fGenLQn, *fGenLQnL, *fGenLQnQ; 
-  Jet         *fGenLQnJ;
-  TLorentzVector fP4GenLQn, fP4GenLQnL, fP4GenLQnQ, fP4GenLQnJ
-    , fP4GenLQnLQ, fP4GenLQnLJ;
-
-  // -- additional variables for bachelor lepton in single LQ production
-  GenParticle    *fGenLQpK, *fGenLQnK; 
-  TLorentzVector fP4GenLQpK, fP4GenLQnK;
+  // -- gen LQ PAIRS and daughter particles
+  std::vector<genLq *> fGenLQ; 
 
   // -- reco vectors
   std::vector<lepton *> fLeptons;
   std::vector<jet *> fJets;
   std::vector<lq *> fLQ;
-  int         fPos, fNeg; 
-  int         fL0, fL1, fJ0, fJ1; 
 
   // -- cuts
   int         TYPE; // 1 = single LQ production, 2 = LQ pair production
@@ -147,7 +134,7 @@ public:
   double      fW8;
 
   bool        fPreselected, fGoodEvent, fGoodCandLQp, fGoodCandLQn;
-  double      fST, fMll, fMljetMin;
+  double      fST, fMll, fMljMin;
 
 };
 
