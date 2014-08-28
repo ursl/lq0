@@ -49,7 +49,7 @@ all: vars prep lib bin
 # -----------------------------------------------------------------------
 
 # -- library
-lib/libLq.so: $(addprefix obj/,$(ANA) $(READER) $(DICTFILES)) 
+lib: $(addprefix obj/,$(ANA) $(READER) $(DICTFILES)) 
 	$(CXX) $(SOFLAGS) $(GLIBS) $(addprefix obj/,$(ANA) $(READER) $(DICTFILES)) $(LIBPATH)/libDelphes.so $(LIBPATH)/libutil.so -o lib/libLq.so 
 
 # -- binaries
