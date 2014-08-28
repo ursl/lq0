@@ -4,14 +4,10 @@
 #include <TLorentzVector.h>
 #include "classes/DelphesClasses.h"
 
-#include "lepton.hh"
-#include "jet.hh"
-
 struct lq {
-  TLorentzVector fP4; 
+  TLorentzVector p4; 
   int q; 
-  jet *fpJet; 
-  lepton *fpLepton; 
+  int idxJ, idxL, idxK;
 };
 
 #endif

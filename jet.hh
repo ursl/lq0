@@ -5,8 +5,8 @@
 #include "classes/DelphesClasses.h"
 
 struct jet {
-  TLorentzVector fP4; 
-  Jet *fpJet;
+  TLorentzVector p4; 
+  Jet *pJet;
 };
 
 

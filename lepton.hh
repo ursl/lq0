@@ -5,10 +5,10 @@
 #include "classes/DelphesClasses.h"
 
 struct lepton {
-  TLorentzVector fP4; 
+  TLorentzVector p4; 
   int q; 
-  Muon *fpMuon;
-  Electron *fpElectron;
+  Muon *pMuon;
+  Electron *pElectron;
 };
 
 #endif
