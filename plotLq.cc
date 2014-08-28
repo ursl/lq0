@@ -53,10 +53,10 @@ void plotLq::bookHist(string name) {
   setHist(fHists[Form("mll_%s", name.c_str())], fDS[name]);
 
   // -- mljetmin
-  fHists.insert(make_pair(Form("mljetmin_%s", name.c_str()), 
-			  new TH1D(Form("mljetmin_%s", name.c_str()), Form("mljetmin_%s", name.c_str()), 60, 0, 1500.))); 
-  setTitles(fHists[Form("mljetmin_%s", name.c_str())], "m_{l jet}^{min} [GeV]", "Entries/bin");
-  setHist(fHists[Form("mljetmin_%s", name.c_str())], fDS[name]);
+  fHists.insert(make_pair(Form("mljmin_%s", name.c_str()), 
+			  new TH1D(Form("mljmin_%s", name.c_str()), Form("mljmin_%s", name.c_str()), 60, 0, 1500.))); 
+  setTitles(fHists[Form("mljmin_%s", name.c_str())], "m_{l jet}^{min} [GeV]", "Entries/bin");
+  setHist(fHists[Form("mljmin_%s", name.c_str())], fDS[name]);
   
   fHists.insert(make_pair(Form("pt_%s", name.c_str()), 
 			  new TH1D(Form("pt_%s", name.c_str()), Form("pt_%s", name.c_str()), 100, 0, 1000.))); 
@@ -105,7 +105,7 @@ void plotLq::normOverlay(std::string ds0, std::string ds1) {
   overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
   c0->SaveAs(Form("%s-%s-%s.pdf", hist.c_str(), ds0.c_str(), ds1.c_str()));
 
-  hist = "mljetmin";
+  hist = "mljmin";
   overlay(fHists[Form("%s_%s", hist.c_str(), ds0.c_str())], ds0, fHists[Form("%s_%s", hist.c_str(), ds1.c_str())], ds1); 
   c0->SaveAs(Form("%s-%s-%s.pdf", hist.c_str(), ds0.c_str(), ds1.c_str()));
   
@@ -182,19 +182,13 @@ void plotLq::loopFunction1() {
   // -- cuts
   fGoodEvent   = false; 
   
-  fGoodCandLQp = false; 
-  fGoodCandLQn = false; 
-
-  if (fRtd.ljnm > 0.) fGoodCandLQn = true; 
-  if (fRtd.ljpm > 0.) fGoodCandLQp = true; 
-  
   if (fPair) {
-    if (fGoodCandLQn && fGoodCandLQp) fGoodEvent = true;
+    if (fRtd.m[0] > 0. && fRtd.m[1] > 0.) fGoodEvent = true;
     if (fRtd.st < 685.)       fGoodEvent = false;
     if (fRtd.mll < 150.)      fGoodEvent = false;
-    if (fRtd.mljetmin < 155.) fGoodEvent = false;
+    if (fRtd.mljmin < 155.) fGoodEvent = false;
   } else {
-    if (fGoodCandLQn || fGoodCandLQp) fGoodEvent = true;
+    if (fRtd.m[0] > 0.) fGoodEvent = true;
   }
 
   char cds[200];
@@ -203,15 +197,11 @@ void plotLq::loopFunction1() {
   if (fGoodEvent) { 
     fHists[Form("st_%s", cds)]->Fill(fRtd.st); 
     fHists[Form("mll_%s", cds)]->Fill(fRtd.mll); 
-    fHists[Form("mljetmin_%s", cds)]->Fill(fRtd.mljetmin); 
+    fHists[Form("mljmin_%s", cds)]->Fill(fRtd.mljmin); 
       
-    if (fRtd.ljnm > 0.) {
-      fHists[Form("m_%s", cds)]->Fill(fRtd.ljnm); 
-      fHists[Form("pt_%s", cds)]->Fill(fRtd.ljnpt); 
-    }
-    if (fRtd.ljpm > 0.) {
-      fHists[Form("m_%s", cds)]->Fill(fRtd.ljpm); 
-      fHists[Form("pt_%s", cds)]->Fill(fRtd.ljppt); 
+    for (int i = 0; i < fRtd.nrec; ++i) {
+      fHists[Form("m_%s", cds)]->Fill(fRtd.m[i]); 
+      fHists[Form("pt_%s", cds)]->Fill(fRtd.pt[i]); 
     }
   }
 
@@ -250,7 +240,7 @@ void plotLq::loopFunction2() {
 	  selpoint s; 
 	  s.fLargerThan.push_back(make_pair(&fRtd.st, stCuts[i])); 
 	  s.fLargerThan.push_back(make_pair(&fRtd.mll, mllCuts[k])); 
-	  s.fLargerThan.push_back(make_pair(&fRtd.mljetmin, mljCuts[j])); 
+	  s.fLargerThan.push_back(make_pair(&fRtd.mljmin, mljCuts[j])); 
 	  fSelPoints.push_back(s); 
 	}
       }
@@ -320,31 +310,55 @@ void plotLq::setupTree(TTree *t) {
 
   t->SetBranchAddress("type",    &fRtd.type);
   t->SetBranchAddress("w8",      &fRtd.w8);
-
-  t->SetBranchAddress("gpm",     &fRtd.gpm);
-  t->SetBranchAddress("gpm2",    &fRtd.gpm2);
-  t->SetBranchAddress("gppt",    &fRtd.gppt);
-
-  t->SetBranchAddress("gnm",     &fRtd.gnm);
-  t->SetBranchAddress("gnm2",    &fRtd.gnm2);
-  t->SetBranchAddress("gnpt",    &fRtd.gnpt);
-
-  t->SetBranchAddress("glqpm",   &fRtd.glqpm);
-  t->SetBranchAddress("gljpm",   &fRtd.gljpm);
-
-  t->SetBranchAddress("glqnm",   &fRtd.glqnm);
-  t->SetBranchAddress("gljnm",   &fRtd.gljnm);
-
   
-  t->SetBranchAddress("ljnm",    &fRtd.ljnm);
-  t->SetBranchAddress("ljnpt",   &fRtd.ljnpt);
+  t->SetBranchAddress("ngen",    &fRtd.ngen);
+  t->SetBranchAddress("gm",       fRtd.gm);
+  t->SetBranchAddress("gpt",      fRtd.gpt);
+  t->SetBranchAddress("geta",     fRtd.geta);
+  t->SetBranchAddress("gphi",     fRtd.gphi);
+  t->SetBranchAddress("gmlj",     fRtd.gmlj);
+  t->SetBranchAddress("glq",      fRtd.glq);
 
-  t->SetBranchAddress("ljpm",    &fRtd.ljpm);
-  t->SetBranchAddress("ljppt",   &fRtd.ljppt);
+  t->SetBranchAddress("glpt",     fRtd.glpt);
+  t->SetBranchAddress("gleta",    fRtd.gleta);
+  t->SetBranchAddress("glphi",    fRtd.glphi);
 
-  t->SetBranchAddress("st",      &fRtd.st);
-  t->SetBranchAddress("mll",     &fRtd.mll);
-  t->SetBranchAddress("mljetmin",&fRtd.mljetmin);
+  t->SetBranchAddress("gqpt",     fRtd.gqpt);
+  t->SetBranchAddress("gqeta",    fRtd.gqeta);
+  t->SetBranchAddress("gqphi",    fRtd.gqphi);
+
+  t->SetBranchAddress("gjpt",     fRtd.gjpt);
+  t->SetBranchAddress("gjeta",    fRtd.gjeta);
+  t->SetBranchAddress("gjphi",    fRtd.gjphi);
+
+  t->SetBranchAddress("gkpt",     fRtd.gkpt);
+  t->SetBranchAddress("gketa",    fRtd.gketa);
+  t->SetBranchAddress("gkphi",    fRtd.gkphi);
+
+  t->SetBranchAddress("nrec",    &fRtd.nrec);
+  t->SetBranchAddress("m",        fRtd.m);
+  t->SetBranchAddress("pt",       fRtd.pt);
+  t->SetBranchAddress("eta" ,     fRtd.eta);
+  t->SetBranchAddress("phi",      fRtd.phi);
+  t->SetBranchAddress("q",        fRtd.lq);
+
+  t->SetBranchAddress("lpt",      fRtd.lpt);
+  t->SetBranchAddress("leta" ,    fRtd.leta);
+  t->SetBranchAddress("lphi",     fRtd.lphi);
+
+  t->SetBranchAddress("jpt",      fRtd.jpt);
+  t->SetBranchAddress("jeta" ,    fRtd.jeta);
+  t->SetBranchAddress("jphi",     fRtd.jphi);
+
+  t->SetBranchAddress("kpt",      fRtd.kpt);
+  t->SetBranchAddress("keta" ,    fRtd.keta);
+  t->SetBranchAddress("kphi",     fRtd.kphi);
+
+  t->SetBranchAddress("st",       &fRtd.st);
+  t->SetBranchAddress("mll" ,     &fRtd.mll);
+  t->SetBranchAddress("mljmin",   &fRtd.mljmin);
+
+
 
 }
 
