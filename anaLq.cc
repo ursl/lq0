@@ -639,43 +639,43 @@ void anaLq::setupReducedTree() {
   fTree->Branch("gmlj",     fRtd.gmlj,            "gmlj[ngen]/D");
   fTree->Branch("glq",      fRtd.glq,             "glq[ngen]/I");
 
-  fTree->Branch("glpt",     &fRtd.glpt,           "glpt[ngen]/D");
-  fTree->Branch("gleta",    &fRtd.gleta,          "gleta[ngen]/D");
-  fTree->Branch("glphi",    &fRtd.glphi,          "glphi[ngen]/D");
+  fTree->Branch("glpt",     fRtd.glpt,           "glpt[ngen]/D");
+  fTree->Branch("gleta",    fRtd.gleta,          "gleta[ngen]/D");
+  fTree->Branch("glphi",    fRtd.glphi,          "glphi[ngen]/D");
 
-  fTree->Branch("gqpt",     &fRtd.gqpt,           "gqpt[ngen]/D");
-  fTree->Branch("gqeta",    &fRtd.gqeta,          "gqeta[ngen]/D");
-  fTree->Branch("gqphi",    &fRtd.gqphi,          "gqphi[ngen]/D");
+  fTree->Branch("gqpt",     fRtd.gqpt,           "gqpt[ngen]/D");
+  fTree->Branch("gqeta",    fRtd.gqeta,          "gqeta[ngen]/D");
+  fTree->Branch("gqphi",    fRtd.gqphi,          "gqphi[ngen]/D");
 
-  fTree->Branch("gjpt",     &fRtd.gjpt,           "gjpt[ngen]/D");
-  fTree->Branch("gjeta",    &fRtd.gjeta,          "gjeta[ngen]/D");
-  fTree->Branch("gjphi",    &fRtd.gjphi,          "gjphi[ngen]/D");
+  fTree->Branch("gjpt",     fRtd.gjpt,           "gjpt[ngen]/D");
+  fTree->Branch("gjeta",    fRtd.gjeta,          "gjeta[ngen]/D");
+  fTree->Branch("gjphi",    fRtd.gjphi,          "gjphi[ngen]/D");
 
-  fTree->Branch("gkpt",     &fRtd.gkpt,           "gkpt[ngen]/D");
-  fTree->Branch("gketa",    &fRtd.gketa,          "gketa[ngen]/D");
-  fTree->Branch("gkphi",    &fRtd.gkphi,          "gkphi[ngen]/D");
+  fTree->Branch("gkpt",     fRtd.gkpt,           "gkpt[ngen]/D");
+  fTree->Branch("gketa",    fRtd.gketa,          "gketa[ngen]/D");
+  fTree->Branch("gkphi",    fRtd.gkphi,          "gkphi[ngen]/D");
 
   fTree->Branch("nrec",    &fRtd.nrec,            "nrec/I");
-  fTree->Branch("m",       &fRtd.m,               "ljm[nrec]/D");
-  fTree->Branch("pt",      &fRtd.pt,              "pt[nrec]/D");
-  fTree->Branch("eta" ,    &fRtd.eta,             "eta[nrec]/D");
-  fTree->Branch("phi",     &fRtd.phi,             "phi[nrec]/D");
-  fTree->Branch("q",       &fRtd.lq,              "lq[nrec]/I");
+  fTree->Branch("m",        fRtd.m,               "m[nrec]/D");
+  fTree->Branch("pt",       fRtd.pt,              "pt[nrec]/D");
+  fTree->Branch("eta",      fRtd.eta,             "eta[nrec]/D");
+  fTree->Branch("phi",      fRtd.phi,             "phi[nrec]/D");
+  fTree->Branch("lq",       fRtd.lq,              "lq[nrec]/I");
 
-  fTree->Branch("lpt",      &fRtd.lpt,              "lpt[nrec]/D");
-  fTree->Branch("leta" ,    &fRtd.leta,             "leta[nrec]/D");
-  fTree->Branch("lphi",     &fRtd.lphi,             "lphi[nrec]/D");
+  fTree->Branch("lpt",      fRtd.lpt,              "lpt[nrec]/D");
+  fTree->Branch("leta",     fRtd.leta,             "leta[nrec]/D");
+  fTree->Branch("lphi",     fRtd.lphi,             "lphi[nrec]/D");
 
-  fTree->Branch("jpt",      &fRtd.jpt,              "jpt[nrec]/D");
-  fTree->Branch("jeta" ,    &fRtd.jeta,             "jeta[nrec]/D");
-  fTree->Branch("jphi",     &fRtd.jphi,             "jphi[nrec]/D");
+  fTree->Branch("jpt",      fRtd.jpt,              "jpt[nrec]/D");
+  fTree->Branch("jeta",     fRtd.jeta,             "jeta[nrec]/D");
+  fTree->Branch("jphi",     fRtd.jphi,             "jphi[nrec]/D");
 
-  fTree->Branch("kpt",      &fRtd.kpt,              "kpt[nrec]/D");
-  fTree->Branch("keta" ,    &fRtd.keta,             "keta[nrec]/D");
-  fTree->Branch("kphi",     &fRtd.kphi,             "kphi[nrec]/D");
+  fTree->Branch("kpt",      fRtd.kpt,              "kpt[nrec]/D");
+  fTree->Branch("keta",     fRtd.keta,             "keta[nrec]/D");
+  fTree->Branch("kphi",     fRtd.kphi,             "kphi[nrec]/D");
 
   fTree->Branch("st",       &fRtd.st,              "st/D");
-  fTree->Branch("mll" ,     &fRtd.mll,             "mll/D");
+  fTree->Branch("mll",      &fRtd.mll,             "mll/D");
   fTree->Branch("mljmin",   &fRtd.mljmin,          "mljmin/D");
 
 
