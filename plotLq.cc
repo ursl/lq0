@@ -8,6 +8,7 @@
 #include "TStyle.h"
 #include "TMath.h"
 #include "TRandom3.h"
+#include "TLorentzVector.h"
 #include "TString.h"
 #include "TCanvas.h"
 #include "TPad.h"
@@ -34,6 +35,47 @@ plotLq::~plotLq() {
 
 // ----------------------------------------------------------------------
 void plotLq::bookHist(string name) {
+
+  char cds[200];
+  sprintf(cds, "%s", fCds.c_str());
+  
+  char hist[200];
+  sprintf(hist, "%s_%s", "dRll", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, 0, 6.))); 
+  setHistTitles(fHists[hist], fDS[name], "#Delta R(l,l)", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "dRjl", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, 0, 6.))); 
+  setHistTitles(fHists[hist], fDS[name], "#Delta R(j,l)", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "dRjk", fCds.c_str());
+  fHists.insert(make_pair(hist,  new TH1D(hist, hist, 60, 0, 6.))); 
+  setHistTitles(fHists[hist], fDS[name], "#Delta R(j,k)", "Entries/bin");
+
+
+  sprintf(hist, "%s_%s", "dEtall", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, -6., 6.))); 
+  setHistTitles(fHists[hist], fDS[name], "#Delta #eta(l, l)", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "dPtll", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, -100., 900.))); 
+  setHistTitles(fHists[hist], fDS[name], "#Delta |#eta|(l, l)", "Entries/bin");
+
+
+
+  sprintf(hist, "%s_%s", "mjl", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 1000.))); 
+  setHistTitles(fHists[hist], fDS[name], "m(j,l) [GeV]", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "mjk", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 1000.))); 
+  setHistTitles(fHists[hist], fDS[name], "m(j,k) [GeV]", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "mlk", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 1000.))); 
+  setHistTitles(fHists[hist], fDS[name], "m(l,k) [GeV]", "Entries/bin");
+
+
   // -- m
   fHists.insert(make_pair(Form("m_%s", name.c_str()), 
 			  new TH1D(Form("m_%s", name.c_str()), Form("m_%s", name.c_str()), 100, 0, 2000.))); 
@@ -72,6 +114,45 @@ void plotLq::makeAll(int bitmask) {
 
 // ----------------------------------------------------------------------
 void plotLq::treeAnalysis() {
+  // -- pair
+  fPair = true;
+  fCds = "lq01_pair"; 
+  bookHist(fCds); 
+  TTree *tp = getTree(fCds); 
+  setupTree(tp); 
+  loopOverTree(tp, 3, 10000); 
+
+  // -- single
+  fPair = false;
+  fCds = "lq01_single"; 
+  bookHist(fCds); 
+  TTree *ts = getTree(fCds); 
+  setupTree(ts); 
+  loopOverTree(ts, 3, 10000); 
+
+  zone(2,4);
+  overlay(fHists[Form("dRll_%s", "lq01_pair")], "lq01_pair", fHists[Form("dRll_%s", "lq01_single")], "lq01_single", UNITY, false, false);
+
+  c0->cd(2); 
+  overlay(fHists[Form("dRjl_%s", "lq01_pair")], "lq01_pair", fHists[Form("dRjl_%s", "lq01_single")], "lq01_single", UNITY, false, false);
+
+  c0->cd(3); 
+  overlay(fHists[Form("dRjk_%s", "lq01_pair")], "lq01_pair", fHists[Form("dRjk_%s", "lq01_single")], "lq01_single", UNITY, false, false);
+
+  c0->cd(4); 
+  overlay(fHists[Form("mjk_%s", "lq01_pair")], "lq01_pair", fHists[Form("mjk_%s", "lq01_single")], "lq01_single", UNITY, false, false);
+
+  c0->cd(5); 
+  overlay(fHists[Form("mjl_%s", "lq01_pair")], "lq01_pair", fHists[Form("mjl_%s", "lq01_single")], "lq01_single", UNITY, false, false);
+
+  c0->cd(6); 
+  overlay(fHists[Form("mlk_%s", "lq01_pair")], "lq01_pair", fHists[Form("mlk_%s", "lq01_single")], "lq01_single", UNITY, false, false);
+
+  c0->cd(7); 
+  overlay(fHists[Form("dEtall_%s", "lq01_pair")], "lq01_pair", fHists[Form("dEtall_%s", "lq01_single")], "lq01_single", UNITY, false, false);
+  
+  c0->cd(8);
+  overlay(fHists[Form("dPtll_%s", "lq01_pair")], "lq01_pair", fHists[Form("dPtll_%s", "lq01_single")], "lq01_single", UNITY, false, false);
 
 }
 
@@ -209,6 +290,39 @@ void plotLq::loopFunction1() {
 
 
 // ----------------------------------------------------------------------
+// gen-level analysis for single vs pair production
+void plotLq::loopFunction3() {
+
+  char cds[200];
+  sprintf(cds, "%s", fCds.c_str());
+
+  for (int i = 0; i < fRtd.ngen; ++i) {
+    TLorentzVector pQ; pQ.SetPtEtaPhiM(fRtd.gjpt[i], fRtd.gjeta[i], fRtd.gjphi[i], 0);
+    TLorentzVector pL; pL.SetPtEtaPhiM(fRtd.glpt[i], fRtd.gleta[i], fRtd.glphi[i], 0);
+    TLorentzVector pK; 
+    if (fPair) {
+      pK.SetPtEtaPhiM(fRtd.glpt[1-i], fRtd.gleta[1-i], fRtd.glphi[1-i], 0);
+    } else {
+      pK.SetPtEtaPhiM(fRtd.gkpt[i], fRtd.gketa[i], fRtd.gkphi[i], 0);
+    }
+    
+    fHists[Form("dRll_%s", cds)]->Fill(pL.DeltaR(pK)); 
+    fHists[Form("dRjl_%s", cds)]->Fill(pQ.DeltaR(pL)); 
+    fHists[Form("dRjk_%s", cds)]->Fill(pQ.DeltaR(pK)); 
+    
+    fHists[Form("mjl_%s", cds)]->Fill((pQ+pL).M()); 
+    fHists[Form("mjk_%s", cds)]->Fill((pQ+pK).M()); 
+    fHists[Form("mlk_%s", cds)]->Fill((pL+pK).M()); 
+    
+    fHists[Form("dEtall_%s", cds)]->Fill(pL.Eta() - pK.Eta()); 
+    fHists[Form("dPtll_%s", cds)]->Fill(pL.Pt() - pK.Eta()); 
+  }
+  
+
+}
+
+
+// ----------------------------------------------------------------------
 void plotLq::loopFunction2() {
   static bool first(true); 
   if (first) {
@@ -295,6 +409,7 @@ void plotLq::loopOverTree(TTree *t, int ifunc, int nevts, int nstart) {
   void (plotLq::*pF)(void);
   if (ifunc == 1) pF = &plotLq::loopFunction1;
   if (ifunc == 2) pF = &plotLq::loopFunction2;
+  if (ifunc == 3) pF = &plotLq::loopFunction3;
 
   // -- the real loop starts here
   for (int jentry = nbegin; jentry < nend; jentry++) {
@@ -340,7 +455,7 @@ void plotLq::setupTree(TTree *t) {
   t->SetBranchAddress("pt",       fRtd.pt);
   t->SetBranchAddress("eta" ,     fRtd.eta);
   t->SetBranchAddress("phi",      fRtd.phi);
-  t->SetBranchAddress("q",        fRtd.lq);
+  t->SetBranchAddress("lq",        fRtd.lq);
 
   t->SetBranchAddress("lpt",      fRtd.lpt);
   t->SetBranchAddress("leta" ,    fRtd.leta);
@@ -444,11 +559,19 @@ void plotLq::loadFiles(string afiles) {
       sdecay = "LQ";
       if (string::npos != sname.find("pair")) sdecay = "LQ #bar{LQ}";
       sdecay = Form("%s (%.0fGeV, #Lambda=%2.1f)", sdecay.c_str(), mass, lambda);
-      ds->fColor = kBlue; 
-      ds->fLcolor = kBlue; 
-      ds->fFcolor = kBlue; 
-      ds->fSymbol = 24; 
-
+      if (string::npos != sdecay.find("bar")) {
+	ds->fColor = kBlue; 
+	ds->fLcolor = kBlue; 
+	ds->fFcolor = kBlue; 
+	ds->fSymbol = 24; 
+	ds->fFillStyle = 3356; 
+      } else {
+	ds->fColor = kRed; 
+	ds->fLcolor = kRed; 
+	ds->fFcolor = kRed; 
+	ds->fSymbol = 25; 
+	ds->fFillStyle = 3365; 
+      }
       ds->fF      = pF; 
       ds->fXsec   = atof(sxsec.c_str());          // [xsec] = pb
       ds->fBf     = 1.;

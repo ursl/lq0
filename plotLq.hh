@@ -8,7 +8,7 @@
 class plotLq: public plotClass {
 
 public :
-                 plotLq(std::string dir = "hpt0", std::string files = "plotLq.files", std::string setup = "m");
+                 plotLq(std::string dir = "results", std::string files = "lq.files", std::string setup = "m");
   virtual        ~plotLq();
 
   virtual void   loadFiles(std::string afiles);
@@ -26,6 +26,7 @@ public :
   virtual void   loopOverTree(TTree *t, int ifunc, int nevts = -1, int nstart = 0); 
   virtual void   loopFunction1(); 
   virtual void   loopFunction2(); 
+  virtual void   loopFunction3(); 
   
   void           optimizePairCuts(std::string sg, std::string bg, double lumi = 20.); 
 
