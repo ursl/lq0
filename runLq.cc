@@ -182,8 +182,6 @@ int main(int argc, char *argv[]) {
       a->setCuts(cutString); 
     }
 
-    a->bookHist();
-
     a->startAnalysis(); 
     a->loop(nevents, start);
     a->endAnalysis();
