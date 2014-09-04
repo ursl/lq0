@@ -80,6 +80,13 @@ void anaLq::startAnalysis() {
 
   J0PT = 125.; 
   J1PT = 45.; 
+
+  fTypeName = "single";
+  bookHist();
+
+  fTypeName = "pair";
+  bookHist();
+
 }
 
 // ----------------------------------------------------------------------
@@ -93,24 +100,13 @@ void anaLq::eventProcessing() {
 
   initVariables();
 
-  //   cout << "w8: " <<  getEvent(0)->Weight 
-  //        << " processid: " << getEvent(0)->ProcessID
-  //        << " MPI: " << getEvent(0)->MPI
-  //        << " X1: " << getEvent(0)->X1 
-  //        << " X2: " << getEvent(0)->X2
-  //        << " qcd: " << getEvent(0)->AlphaQCD
-  //        << " nevents = " << fbEvent->GetEntries() 
-  //        << endl;
-
-  genLevelAnalysis(); 
+  truthAnalysis(); 
   analysis();
-  fillHist(); 
-
 }
 
 
 // ----------------------------------------------------------------------
-void anaLq::genLevelAnalysis() {
+void anaLq::truthAnalysis() {
 
   for (unsigned int i = 0; i < fGenLQ.size(); ++i) delete fGenLQ[i];
   fGenLQ.clear();
@@ -158,15 +154,31 @@ void anaLq::genLevelAnalysis() {
 
 // ----------------------------------------------------------------------
 void anaLq::analysis() {
+  // -- rec-level inputs: leptons and jets
   leptonSelection();
   jetSelection();
+
+  // -- single production analysis
+  TYPE = 1;
+  fTypeName = "single";
   preselection();
 
   if (fPreselected) {
-    if (2 == TYPE) lqlqSelection();
-    if (1 == TYPE) lqSelection();
+    lqSelection();
     candAnalysis();
   }
+  fillHist(); 
+
+  // -- pair production analysis
+  TYPE = 2; 
+  fTypeName = "pair";
+  preselection(); 
+  if (fPreselected) {
+    lqlqSelection();
+    candAnalysis();
+  }
+  fillHist(); 
+
 }
 
 
@@ -238,11 +250,29 @@ void anaLq::jetSelection() {
 void anaLq::preselection() {
 
   fGoodEvent   = false; 
-  fGoodCandLQp = false; 
-  fGoodCandLQn = false; 
 
   fPreselected = false;
   fST = -9999.; 
+
+  if (1 == TYPE) {
+    if (fLeptons.size() < 2) return;
+    if (fJets.size() < 2)    return;
+
+    if (fLeptons[0]->p4.Pt() < L0PT) return;
+    if (fJets[0]->p4.Pt() < J0PT)    return;
+
+    if (fLeptons[0]->p4.DeltaR(fLeptons[1]->p4) < 0.3) return;
+
+    TLorentzVector ll4; 
+    ll4 = fLeptons[0]->p4 + fLeptons[1]->p4;
+    if (ll4.M() < 50.)  return;
+
+    fST = fLeptons[0]->p4.Pt() + fLeptons[1]->p4.Pt() + fJets[0]->p4.Pt() + fJets[1]->p4.Pt();
+    if (fST < 0) return;
+
+    fPreselected = true;
+    return;
+  }
 
   if (2 == TYPE) {
     if (fLeptons.size() < 2) return;
@@ -265,26 +295,17 @@ void anaLq::preselection() {
   }
 
 
-  if (1 == TYPE) {
-    if (fLeptons.size() < 1) return;
-    if (fJets.size() < 1)    return;
-
-    if (fLeptons[0]->p4.Pt() < L0PT) return;
-    if (fJets[0]->p4.Pt() < J0PT)    return;
-
-    fST = fLeptons[0]->p4.Pt() + fJets[0]->p4.Pt();
-    fPreselected = true;
-    return;
-  }
 
 }
 
 // ----------------------------------------------------------------------
+// -- this is CMS' pair selection
 void anaLq::lqlqSelection() {
 
+  // -- clear LQ vector
   for (unsigned int i = 0; i < fLQ.size(); ++i) delete fLQ[i];
   fLQ.clear();
-
+  
   int iBest(-1);
   double mdiff(99999.), mdiffBest(99999.); 
   TLorentzVector lq0, lq1; 
@@ -335,20 +356,23 @@ void anaLq::lqlqSelection() {
 
 // ----------------------------------------------------------------------
 void anaLq::lqSelection() {
-  // FIXME this has to be improved!
+
+  // -- clear LQ vector
   for (unsigned int i = 0; i < fLQ.size(); ++i) delete fLQ[i];
   fLQ.clear();
-  
-  TLorentzVector lq0 = fLeptons[0]->p4 + fJets[0]->p4; 
 
-  lq *Lq = new lq;
-  Lq->p4 = lq0; 
-  Lq->q    = fLeptons[0]->q; 
-  Lq->idxL = 0; 
-  Lq->idxK = (fLeptons.size() > 1? 1:-1); 
-  Lq->idxJ = 0;
-  fLQ.push_back(Lq); 
-
+  // FIXME this has to be improved!
+  lq *Lq(0); 
+  for (unsigned int i = 0; i < 2; ++i) {
+    TLorentzVector lq0 = fLeptons[i]->p4 + fJets[i]->p4; 
+    Lq = new lq;
+    Lq->p4   = lq0; 
+    Lq->q    = fLeptons[i]->q; 
+    Lq->idxL = i; 
+    Lq->idxK = 1-i;
+    Lq->idxJ = i;
+    fLQ.push_back(Lq); 
+  }
 }
 
 
@@ -357,15 +381,18 @@ void anaLq::lqSelection() {
 void anaLq::candAnalysis() {
 
   fGoodEvent   = false; 
-  
+  int idxI(0), idxJ(1); 
+
+  if (1 == TYPE) {
+    if (fLQ[idxI]->p4.M() > 0.) fGoodEvent = true;
+  }
+
   if (2 == TYPE) {
-    if (2 == fLQ.size() && fLQ[0]->p4.M() > 0. && fLQ[1]->p4.M() > 0.) fGoodEvent = true;
+    if (fLQ[idxI]->p4.M() > 0. && fLQ[idxJ]->p4.M() > 0.) fGoodEvent = true;
     if (fST < 685.)       fGoodEvent = false;
     if (fMll < 150.)      fGoodEvent = false;
     if (fMljMin < 155.)   fGoodEvent = false;
-  } else {
-    if (1 == fLQ.size() && fLQ[0]->p4.M() > 0.) fGoodEvent = true;
-  }
+  } 
 
 }
 
@@ -373,45 +400,41 @@ void anaLq::candAnalysis() {
 // ----------------------------------------------------------------------
 void anaLq::fillHist() {
 
+  fpHistFile->cd(fTypeName.c_str()); 
   fillRedTreeData(); 
-  fTree->Fill();
-
-  char cds[200]; 
-  sprintf(cds, "%s", fName.c_str());
+  TTree *t = (TTree*)gDirectory->Get("events");
+  t->Fill();
 
   if (fPreselected) { 
-    fHists[Form("pre_l0pt_%s", cds)]->Fill(fLeptons[0]->p4.Pt()); 
-    if (2 == TYPE) fHists[Form("pre_l1pt_%s", cds)]->Fill(fLeptons[1]->p4.Pt()); 
+    fHists["pre_l0pt"]->Fill(fLeptons[0]->p4.Pt()); 
+    fHists["pre_l1pt"]->Fill(fLeptons[1]->p4.Pt()); 
 
-    fHists[Form("pre_j0pt_%s", cds)]->Fill(fJets[0]->p4.Pt()); 
-    if (2 == TYPE) fHists[Form("pre_j1pt_%s", cds)]->Fill(fJets[1]->p4.Pt()); 
+    fHists["pre_j0pt"]->Fill(fJets[0]->p4.Pt()); 
+    fHists["pre_j1pt"]->Fill(fJets[1]->p4.Pt()); 
 
-    fHists[Form("pre_st_%s", cds)]->Fill(fRtd.st); 
-    fHists[Form("pre_mll_%s", cds)]->Fill(fMll); 
-    fHists[Form("pre_mljetmin_%s", cds)]->Fill(fMljMin); 
+    fHists["pre_st"]->Fill(fRtd.st); 
+    fHists["pre_mll"]->Fill(fMll); 
+    fHists["pre_mljetmin"]->Fill(fMljMin); 
       
     if (fLQ[0]->p4.M() > 0.) {
-      fHists[Form("pre_m_%s", cds)]->Fill(fLQ[0]->p4.M()); 
-      fHists[Form("pre_pt_%s", cds)]->Fill(fLQ[0]->p4.Pt()); 
+      fHists["pre_m"]->Fill(fLQ[0]->p4.M()); 
+      fHists["pre_pt"]->Fill(fLQ[0]->p4.Pt()); 
+      if (2 == TYPE) {
+	fHists["pre_m"]->Fill(fLQ[1]->p4.M()); 
+	fHists["pre_pt"]->Fill(fLQ[1]->p4.Pt()); 
+      }
     }
-    if (2 == fLQ.size() && fLQ[1]->p4.M() > 0.) {
-      fHists[Form("pre_m_%s", cds)]->Fill(fLQ[1]->p4.M()); 
-      fHists[Form("pre_pt_%s", cds)]->Fill(fLQ[1]->p4.Pt()); 
-    }
-
 
     if (fGoodEvent) { 
-      fHists[Form("sel_st_%s", cds)]->Fill(fRtd.st); 
-      fHists[Form("sel_mll_%s", cds)]->Fill(fMll); 
-      fHists[Form("sel_mljetmin_%s", cds)]->Fill(fMljMin); 
+      fHists["sel_st"]->Fill(fRtd.st); 
+      fHists["sel_mll"]->Fill(fMll); 
+      fHists["sel_mljetmin"]->Fill(fMljMin); 
       
-      if (fLQ[0]->p4.M() > 0.) {
-	fHists[Form("sel_m_%s", cds)]->Fill(fLQ[0]->p4.M()); 
-	fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[0]->p4.Pt()); 
-      }
-      if (2 == fLQ.size() && fLQ[1]->p4.M() > 0.) {
-	fHists[Form("sel_m_%s", cds)]->Fill(fLQ[1]->p4.M()); 
-	fHists[Form("sel_pt_%s", cds)]->Fill(fLQ[1]->p4.Pt()); 
+      fHists["sel_m"]->Fill(fLQ[0]->p4.M()); 
+      fHists["sel_pt"]->Fill(fLQ[0]->p4.Pt()); 
+      if (2 == TYPE) {
+	fHists["sel_m"]->Fill(fLQ[1]->p4.M()); 
+	fHists["sel_pt"]->Fill(fLQ[1]->p4.Pt()); 
       }
     }
 
@@ -424,14 +447,19 @@ void anaLq::fillHist() {
 // ----------------------------------------------------------------------
 void anaLq::bookHist() {
   fpHistFile->cd();			   
-  cout << "==> anaLq: bookHist"  << endl;
+  cout << "==> anaLq: bookHist in directory " << fTypeName << endl;
 
   TH1D *h1(0); 
   (void)h1;
 
-  //  fpHistFile->mkdir(Form("class%d", i)); 
-  //  fpHistFile->cd(Form("class%d", i));
+  fpHistFile->mkdir(Form("%s", fTypeName.c_str())); 
+  fpHistFile->cd(Form("%s", fTypeName.c_str()));
 
+  // -- Reduced Tree
+  TTree *t = new TTree("events", "events");
+  setupReducedTree(t);
+
+  // -- Histograms
   h1 = new TH1D("pt",  "lq gen pt", 40, 0., 400.); 
   h1 = new TH1D("phi", "lq gen phi", 40, -3.15, 3.15); 
   h1 = new TH1D("m",   "lq gen m", 22, 400., 1500.); 
@@ -454,72 +482,67 @@ void anaLq::bookHist() {
     // -- histograms as in plotLq:
 
     // -- m
-    fHists.insert(make_pair(Form("%s_m_%s", levels[i].c_str(), fName.c_str()), 
-			    new TH1D(Form("%s_m_%s", levels[i].c_str(), fName.c_str()), 
-				     Form("%s_m_%s", levels[i].c_str(), fName.c_str()), 
+    fHists.insert(make_pair(Form("%s_m", levels[i].c_str()), 
+			    new TH1D(Form("%s_m", levels[i].c_str()), 
+				     Form("%s_m", levels[i].c_str()), 
 				     40, 0, 2000.))); 
-    setTitles(fHists[Form("%s_m_%s", levels[i].c_str(), fName.c_str())], "m [GeV]", "Entries/bin");
+    setTitles(fHists[Form("%s_m", levels[i].c_str())], "m [GeV]", "Entries/bin");
     
     // -- st
-    fHists.insert(make_pair(Form("%s_st_%s", levels[i].c_str(), fName.c_str()), 
-			    new TH1D(Form("%s_st_%s", levels[i].c_str(), fName.c_str()), 
-				     Form("%s_st_%s", levels[i].c_str(), fName.c_str()), 
+    fHists.insert(make_pair(Form("%s_st", levels[i].c_str()), 
+			    new TH1D(Form("%s_st", levels[i].c_str()), 
+				     Form("%s_st", levels[i].c_str()), 
 				     14, 0, 3500.))); 
-    setTitles(fHists[Form("%s_st_%s", levels[i].c_str(), fName.c_str())], "S_{T} [GeV]", "Entries/bin");
+    setTitles(fHists[Form("%s_st", levels[i].c_str())], "S_{T} [GeV]", "Entries/bin");
     
     // -- mll
-    fHists.insert(make_pair(Form("%s_mll_%s", levels[i].c_str(), fName.c_str()), 
-			    new TH1D(Form("%s_mll_%s", levels[i].c_str(), fName.c_str()), 
-				     Form("%s_mll_%s", levels[i].c_str(), fName.c_str()), 
+    fHists.insert(make_pair(Form("%s_mll", levels[i].c_str()), 
+			    new TH1D(Form("%s_mll", levels[i].c_str()), 
+				     Form("%s_mll", levels[i].c_str()), 
 				     30, 0, 1500.))); 
-    setTitles(fHists[Form("%s_mll_%s", levels[i].c_str(), fName.c_str())], "m_{l l} [GeV]", "Entries/bin");
+    setTitles(fHists[Form("%s_mll", levels[i].c_str())], "m_{l l} [GeV]", "Entries/bin");
     
     // -- mljetmin
-    fHists.insert(make_pair(Form("%s_mljetmin_%s", levels[i].c_str(), fName.c_str()), 
-			    new TH1D(Form("%s_mljetmin_%s", levels[i].c_str(), fName.c_str()), 
-				     Form("%s_mljetmin_%s", levels[i].c_str(), fName.c_str()),
+    fHists.insert(make_pair(Form("%s_mljetmin", levels[i].c_str()), 
+			    new TH1D(Form("%s_mljetmin", levels[i].c_str()), 
+				     Form("%s_mljetmin", levels[i].c_str()),
 				     15, 0, 1500.))); 
-    setTitles(fHists[Form("%s_mljetmin_%s", levels[i].c_str(), fName.c_str())], "m_{l jet}^{min} [GeV]", "Entries/bin");
+    setTitles(fHists[Form("%s_mljetmin", levels[i].c_str())], "m_{l jet}^{min} [GeV]", "Entries/bin");
     
     
     // -- pt
-    fHists.insert(make_pair(Form("%s_pt_%s", levels[i].c_str(), fName.c_str()), 
-			    new TH1D(Form("%s_pt_%s", levels[i].c_str(), fName.c_str()), 
-				     Form("%s_pt_%s", levels[i].c_str(), fName.c_str()), 
+    fHists.insert(make_pair(Form("%s_pt", levels[i].c_str()), 
+			    new TH1D(Form("%s_pt", levels[i].c_str()), 
+				     Form("%s_pt", levels[i].c_str()), 
 				     100, 0, 1000.))); 
-    setTitles(fHists[Form("%s_pt_%s", levels[i].c_str(), fName.c_str())], "p_{T} [GeV]", "Entries/bin");
+    setTitles(fHists[Form("%s_pt", levels[i].c_str())], "p_{T} [GeV]", "Entries/bin");
 
     // -- lepton pt
-    fHists.insert(make_pair(Form("%s_l0pt_%s", levels[i].c_str(), fName.c_str()), 
-			    new TH1D(Form("%s_l0pt_%s", levels[i].c_str(), fName.c_str()), 
-				     Form("%s_l0pt_%s", levels[i].c_str(), fName.c_str()), 
+    fHists.insert(make_pair(Form("%s_l0pt", levels[i].c_str()), 
+			    new TH1D(Form("%s_l0pt", levels[i].c_str()), 
+				     Form("%s_l0pt", levels[i].c_str()), 
 				     64, 0, 1600.))); 
-    setTitles(fHists[Form("%s_l0pt_%s", levels[i].c_str(), fName.c_str())], "p_{T}(l_{0}) [GeV]", "Entries/bin");
+    setTitles(fHists[Form("%s_l0pt", levels[i].c_str())], "p_{T}(l_{0}) [GeV]", "Entries/bin");
 
-    fHists.insert(make_pair(Form("%s_l1pt_%s", levels[i].c_str(), fName.c_str()), 
-			    new TH1D(Form("%s_l1pt_%s", levels[i].c_str(), fName.c_str()), 
-				     Form("%s_l1pt_%s", levels[i].c_str(), fName.c_str()), 
+    fHists.insert(make_pair(Form("%s_l1pt", levels[i].c_str()), 
+			    new TH1D(Form("%s_l1pt", levels[i].c_str()), 
+				     Form("%s_l1pt", levels[i].c_str()), 
 				     40, 0, 800.))); 
-    setTitles(fHists[Form("%s_l1pt_%s", levels[i].c_str(), fName.c_str())], "p_{T}(l_{1}) [GeV]", "Entries/bin");
+    setTitles(fHists[Form("%s_l1pt", levels[i].c_str())], "p_{T}(l_{1}) [GeV]", "Entries/bin");
 
     // -- jet pt
-    fHists.insert(make_pair(Form("%s_j0pt_%s", levels[i].c_str(), fName.c_str()), 
-			    new TH1D(Form("%s_j0pt_%s", levels[i].c_str(), fName.c_str()), 
-				     Form("%s_j0pt_%s", levels[i].c_str(), fName.c_str()), 
+    fHists.insert(make_pair(Form("%s_j0pt", levels[i].c_str()), 
+			    new TH1D(Form("%s_j0pt", levels[i].c_str()), 
+				     Form("%s_j0pt", levels[i].c_str()), 
 				     64, 0, 1600.))); 
-    setTitles(fHists[Form("%s_j0pt_%s", levels[i].c_str(), fName.c_str())], "p_{T}(j_{0}) [GeV]", "Entries/bin");
+    setTitles(fHists[Form("%s_j0pt", levels[i].c_str())], "p_{T}(j_{0}) [GeV]", "Entries/bin");
 
-    fHists.insert(make_pair(Form("%s_j1pt_%s", levels[i].c_str(), fName.c_str()), 
-			    new TH1D(Form("%s_j1pt_%s", levels[i].c_str(), fName.c_str()), 
-				     Form("%s_j1pt_%s", levels[i].c_str(), fName.c_str()), 
+    fHists.insert(make_pair(Form("%s_j1pt", levels[i].c_str()), 
+			    new TH1D(Form("%s_j1pt", levels[i].c_str()), 
+				     Form("%s_j1pt", levels[i].c_str()), 
 				     40, 0, 800.))); 
-    setTitles(fHists[Form("%s_j1pt_%s", levels[i].c_str(), fName.c_str())], "p_{T}(j_{1}) [GeV]", "Entries/bin");
+    setTitles(fHists[Form("%s_j1pt", levels[i].c_str())], "p_{T}(j_{1}) [GeV]", "Entries/bin");
   }
-  
-  // -- Reduced Tree
-  fTree = new TTree("events", "events");
-  setupReducedTree();
-  
   
 }
 
@@ -627,56 +650,56 @@ void anaLq::dumpDaughters(GenParticle *pMom) {
 }
 
 // ----------------------------------------------------------------------
-void anaLq::setupReducedTree() {
-  fTree->Branch("type",    &fRtd.type,            "type/I");
-  fTree->Branch("w8",      &fRtd.w8,              "w8/D");
+void anaLq::setupReducedTree(TTree *t) {
+  t->Branch("type",    &fRtd.type,            "type/I");
+  t->Branch("w8",      &fRtd.w8,              "w8/D");
 
-  fTree->Branch("ngen",    &fRtd.ngen,            "ngen/I");
-  fTree->Branch("gm",       fRtd.gm,              "gm[ngen]/D");
-  fTree->Branch("gpt",      fRtd.gpt,             "gpt[ngen]/D");
-  fTree->Branch("geta",     fRtd.geta,            "geta[ngen]/D");
-  fTree->Branch("gphi",     fRtd.gphi,            "gphi[ngen]/D");
-  fTree->Branch("gmlj",     fRtd.gmlj,            "gmlj[ngen]/D");
-  fTree->Branch("glq",      fRtd.glq,             "glq[ngen]/I");
+  t->Branch("ngen",    &fRtd.ngen,            "ngen/I");
+  t->Branch("gm",       fRtd.gm,              "gm[ngen]/D");
+  t->Branch("gpt",      fRtd.gpt,             "gpt[ngen]/D");
+  t->Branch("geta",     fRtd.geta,            "geta[ngen]/D");
+  t->Branch("gphi",     fRtd.gphi,            "gphi[ngen]/D");
+  t->Branch("gmlj",     fRtd.gmlj,            "gmlj[ngen]/D");
+  t->Branch("glq",      fRtd.glq,             "glq[ngen]/I");
 
-  fTree->Branch("glpt",     fRtd.glpt,           "glpt[ngen]/D");
-  fTree->Branch("gleta",    fRtd.gleta,          "gleta[ngen]/D");
-  fTree->Branch("glphi",    fRtd.glphi,          "glphi[ngen]/D");
+  t->Branch("glpt",     fRtd.glpt,           "glpt[ngen]/D");
+  t->Branch("gleta",    fRtd.gleta,          "gleta[ngen]/D");
+  t->Branch("glphi",    fRtd.glphi,          "glphi[ngen]/D");
 
-  fTree->Branch("gqpt",     fRtd.gqpt,           "gqpt[ngen]/D");
-  fTree->Branch("gqeta",    fRtd.gqeta,          "gqeta[ngen]/D");
-  fTree->Branch("gqphi",    fRtd.gqphi,          "gqphi[ngen]/D");
+  t->Branch("gqpt",     fRtd.gqpt,           "gqpt[ngen]/D");
+  t->Branch("gqeta",    fRtd.gqeta,          "gqeta[ngen]/D");
+  t->Branch("gqphi",    fRtd.gqphi,          "gqphi[ngen]/D");
 
-  fTree->Branch("gjpt",     fRtd.gjpt,           "gjpt[ngen]/D");
-  fTree->Branch("gjeta",    fRtd.gjeta,          "gjeta[ngen]/D");
-  fTree->Branch("gjphi",    fRtd.gjphi,          "gjphi[ngen]/D");
+  t->Branch("gjpt",     fRtd.gjpt,           "gjpt[ngen]/D");
+  t->Branch("gjeta",    fRtd.gjeta,          "gjeta[ngen]/D");
+  t->Branch("gjphi",    fRtd.gjphi,          "gjphi[ngen]/D");
 
-  fTree->Branch("gkpt",     fRtd.gkpt,           "gkpt[ngen]/D");
-  fTree->Branch("gketa",    fRtd.gketa,          "gketa[ngen]/D");
-  fTree->Branch("gkphi",    fRtd.gkphi,          "gkphi[ngen]/D");
+  t->Branch("gkpt",     fRtd.gkpt,           "gkpt[ngen]/D");
+  t->Branch("gketa",    fRtd.gketa,          "gketa[ngen]/D");
+  t->Branch("gkphi",    fRtd.gkphi,          "gkphi[ngen]/D");
 
-  fTree->Branch("nrec",    &fRtd.nrec,            "nrec/I");
-  fTree->Branch("m",        fRtd.m,               "m[nrec]/D");
-  fTree->Branch("pt",       fRtd.pt,              "pt[nrec]/D");
-  fTree->Branch("eta",      fRtd.eta,             "eta[nrec]/D");
-  fTree->Branch("phi",      fRtd.phi,             "phi[nrec]/D");
-  fTree->Branch("lq",       fRtd.lq,              "lq[nrec]/I");
+  t->Branch("nrec",    &fRtd.nrec,            "nrec/I");
+  t->Branch("m",        fRtd.m,               "m[nrec]/D");
+  t->Branch("pt",       fRtd.pt,              "pt[nrec]/D");
+  t->Branch("eta",      fRtd.eta,             "eta[nrec]/D");
+  t->Branch("phi",      fRtd.phi,             "phi[nrec]/D");
+  t->Branch("lq",       fRtd.lq,              "lq[nrec]/I");
 
-  fTree->Branch("lpt",      fRtd.lpt,              "lpt[nrec]/D");
-  fTree->Branch("leta",     fRtd.leta,             "leta[nrec]/D");
-  fTree->Branch("lphi",     fRtd.lphi,             "lphi[nrec]/D");
+  t->Branch("lpt",      fRtd.lpt,              "lpt[nrec]/D");
+  t->Branch("leta",     fRtd.leta,             "leta[nrec]/D");
+  t->Branch("lphi",     fRtd.lphi,             "lphi[nrec]/D");
 
-  fTree->Branch("jpt",      fRtd.jpt,              "jpt[nrec]/D");
-  fTree->Branch("jeta",     fRtd.jeta,             "jeta[nrec]/D");
-  fTree->Branch("jphi",     fRtd.jphi,             "jphi[nrec]/D");
+  t->Branch("jpt",      fRtd.jpt,              "jpt[nrec]/D");
+  t->Branch("jeta",     fRtd.jeta,             "jeta[nrec]/D");
+  t->Branch("jphi",     fRtd.jphi,             "jphi[nrec]/D");
 
-  fTree->Branch("kpt",      fRtd.kpt,              "kpt[nrec]/D");
-  fTree->Branch("keta",     fRtd.keta,             "keta[nrec]/D");
-  fTree->Branch("kphi",     fRtd.kphi,             "kphi[nrec]/D");
+  t->Branch("kpt",      fRtd.kpt,              "kpt[nrec]/D");
+  t->Branch("keta",     fRtd.keta,             "keta[nrec]/D");
+  t->Branch("kphi",     fRtd.kphi,             "kphi[nrec]/D");
 
-  fTree->Branch("st",       &fRtd.st,              "st/D");
-  fTree->Branch("mll",      &fRtd.mll,             "mll/D");
-  fTree->Branch("mljmin",   &fRtd.mljmin,          "mljmin/D");
+  t->Branch("st",       &fRtd.st,              "st/D");
+  t->Branch("mll",      &fRtd.mll,             "mll/D");
+  t->Branch("mljmin",   &fRtd.mljmin,          "mljmin/D");
 
 
 
@@ -727,33 +750,38 @@ void anaLq::fillRedTreeData() {
   }
   fRtd.ngen = fGenLQ.size(); 
 
-  if (fPreselected) {
-    for (unsigned int i = 0; i < fLQ.size(); ++i) {
-      fRtd.m[i]    = fLQ[i]->p4.M();
-      fRtd.pt[i]   = fLQ[i]->p4.Pt();
-      fRtd.eta[i]  = fLQ[i]->p4.Eta();
-      fRtd.phi[i]  = fLQ[i]->p4.Phi();
+  if (!fPreselected) {
+    fRtd.nrec = 0; 
+    return;
 
-      fRtd.lq[i]    = fLeptons[fLQ[i]->idxL]->q;
-      fRtd.lpt[i]   = fLeptons[fLQ[i]->idxL]->p4.Pt();
-      fRtd.leta[i]  = fLeptons[fLQ[i]->idxL]->p4.Phi();
-      fRtd.lphi[i]  = fLeptons[fLQ[i]->idxL]->p4.Eta();
-
-      fRtd.jpt[i]   = fJets[fLQ[i]->idxJ]->p4.Pt();
-      fRtd.jeta[i]  = fJets[fLQ[i]->idxJ]->p4.Phi();
-      fRtd.jphi[i]  = fJets[fLQ[i]->idxJ]->p4.Eta();
-
-      if (fLQ[i]->idxK > -1) {
-	fRtd.kpt[i]   = fLeptons[fLQ[i]->idxK]->p4.Pt();
-	fRtd.keta[i]  = fLeptons[fLQ[i]->idxK]->p4.Phi();
-	fRtd.kphi[i]  = fLeptons[fLQ[i]->idxK]->p4.Eta();
-      } else {
-	fRtd.kpt[i]   = -9999.;
-	fRtd.keta[i]  = -9999.;
-	fRtd.kphi[i]  = -9999.;
-      }
+  }
+  // -- and now fill all LQs (pair production characterized by kpt < 0; single production with kpt > 0)
+  for (unsigned int i = 0; i < fLQ.size(); ++i) {
+    fRtd.m[i]    = fLQ[i]->p4.M();
+    fRtd.pt[i]   = fLQ[i]->p4.Pt();
+    fRtd.eta[i]  = fLQ[i]->p4.Eta();
+    fRtd.phi[i]  = fLQ[i]->p4.Phi();
+    
+    fRtd.lq[i]    = fLeptons[fLQ[i]->idxL]->q;
+    fRtd.lpt[i]   = fLeptons[fLQ[i]->idxL]->p4.Pt();
+    fRtd.leta[i]  = fLeptons[fLQ[i]->idxL]->p4.Phi();
+    fRtd.lphi[i]  = fLeptons[fLQ[i]->idxL]->p4.Eta();
+    
+    fRtd.jpt[i]   = fJets[fLQ[i]->idxJ]->p4.Pt();
+    fRtd.jeta[i]  = fJets[fLQ[i]->idxJ]->p4.Phi();
+    fRtd.jphi[i]  = fJets[fLQ[i]->idxJ]->p4.Eta();
+    
+    if (fLQ[i]->idxK > -1) {
+      fRtd.kpt[i]   = fLeptons[fLQ[i]->idxK]->p4.Pt();
+      fRtd.keta[i]  = fLeptons[fLQ[i]->idxK]->p4.Phi();
+      fRtd.kphi[i]  = fLeptons[fLQ[i]->idxK]->p4.Eta();
+    } else {
+      fRtd.kpt[i]   = -9999.;
+      fRtd.keta[i]  = -9999.;
+      fRtd.kphi[i]  = -9999.;
     }
   }
+
   fRtd.nrec = fLQ.size(); 
 
 
@@ -762,8 +790,6 @@ void anaLq::fillRedTreeData() {
 
 // ----------------------------------------------------------------------
 void anaLq::genLQProducts(GenParticle *lq) {
-
-  genLq *gen = new genLq(); 
 
   GenParticle *l(0); 
   GenParticle *q(0); 
@@ -830,7 +856,8 @@ void anaLq::genLQProducts(GenParticle *lq) {
     //    cout << " xx choosing jet = " << dRBest << " with ET = " << j->PT << " for jet of LQ " << lqIdx << endl;
   }
 
-  // -- fill struct
+  // -- create and fill struct
+  genLq *gen = new genLq(); 
   gen->q = l->Charge;
 
   gen->pLQ = lq;
@@ -865,7 +892,7 @@ void anaLq::genLQProducts(GenParticle *lq) {
 // ----------------------------------------------------------------------
 void anaLq::genLQSingle(GenParticle *lq) {
 
-  // -- Fill LQ into single variables
+  // -- Fill single LQ into first set of variables
   genLQProducts(lq); 
 
   // -- find gen-level bachelor lepton K to LQ
@@ -880,9 +907,59 @@ void anaLq::genLQSingle(GenParticle *lq) {
     }
   }
 
-  genLq *gen = fGenLQ.back(); 
-  gen->pK = pGen;
-  gen->p4K.SetPtEtaPhiM(pGen->PT, pGen->Eta, pGen->Phi, pGen->Mass);
+  genLq *correct = fGenLQ.back(); 
+  correct->pK = pGen;
+  correct->p4K.SetPtEtaPhiM(pGen->PT, pGen->Eta, pGen->Phi, pGen->Mass);
+
+
+  // -- Fill the second possibility: gen->pK + subleading genJet, with gen->pL as K
+  // ------------------------------------------------------------------------------
+  Jet *pJetLq = correct->pJ;
+  Jet *pJet(0); 
+  double pTmax(-1.);
+  int imax(-1);
+  double dr(0.3);
+  for (int i = 0; i < fbGenJets->GetEntries(); ++i) {
+    pJet = getGenJet(i); 
+    // -- remove leptons from gen jets
+    if (isLeptonJet(pJet, dr)) continue;
+    if (pJetLq == pJet) continue;
+    if (pJet->PT > pTmax) {
+      pTmax = pJet->PT;
+      imax = i; 
+    }
+  }
+
+  if (imax < 0) return;
+  pJet = getGenJet(imax); 
+
+  TLorentzVector p4J; p4J.SetPtEtaPhiM(pJet->PT, pJet->Eta, pJet->Phi, pJet->Mass);
+  GenParticle *l = correct->pK;
+  GenParticle *k = correct->pL;
+  TLorentzVector p4Lq = correct->p4K + p4J;
+
+  genLq *fake = new genLq(); 
+  fake->q = l->Charge;
+
+  fake->pLQ = 0;
+  fake->p4LQ = p4Lq;
+  
+  fake->pL = l; 
+  fake->p4L.SetPtEtaPhiM(l->PT, l->Eta, l->Phi, l->Mass);
+
+  fake->pK = k; 
+  fake->p4K.SetPtEtaPhiM(k->PT, k->Eta, k->Phi, k->Mass);
+  
+  fake->pQ = 0; 
+  fake->p4Q = p4J;
+
+  fake->pJ = pJet;
+  fake->p4J = p4J;
+    
+  fake->p4LJ = p4Lq; 
+
+  fGenLQ.push_back(fake);
+
 }
 
 

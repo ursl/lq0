@@ -40,7 +40,7 @@ public:
   void openHistFile(std::string filename);
   void closeHistFile();
   void bookHist();
-  void setupReducedTree();
+  void setupReducedTree(TTree *t);
   
   void startAnalysis();
   void endAnalysis();
@@ -53,7 +53,7 @@ public:
   void fillRedTreeData(); 
   
   // -- gen-level analysis
-  void genLevelAnalysis();
+  void truthAnalysis();
   void genLQProducts(GenParticle *lq);
   void genLQSingle(GenParticle *lq);
   int  genIndex(GenParticle *); 
@@ -106,7 +106,6 @@ public:
 
 
   TFile       *fpHistFile; 
-  TTree       *fTree;
   redTreeData fRtd;
 
   TChain      *fpChain; 
@@ -130,10 +129,10 @@ public:
   double      L0PT, L1PT;
   double      J0PT, J1PT;
 
-  std::string fName;
+  std::string fName, fTypeName;
   double      fW8;
 
-  bool        fPreselected, fGoodEvent, fGoodCandLQp, fGoodCandLQn;
+  bool        fPreselected, fGoodEvent;
   double      fST, fMll, fMljMin;
 
 };
