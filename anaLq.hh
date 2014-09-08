@@ -56,6 +56,9 @@ public:
   void truthAnalysis();
   void genLQProducts(GenParticle *lq);
   void genLQSingle(GenParticle *lq);
+  void genBgPair();
+  void genBgSingle();
+
   int  genIndex(GenParticle *); 
   int isLeptonJet(Jet *j, double deltaR = 0.3); 
   double nearestLepton(Jet *j); 

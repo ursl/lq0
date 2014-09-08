@@ -146,9 +146,9 @@ void anaLq::truthAnalysis() {
   if (pGen1) {
     genLQProducts(pGen0);
     genLQProducts(pGen1);
-  } else {
+  } else if (pGen0) {
     genLQSingle(pGen0);
-  }
+  } 
 }
 
 
@@ -161,6 +161,7 @@ void anaLq::analysis() {
   // -- single production analysis
   TYPE = 1;
   fTypeName = "single";
+
   preselection();
 
   if (fPreselected) {
@@ -172,6 +173,7 @@ void anaLq::analysis() {
   // -- pair production analysis
   TYPE = 2; 
   fTypeName = "pair";
+  genBgPair();
   preselection(); 
   if (fPreselected) {
     lqlqSelection();
@@ -897,6 +899,7 @@ void anaLq::genLQSingle(GenParticle *lq) {
 
   // -- find gen-level bachelor lepton K to LQ
   int lqIdx = genIndex(lq);
+  if (lqIdx < 0) return; // do nothing for background
   int lqMomIdx = lq->M1;
   GenParticle *pGen(0);
   for (int i = 0; i < fbParticles->GetEntries(); ++i) {
@@ -961,6 +964,163 @@ void anaLq::genLQSingle(GenParticle *lq) {
   fGenLQ.push_back(fake);
 
 }
+
+
+// ----------------------------------------------------------------------
+void anaLq::genBgPair() {
+  
+  Jet *pJet(0); 
+  double pTj0(-1.), pTj1(-1.);
+  double pTl0(-1.), pTl1(-1.);
+  int j0(-1), j1(-1);
+  int l0(-1), l1(-1);
+  double dr(0.3);
+  for (int i = 0; i < fbGenJets->GetEntries(); ++i) {
+    pJet = getGenJet(i); 
+    // -- remove leptons from gen jets
+    int lidx = isLeptonJet(pJet, dr); 
+    if (lidx > 0) {
+      GenParticle *pGen = getParticle(lidx); 
+      if (13 == TMath::Abs(pGen->PID)) {
+	if (pGen->PT > pTl0) {
+	  pTl0 = pGen->PT;
+	  l0 = lidx;
+	} else if (pGen->PT > pTl1) {
+	  pTl1 = pGen->PT;
+	  l1 = lidx; 
+	}
+      }
+      continue;
+    }
+    
+    if (pJet->PT > pTj0) {
+      pTj0 = pJet->PT;
+      j0 = i; 
+    } else if (pJet->PT > pTj1) {
+      pTj1 = pJet->PT;
+      j1 = i; 
+    }
+  }
+
+  if (l1 > -1 && j1 > -1) {
+    if (0) {
+      cout << "Leptons: " << endl;
+      if (l0 > 0) printParticle(getParticle(l0));
+      if (l1 > 0) printParticle(getParticle(l1));
+      
+      cout << "Jets: " << endl;
+      if (j0 > -1) cout << getGenJet(j0)->PT << " " << getGenJet(j0)->Eta << " " << getGenJet(j0)->Phi << endl;
+      if (j1 > -1) cout << getGenJet(j1)->PT << " " << getGenJet(j1)->Eta << " " << getGenJet(j1)->Phi << endl;
+    }
+  } else {
+    return;
+  }
+
+  TLorentzVector p4L0, p4L1, p4J0, p4J1; 
+  GenParticle *pL0 = getParticle(l0);
+  p4L0.SetPtEtaPhiM(pL0->PT, pL0->Eta, pL0->Phi, pL0->Mass);
+  GenParticle *pL1 = getParticle(l1);
+  p4L1.SetPtEtaPhiM(pL1->PT, pL1->Eta, pL1->Phi, pL1->Mass);
+
+  Jet *pJ0 = getGenJet(j0);
+  p4J0.SetPtEtaPhiM(pJ0->PT, pJ0->Eta, pJ0->Phi, pJ0->Mass);
+
+  Jet *pJ1 = getGenJet(j1);
+  p4J1.SetPtEtaPhiM(pJ1->PT, pJ1->Eta, pJ1->Phi, pJ1->Mass);
+
+  // -- combine the leptons with the best-matching jet
+  TLorentzVector p4Lq0, p4Lq1; 
+  int iBest(-1);
+  double mdiff0(99999.), mdiff1(99999.); 
+  TLorentzVector lq0, lq1; 
+  lq0 = p4L0 + p4J0;
+  lq1 = p4L1 + p4J1;
+  mdiff0 = TMath::Abs(lq0.M() - lq1.M()); 
+
+  lq0 = p4L0 + p4J1;
+  lq1 = p4L1 + p4J0;
+  mdiff1 = TMath::Abs(lq0.M() - lq1.M()); 
+
+  genLq *fake0 = new genLq(); 
+  fake0->q = pL0->Charge;
+
+  fake0->pL = pL0; 
+  fake0->p4L.SetPtEtaPhiM(pL0->PT, pL0->Eta, pL0->Phi, pL0->Mass);
+
+  fake0->pK = 0; 
+  fake0->p4K.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+
+  genLq *fake1 = new genLq(); 
+  fake1->q = pL1->Charge;
+
+  fake1->pL = pL1; 
+  fake1->p4L.SetPtEtaPhiM(pL1->PT, pL1->Eta, pL1->Phi, pL1->Mass);
+
+  fake1->pK = 0; 
+  fake1->p4K.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+
+  if (mdiff0 < mdiff1) {
+    p4Lq0 = p4L0 + p4J0;
+    p4Lq1 = p4L1 + p4J1;
+
+    fake0->pLQ = 0;
+    fake0->p4LQ = p4Lq0;
+    fake0->p4LJ = p4Lq0;
+
+    fake0->pQ = 0; 
+    fake0->p4Q = p4J0;
+
+    fake0->pJ = pJ0;
+    fake0->p4J = p4J0;
+
+    fake1->pLQ = 0;
+    fake1->p4LQ = p4Lq1;
+    fake1->p4LJ = p4Lq1;
+
+    fake1->pQ = 0; 
+    fake1->p4Q = p4J1;
+
+    fake1->pJ = pJ1;
+    fake1->p4J = p4J1;
+  } else {
+    p4Lq0 = p4L0 + p4J1;
+    p4Lq1 = p4L1 + p4J0;
+
+    fake0->pLQ = 0;
+    fake0->p4LQ = p4Lq0;
+    fake0->p4LJ = p4Lq0;
+
+    fake0->pQ = 0; 
+    fake0->p4Q = p4J1;
+
+    fake0->pJ = pJ0;
+    fake0->p4J = p4J1;
+
+    fake1->pLQ = 0;
+    fake1->p4LQ = p4Lq1;
+    fake1->p4LJ = p4Lq1;
+
+    fake1->pQ = 0; 
+    fake1->p4Q = p4J0;
+
+    fake1->pJ = pJ1;
+    fake1->p4J = p4J0;
+  }
+
+  fGenLQ.push_back(fake0);
+  fGenLQ.push_back(fake1);
+
+
+
+}
+
+
+// ----------------------------------------------------------------------
+void anaLq::genBgSingle() {
+
+}
+
+
 
 
 
