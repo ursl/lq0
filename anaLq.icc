@@ -32,6 +32,8 @@ void anaLq::init() {
   TYPE = -1; 
   fName = ""; 
 
+  fEvt = 0; 
+  
 }
 
 // ----------------------------------------------------------------------
@@ -95,6 +97,7 @@ int anaLq::loop(int nevents, int start) {
   for (int jEvent = start; jEvent < maxEvents; ++jEvent) {
     if (jEvent%step == 0) cout << Form(" .. Event %8d", jEvent) << endl;
     fTR->ReadEntry(jEvent); 
+    fEvt = jEvent; 
     eventProcessing(); 
   }
   return 0;

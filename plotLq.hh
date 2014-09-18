@@ -16,7 +16,7 @@ public :
 
   // -- Main analysis methods 
   virtual void   makeAll(int bitmask = 0);
-  virtual void   treeAnalysis(); 
+  virtual void   treeAnalysis(std::string cds1, std::string cds2); 
   virtual void   normOverlay(std::string f1, std::string f2); 
 
   void           overlayAll();

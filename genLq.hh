@@ -6,10 +6,10 @@
 
 
 struct genLq {
-  int q; 
-  TLorentzVector p4LQ, p4L, p4Q, p4J, p4K, p4LJ;
+  int q, tm; 
+  TLorentzVector p4LQ, p4L, p4Q, p4J, p4K, p4I, p4LJ;
   GenParticle *pLQ, *pL, *pQ, *pK; 
-  Jet *pJ;
+  Jet *pJ, *pI;
 };
 
 #endif

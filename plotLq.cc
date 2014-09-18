@@ -41,37 +41,40 @@ void plotLq::bookHist(string name) {
   
   // -- start gen level
   char hist[200];
+  sprintf(hist, "%s_%s", "ngen", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 5, 0, 5.))); 
+  setHistTitles(fHists[hist], fDS[name], "n_{Gen}(LQ)", "Entries/bin");
+
   sprintf(hist, "%s_%s", "ptl0", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 800.))); 
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 2000.))); 
   setHistTitles(fHists[hist], fDS[name], "p_{T}(l0)", "Entries/bin");
 
   sprintf(hist, "%s_%s", "ptl1", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 600.))); 
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 120, 0, 1200.))); 
   setHistTitles(fHists[hist], fDS[name], "p_{T}(l1)", "Entries/bin");
 
   sprintf(hist, "%s_%s", "ptq0", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 600.))); 
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 2000.))); 
   setHistTitles(fHists[hist], fDS[name], "p_{T}(q0)", "Entries/bin");
 
+  sprintf(hist, "%s_%s", "ptq1", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 120, 0, 1200.))); 
+  setHistTitles(fHists[hist], fDS[name], "p_{T}(q1)", "Entries/bin");
+
   sprintf(hist, "%s_%s", "ptlq", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 600.))); 
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 120, 0, 1200.))); 
   setHistTitles(fHists[hist], fDS[name], "p_{T}(lq)", "Entries/bin");
 
-
-  sprintf(hist, "%s_%s", "etal0", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, -3., 3.))); 
-  setHistTitles(fHists[hist], fDS[name], "#eta_{T}(l0)", "Entries/bin");
-
-  sprintf(hist, "%s_%s", "etal1", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, -3., 3.))); 
-  setHistTitles(fHists[hist], fDS[name], "#eta_{T}(l1)", "Entries/bin");
-
   sprintf(hist, "%s_%s", "etaq0", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, -3., 3.))); 
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, -4., 4.))); 
   setHistTitles(fHists[hist], fDS[name], "#eta_{T}(q0)", "Entries/bin");
 
+  sprintf(hist, "%s_%s", "etaq1", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, -4., 4.))); 
+  setHistTitles(fHists[hist], fDS[name], "#eta_{T}(q1)", "Entries/bin");
+
   sprintf(hist, "%s_%s", "etalq", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, -3., 3.))); 
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, -4., 4.))); 
   setHistTitles(fHists[hist], fDS[name], "#eta_{T}(lq)", "Entries/bin");
 
 
@@ -79,49 +82,79 @@ void plotLq::bookHist(string name) {
   fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, 0, 6.))); 
   setHistTitles(fHists[hist], fDS[name], "#Delta R(l,l)", "Entries/bin");
 
-  sprintf(hist, "%s_%s", "dFll", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, -3.15, 3.15))); 
-  setHistTitles(fHists[hist], fDS[name], "#Delta #phi(l,l)", "Entries/bin");
-
 
   sprintf(hist, "%s_%s", "dRql", fCds.c_str());
   fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, 0, 6.))); 
   setHistTitles(fHists[hist], fDS[name], "#Delta R(q,l)", "Entries/bin");
 
+  sprintf(hist, "%s_%s", "dRxql", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, 0, 6.))); 
+  setHistTitles(fHists[hist], fDS[name], "#Delta RX(q,l)", "Entries/bin");
+
   sprintf(hist, "%s_%s", "dFql", fCds.c_str());
   fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, -3.15, 3.15))); 
   setHistTitles(fHists[hist], fDS[name], "#Delta #phi(q,l)", "Entries/bin");
 
-  sprintf(hist, "%s_%s", "dRqk", fCds.c_str());
-  fHists.insert(make_pair(hist,  new TH1D(hist, hist, 60, 0, 6.))); 
-  setHistTitles(fHists[hist], fDS[name], "#Delta R(q,k)", "Entries/bin");
-
-  sprintf(hist, "%s_%s", "dFqk", fCds.c_str());
+  sprintf(hist, "%s_%s", "dFxql", fCds.c_str());
   fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, -3.15, 3.15))); 
-  setHistTitles(fHists[hist], fDS[name], "#Delta #phi(q,k)", "Entries/bin");
+  setHistTitles(fHists[hist], fDS[name], "#Delta #phiX(q,l)", "Entries/bin");
 
 
-  sprintf(hist, "%s_%s", "dEtall", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 60, -6., 6.))); 
-  setHistTitles(fHists[hist], fDS[name], "#eta(l0) - #eta(l1)", "Entries/bin");
+
 
   sprintf(hist, "%s_%s", "dPtll", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0., 500.))); 
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, -100., 900.))); 
   setHistTitles(fHists[hist], fDS[name], "pT(l0) - pT(l1) [GeV]", "Entries/bin");
 
+  sprintf(hist, "%s_%s", "sPtll", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0., 2000.))); 
+  setHistTitles(fHists[hist], fDS[name], "pT(l0) + pT(l1) [GeV]", "Entries/bin");
 
 
-  sprintf(hist, "%s_%s", "mql", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 1000.))); 
-  setHistTitles(fHists[hist], fDS[name], "m(q,l) [GeV]", "Entries/bin");
+  sprintf(hist, "%s_%s", "dPtqq", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, -100., 900.))); 
+  setHistTitles(fHists[hist], fDS[name], "pT(q0) - pT(q1) [GeV]", "Entries/bin");
 
-  sprintf(hist, "%s_%s", "mqk", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 1000.))); 
-  setHistTitles(fHists[hist], fDS[name], "m(q,k) [GeV]", "Entries/bin");
+  sprintf(hist, "%s_%s", "sPtqq", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0., 2000.))); 
+  setHistTitles(fHists[hist], fDS[name], "pT(q0) + pT(q1) [GeV]", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "mxql", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 2000.))); 
+  setHistTitles(fHists[hist], fDS[name], "mX(q,l) [GeV]", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "mqXlY", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 2000.))); 
+  setHistTitles(fHists[hist], fDS[name], "m(qX,lY) [GeV]", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "mqXlX", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 2000.))); 
+  setHistTitles(fHists[hist], fDS[name], "m(qX,lX) [GeV]", "Entries/bin");
 
   sprintf(hist, "%s_%s", "mll", fCds.c_str());
-  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 1000.))); 
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 2000.))); 
   setHistTitles(fHists[hist], fDS[name], "m(l,k) [GeV]", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "ptll", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0, 2000.))); 
+  setHistTitles(fHists[hist], fDS[name], "pt(l0 + l1) [GeV]", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "ptqq", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0., 2000.))); 
+  setHistTitles(fHists[hist], fDS[name], "pT(q0 + q1) [GeV]", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "st", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 200, 0., 5000.))); 
+  setHistTitles(fHists[hist], fDS[name], "pT(l0) + pT(l1) + pT(q0) + pT(q1) [GeV]", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "dst", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, -100., 1400.))); 
+  setHistTitles(fHists[hist], fDS[name], "(pT(l0) + pT(q0)) -  (pT(l1)  + pT(q1)) [GeV]", "Entries/bin");
+
+  sprintf(hist, "%s_%s", "dpt", fCds.c_str());
+  fHists.insert(make_pair(hist, new TH1D(hist, hist, 100, 0., 500.))); 
+  setHistTitles(fHists[hist], fDS[name], "pT(l0+q0) - (pT(l1_q1) [GeV]", "Entries/bin");
+
   // -- end gen level
 
 
@@ -132,16 +165,16 @@ void plotLq::bookHist(string name) {
   setHist(fHists[Form("m_%s", name.c_str())], fDS[name]);
 
   // -- st
-  fHists.insert(make_pair(Form("st_%s", name.c_str()), 
-			  new TH1D(Form("st_%s", name.c_str()), Form("st_%s", name.c_str()), 35, 0, 3500.))); 
-  setTitles(fHists[Form("st_%s", name.c_str())], "S_{T} [GeV]", "Entries/bin");
-  setHist(fHists[Form("st_%s", name.c_str())], fDS[name]);
+//   fHists.insert(make_pair(Form("st_%s", name.c_str()), 
+// 			  new TH1D(Form("st_%s", name.c_str()), Form("st_%s", name.c_str()), 35, 0, 3500.))); 
+//   setTitles(fHists[Form("st_%s", name.c_str())], "S_{T} [GeV]", "Entries/bin");
+//   setHist(fHists[Form("st_%s", name.c_str())], fDS[name]);
 
-  // -- mll
-  fHists.insert(make_pair(Form("mll_%s", name.c_str()), 
-			  new TH1D(Form("mll_%s", name.c_str()), Form("mll_%s", name.c_str()), 50, 0, 1500.))); 
-  setTitles(fHists[Form("mll_%s", name.c_str())], "m_{l l} [GeV]", "Entries/bin");
-  setHist(fHists[Form("mll_%s", name.c_str())], fDS[name]);
+//   // -- mll
+//   fHists.insert(make_pair(Form("mll_%s", name.c_str()), 
+// 			  new TH1D(Form("mll_%s", name.c_str()), Form("mll_%s", name.c_str()), 50, 0, 1500.))); 
+//   setTitles(fHists[Form("mll_%s", name.c_str())], "m_{l l} [GeV]", "Entries/bin");
+//   setHist(fHists[Form("mll_%s", name.c_str())], fDS[name]);
 
   // -- mljetmin
   fHists.insert(make_pair(Form("mljmin_%s", name.c_str()), 
@@ -158,93 +191,127 @@ void plotLq::bookHist(string name) {
 
 // ----------------------------------------------------------------------
 void plotLq::makeAll(int bitmask) {
-  if (bitmask & 0x1) treeAnalysis();
+  //  if (bitmask & 0x1) treeAnalysis();
 }
 
 // ----------------------------------------------------------------------
-void plotLq::treeAnalysis() {
+void plotLq::treeAnalysis(string cds1, string cds2) {
   // -- pair
   fPair = true;
-  fCds = "lq01_pair"; 
+  fCds = cds1; 
   bookHist(fCds); 
-  TTree *tp = getTree(fCds); 
+  TTree *tp = getTree(fCds, "pair"); 
   setupTree(tp); 
   loopOverTree(tp, 3, 20000); 
 
   // -- single
   fPair = false;
-  fCds = "lq01_single"; 
+  fCds = cds2;
   bookHist(fCds); 
-  TTree *ts = getTree(fCds); 
+  TTree *ts = getTree(fCds, "single"); 
   setupTree(ts); 
   loopOverTree(ts, 3, 20000); 
   
   char hist[200];
   int ipad(1); 
-  zone(4,4);
+  zone(5, 5);
+  sprintf(hist, "ngen");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
+  c0->cd(++ipad); 
   sprintf(hist, "ptl0");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
 
   c0->cd(++ipad); 
   sprintf(hist, "ptl1");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
 
   c0->cd(++ipad); 
   sprintf(hist, "dPtll");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
+  c0->cd(++ipad); 
+  sprintf(hist, "sPtll");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
+  c0->cd(++ipad); 
+  sprintf(hist, "ptll");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
 
   c0->cd(++ipad); 
   sprintf(hist, "ptq0");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
+  c0->cd(++ipad); 
+  sprintf(hist, "ptq1");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
+  c0->cd(++ipad); 
+  sprintf(hist, "dPtqq");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
+  c0->cd(++ipad); 
+  sprintf(hist, "sPtqq");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
+  c0->cd(++ipad); 
+  sprintf(hist, "st");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
+  c0->cd(++ipad); 
+  sprintf(hist, "mqXlY");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
+  c0->cd(++ipad); 
+  sprintf(hist, "mqXlX");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
+  c0->cd(++ipad); 
+  sprintf(hist, "mll");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
+  c0->cd(++ipad); 
+  sprintf(hist, "dst");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
 
   c0->cd(++ipad); 
   sprintf(hist, "ptlq");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
 
   c0->cd(++ipad); 
-  sprintf(hist, "etal0");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
-
-  c0->cd(++ipad); 
-  sprintf(hist, "etal1");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
+  sprintf(hist, "dpt");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
 
   c0->cd(++ipad); 
   sprintf(hist, "etaq0");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
+  c0->cd(++ipad); 
+  sprintf(hist, "etaq1");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
 
   c0->cd(++ipad); 
   sprintf(hist, "etalq");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
-
-  c0->cd(++ipad); 
-  sprintf(hist, "dFll");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
 
   c0->cd(++ipad); 
   sprintf(hist, "dFql");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
 
   c0->cd(++ipad); 
-  sprintf(hist, "dFqk");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
+  sprintf(hist, "dFxql");
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
+
 
   c0->cd(++ipad); 
   sprintf(hist, "dRll");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
-
-  c0->cd(++ipad); 
-  sprintf(hist, "dEtall");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
 
 
   c0->cd(++ipad); 
   sprintf(hist, "dRql");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
+  overlay(fHists[Form("%s_%s", hist, cds1.c_str())], cds1, fHists[Form("%s_%s", hist, cds2.c_str())], cds2, UNITY, false, false);
 
-  c0->cd(++ipad); 
-  sprintf(hist, "dRqk");
-  overlay(fHists[Form("%s_%s", hist, "lq01_pair")], "lq01_pair", fHists[Form("%s_%s", hist, "lq01_single")], "lq01_single", UNITY, false, false);
 
 
 }
@@ -369,8 +436,8 @@ void plotLq::loopFunction1() {
   sprintf(cds, "%s", fCds.c_str());
 
   if (fGoodEvent) { 
-    fHists[Form("st_%s", cds)]->Fill(fRtd.st); 
-    fHists[Form("mll_%s", cds)]->Fill(fRtd.mll); 
+    //    fHists[Form("st_%s", cds)]->Fill(fRtd.st); 
+    //    fHists[Form("mll_%s", cds)]->Fill(fRtd.mll); 
     fHists[Form("mljmin_%s", cds)]->Fill(fRtd.mljmin); 
       
     for (int i = 0; i < fRtd.nrec; ++i) {
@@ -388,105 +455,129 @@ void plotLq::loopFunction3() {
 
   char cds[200];
   sprintf(cds, "%s", fCds.c_str());
-  
-  if (fPair) {
 
-    TLorentzVector pL[2], pQ[2]; 
+  TLorentzVector pL[2], pQ[2], pX[2], pXL[2], pXQ[2]; 
+  bool single2(false);
+
+  if (fPair) {
+    single2 = true;
+    // -- first the correct combination for the LQ, ordered according to lepton pT!
+    if (fRtd.glpt[0] > fRtd.glpt[1]) {
+      pXL[0].SetPtEtaPhiM(fRtd.glpt[0], fRtd.gleta[0], fRtd.glphi[0], 0);
+      pXL[1].SetPtEtaPhiM(fRtd.glpt[1], fRtd.gleta[1], fRtd.glphi[1], 0);
+      pXQ[0].SetPtEtaPhiM(fRtd.gjpt[0], fRtd.gjeta[0], fRtd.gjphi[0], 0);
+      pXQ[1].SetPtEtaPhiM(fRtd.gjpt[1], fRtd.gjeta[1], fRtd.gjphi[1], 0);
+    } else {
+      pXL[1].SetPtEtaPhiM(fRtd.glpt[0], fRtd.gleta[0], fRtd.glphi[0], 0);
+      pXL[0].SetPtEtaPhiM(fRtd.glpt[1], fRtd.gleta[1], fRtd.glphi[1], 0);
+      pXQ[1].SetPtEtaPhiM(fRtd.gjpt[0], fRtd.gjeta[0], fRtd.gjphi[0], 0);
+      pXQ[0].SetPtEtaPhiM(fRtd.gjpt[1], fRtd.gjeta[1], fRtd.gjphi[1], 0);
+    }
+    pX[0] = pXL[0] + pXQ[0];
+    pX[1] = pXL[1] + pXQ[1];
+
+    // -- now sorted into leading and subleading 
     if (fRtd.glpt[0] > fRtd.glpt[1]) {
       pL[0].SetPtEtaPhiM(fRtd.glpt[0], fRtd.gleta[0], fRtd.glphi[0], 0);
       pL[1].SetPtEtaPhiM(fRtd.glpt[1], fRtd.gleta[1], fRtd.glphi[1], 0);
-
-      pQ[0].SetPtEtaPhiM(fRtd.gqpt[0], fRtd.gqeta[0], fRtd.gqphi[0], 0);
-      pQ[1].SetPtEtaPhiM(fRtd.gqpt[1], fRtd.gqeta[1], fRtd.gqphi[1], 0);
+      //       pQ[0].SetPtEtaPhiM(fRtd.gjpt[0], fRtd.gjeta[0], fRtd.gjphi[0], 0);
+      //       pQ[1].SetPtEtaPhiM(fRtd.gjpt[1], fRtd.gjeta[1], fRtd.gjphi[1], 0);
     } else {
       pL[1].SetPtEtaPhiM(fRtd.glpt[0], fRtd.gleta[0], fRtd.glphi[0], 0);
       pL[0].SetPtEtaPhiM(fRtd.glpt[1], fRtd.gleta[1], fRtd.glphi[1], 0);
-
-      pQ[1].SetPtEtaPhiM(fRtd.gqpt[0], fRtd.gqeta[0], fRtd.gqphi[0], 0);
-      pQ[0].SetPtEtaPhiM(fRtd.gqpt[1], fRtd.gqeta[1], fRtd.gqphi[1], 0);
+      //       pQ[1].SetPtEtaPhiM(fRtd.gjpt[0], fRtd.gjeta[0], fRtd.gjphi[0], 0);
+      //       pQ[0].SetPtEtaPhiM(fRtd.gjpt[1], fRtd.gjeta[1], fRtd.gjphi[1], 0);
     }
-    
-    fHists[Form("ptl0_%s", cds)]->Fill(pL[0].Pt()); 
-    fHists[Form("ptl1_%s", cds)]->Fill(pL[1].Pt()); 
-    fHists[Form("ptq0_%s", cds)]->Fill(pQ[0].Pt()); 
-    fHists[Form("ptlq_%s", cds)]->Fill((pQ[0] + pL[0]).Pt()); 
-    fHists[Form("ptlq_%s", cds)]->Fill((pQ[1] + pL[1]).Pt()); 
-    
-    fHists[Form("etal0_%s", cds)]->Fill(pL[0].Eta()); 
-    fHists[Form("etal1_%s", cds)]->Fill(pL[1].Eta()); 
-    fHists[Form("etaq0_%s", cds)]->Fill(pQ[0].Eta()); 
-    fHists[Form("etalq_%s", cds)]->Fill((pQ[0] + pL[0]).Eta()); 
-    fHists[Form("etalq_%s", cds)]->Fill((pQ[1] + pL[1]).Eta()); 
-
-    fHists[Form("dFll_%s", cds)]->Fill(pL[0].DeltaPhi(pL[1])); 
-    fHists[Form("dRll_%s", cds)]->Fill(pL[0].DeltaR(pL[1])); 
-
-    fHists[Form("dRql_%s", cds)]->Fill(pQ[0].DeltaR(pL[0])); 
-    fHists[Form("dRql_%s", cds)]->Fill(pQ[1].DeltaR(pL[1])); 
-    fHists[Form("dFql_%s", cds)]->Fill(pQ[0].DeltaPhi(pL[0])); 
-    fHists[Form("dFql_%s", cds)]->Fill(pQ[1].DeltaPhi(pL[1])); 
-
-    fHists[Form("dRqk_%s", cds)]->Fill(pQ[0].DeltaR(pL[1])); 
-    fHists[Form("dRqk_%s", cds)]->Fill(pQ[1].DeltaR(pL[0])); 
-    fHists[Form("dFqk_%s", cds)]->Fill(pQ[0].DeltaPhi(pL[1])); 
-    fHists[Form("dFqk_%s", cds)]->Fill(pQ[1].DeltaPhi(pL[0])); 
-    
-    fHists[Form("mql_%s", cds)]->Fill((pQ[0]+pL[0]).M()); 
-    fHists[Form("mql_%s", cds)]->Fill((pQ[1]+pL[1]).M()); 
-
-    fHists[Form("mqk_%s", cds)]->Fill((pQ[0]+pL[1]).M()); 
-    fHists[Form("mqk_%s", cds)]->Fill((pQ[1]+pL[0]).M()); 
-
-    fHists[Form("mll_%s", cds)]->Fill((pL[0]+pL[1]).M()); 
-    
-    fHists[Form("dEtall_%s", cds)]->Fill(pL[0].Eta() - pL[1].Eta()); 
-    fHists[Form("dPtll_%s", cds)]->Fill(pL[0].Pt() - pL[1].Pt()); 
+    if (fRtd.gjpt[0] > fRtd.gjpt[1]) {
+      pQ[0].SetPtEtaPhiM(fRtd.gjpt[0], fRtd.gjeta[0], fRtd.gjphi[0], 0);
+      pQ[1].SetPtEtaPhiM(fRtd.gjpt[1], fRtd.gjeta[1], fRtd.gjphi[1], 0);
+    } else {
+      pQ[1].SetPtEtaPhiM(fRtd.gjpt[0], fRtd.gjeta[0], fRtd.gjphi[0], 0);
+      pQ[0].SetPtEtaPhiM(fRtd.gjpt[1], fRtd.gjeta[1], fRtd.gjphi[1], 0);
+    }
   } else {
-    TLorentzVector pQs, pQ[2]; pQs.SetPtEtaPhiM(fRtd.gqpt[0], fRtd.gqeta[0], fRtd.gqphi[0], 0);
-    TLorentzVector pLs, pL[2]; pLs.SetPtEtaPhiM(fRtd.glpt[0], fRtd.gleta[0], fRtd.glphi[0], 0);
-    TLorentzVector pKs;        pKs.SetPtEtaPhiM(fRtd.gkpt[0], fRtd.gketa[0], fRtd.gkphi[0], 0);
+    // -- first the correct combination for the LQ
+    pXL[0].SetPtEtaPhiM(fRtd.glpt[0], fRtd.gleta[0], fRtd.glphi[0], 0);
+    pXL[1].SetPtEtaPhiM(fRtd.gkpt[0], fRtd.gketa[0], fRtd.gkphi[0], 0);
+    pXQ[0].SetPtEtaPhiM(fRtd.gjpt[0], fRtd.gjeta[0], fRtd.gjphi[0], 0);
+    if (fRtd.gipt[0] > 0.) {
+      pXQ[1].SetPtEtaPhiM(fRtd.gipt[0], fRtd.gieta[0], fRtd.giphi[0], 0);
+      single2 = true;
+    }
 
+    pX[0] = pXL[0] + pXQ[0];
+    if (single2) pX[1] = pXL[1] + pXQ[1];
+
+    // -- now the ordering for leading and subleading
     if (fRtd.glpt[0] > fRtd.gkpt[0]) {
       pL[0].SetPtEtaPhiM(fRtd.glpt[0], fRtd.gleta[0], fRtd.glphi[0], 0);
+      //       pQ[0].SetPtEtaPhiM(fRtd.gjpt[0], fRtd.gjeta[0], fRtd.gjphi[0], 0);
       pL[1].SetPtEtaPhiM(fRtd.gkpt[0], fRtd.gketa[0], fRtd.gkphi[0], 0);
-
-      pQ[0].SetPtEtaPhiM(fRtd.gqpt[0], fRtd.gqeta[0], fRtd.gqphi[0], 0);
     } else {
+      cout << "we should not get here" << endl;
       pL[1].SetPtEtaPhiM(fRtd.glpt[0], fRtd.gleta[0], fRtd.glphi[0], 0);
       pL[0].SetPtEtaPhiM(fRtd.gkpt[0], fRtd.gketa[0], fRtd.gkphi[0], 0);
-
-      pQ[0].SetPtEtaPhiM(fRtd.gqpt[0], fRtd.gqeta[0], fRtd.gqphi[0], 0);
+      //       pQ[0].SetPtEtaPhiM(fRtd.gjpt[0], fRtd.gjeta[0], fRtd.gjphi[0], 0);
     }
 
-
-
-    fHists[Form("ptl0_%s", cds)]->Fill(pL[0].Pt()); 
-    fHists[Form("ptl1_%s", cds)]->Fill(pL[1].Pt()); 
-    fHists[Form("ptq0_%s", cds)]->Fill(pQ[0].Pt()); 
-    fHists[Form("ptlq_%s", cds)]->Fill((pQs + pLs).Pt()); 
-
-    fHists[Form("etal0_%s", cds)]->Fill(pL[0].Eta()); 
-    fHists[Form("etal1_%s", cds)]->Fill(pL[1].Eta()); 
-    fHists[Form("etalq_%s", cds)]->Fill((pQs + pLs).Eta()); 
-
-    fHists[Form("etaq0_%s", cds)]->Fill(pQ[0].Eta()); 
-
-
-    fHists[Form("dFll_%s", cds)]->Fill(pL[0].DeltaPhi(pL[1])); 
-    fHists[Form("dRll_%s", cds)]->Fill(pL[0].DeltaR(pL[1])); 
-    fHists[Form("dRql_%s", cds)]->Fill(pQs.DeltaR(pLs)); 
-    fHists[Form("dFql_%s", cds)]->Fill(pQs.DeltaPhi(pLs)); 
-    fHists[Form("dRqk_%s", cds)]->Fill(pQs.DeltaR(pKs)); 
-    fHists[Form("dFqk_%s", cds)]->Fill(pQs.DeltaPhi(pKs)); 
-    
-    fHists[Form("mql_%s", cds)]->Fill((pQs + pLs).M()); 
-    fHists[Form("mqk_%s", cds)]->Fill((pQs + pKs).M()); 
-    fHists[Form("mll_%s", cds)]->Fill((pLs + pKs).M()); 
-    
-    fHists[Form("dEtall_%s", cds)]->Fill(pL[0].Eta() - pL[1].Eta()); 
-    fHists[Form("dPtll_%s", cds)]->Fill(pL[0].Pt() - pL[1].Pt()); 
+    if (fRtd.gjpt[0] > fRtd.gipt[0]) {
+      pQ[0].SetPtEtaPhiM(fRtd.gjpt[0], fRtd.gjeta[0], fRtd.gjphi[0], 0);
+      if (single2) pQ[1].SetPtEtaPhiM(fRtd.gipt[0], fRtd.gieta[0], fRtd.giphi[0], 0);
+    } else {
+      pQ[1].SetPtEtaPhiM(fRtd.gjpt[0], fRtd.gjeta[0], fRtd.gjphi[0], 0);
+      if (single2) pQ[0].SetPtEtaPhiM(fRtd.gipt[0], fRtd.gieta[0], fRtd.giphi[0], 0);
+    }      
   }
+    
+  fHists[Form("ngen_%s", cds)]->Fill(fRtd.ngen); 
+  
+  fHists[Form("ptl0_%s", cds)]->Fill(pL[0].Pt()); 
+  fHists[Form("ptl1_%s", cds)]->Fill(pL[1].Pt()); 
+  fHists[Form("ptq0_%s", cds)]->Fill(pQ[0].Pt()); 
+  if (single2)   fHists[Form("ptq1_%s", cds)]->Fill(pQ[1].Pt()); 
+  fHists[Form("ptlq_%s", cds)]->Fill(pX[0].Pt()); 
+  if (single2) fHists[Form("ptlq_%s", cds)]->Fill(pX[1].Pt()); 
+  
+  fHists[Form("etaq0_%s", cds)]->Fill(pQ[0].Eta()); 
+  if (single2) fHists[Form("etaq1_%s", cds)]->Fill(pQ[1].Eta()); 
+  fHists[Form("etalq_%s", cds)]->Fill(pX[0].Eta()); 
+  if (single2) fHists[Form("etalq_%s", cds)]->Fill(pXQ[1].Eta()); 
+  
+  fHists[Form("dRll_%s", cds)]->Fill(pL[0].DeltaR(pL[1])); 
+  
+  fHists[Form("dRxql_%s", cds)]->Fill(pXQ[0].DeltaR(pXL[0])); 
+  if (single2) fHists[Form("dRxql_%s", cds)]->Fill(pXQ[1].DeltaR(pXL[1])); 
+  fHists[Form("dRql_%s", cds)]->Fill(pQ[0].DeltaR(pL[0])); 
+  if (single2) fHists[Form("dRql_%s", cds)]->Fill(pQ[1].DeltaR(pL[1])); 
+  fHists[Form("dFxql_%s", cds)]->Fill(pXQ[0].DeltaPhi(pXL[0])); 
+  if (single2) fHists[Form("dFxql_%s", cds)]->Fill(pXQ[1].DeltaPhi(pXL[1])); 
+  fHists[Form("dFql_%s", cds)]->Fill(pQ[0].DeltaPhi(pL[0])); 
+  if (single2) fHists[Form("dFql_%s", cds)]->Fill(pQ[1].DeltaPhi(pL[1])); 
+  
+  fHists[Form("mxql_%s", cds)]->Fill(pX[0].M()); 
+  if (single2) fHists[Form("mxql_%s", cds)]->Fill(pX[1].M()); 
 
+  fHists[Form("mqXlX_%s", cds)]->Fill((pQ[0]+pL[0]).M()); 
+  if (single2) fHists[Form("mqXlX_%s", cds)]->Fill((pQ[1]+pL[1]).M()); 
+  
+  fHists[Form("mqXlY_%s", cds)]->Fill((pQ[0]+pL[1]).M()); 
+  if (single2) fHists[Form("mqXlY_%s", cds)]->Fill((pQ[1]+pL[0]).M()); 
+  
+  fHists[Form("mll_%s", cds)]->Fill((pL[0]+pL[1]).M()); 
+  
+  fHists[Form("dPtll_%s", cds)]->Fill(pL[0].Pt() - pL[1].Pt()); 
+
+  fHists[Form("sPtll_%s", cds)]->Fill(pL[0].Pt() + pL[1].Pt()); 
+  fHists[Form("ptll_%s", cds)]->Fill((pL[0]+pL[1]).Pt()); 
+  
+  if (single2) {
+    fHists[Form("dPtqq_%s", cds)]->Fill(pQ[0].Pt() - pQ[1].Pt()); 
+    fHists[Form("sPtqq_%s", cds)]->Fill(pQ[0].Pt() + pQ[1].Pt()); 
+    fHists[Form("ptqq_%s", cds)]->Fill((pQ[0]+pQ[1]).Pt()); 
+    fHists[Form("st_%s", cds)]->Fill(pL[0].Pt() + pL[1].Pt() + pQ[0].Pt() + pQ[1].Pt()); 
+    fHists[Form("dst_%s", cds)]->Fill((pXL[0].Pt() + pXQ[0].Pt()) - (pXL[1].Pt() + pXQ[1].Pt())); 
+    fHists[Form("dpt_%s", cds)]->Fill((pXL[0] + pXQ[0]).Pt() - (pXL[1] + pXQ[1]).Pt()); 
+  }
 }
 
 
@@ -601,6 +692,7 @@ void plotLq::setupTree(TTree *t) {
   t->SetBranchAddress("gphi",     fRtd.gphi);
   t->SetBranchAddress("gmlj",     fRtd.gmlj);
   t->SetBranchAddress("glq",      fRtd.glq);
+  t->SetBranchAddress("gtm",      fRtd.gtm);
 
   t->SetBranchAddress("glpt",     fRtd.glpt);
   t->SetBranchAddress("gleta",    fRtd.gleta);
@@ -613,6 +705,10 @@ void plotLq::setupTree(TTree *t) {
   t->SetBranchAddress("gjpt",     fRtd.gjpt);
   t->SetBranchAddress("gjeta",    fRtd.gjeta);
   t->SetBranchAddress("gjphi",    fRtd.gjphi);
+
+  t->SetBranchAddress("gipt",     fRtd.gipt);
+  t->SetBranchAddress("gieta",    fRtd.gieta);
+  t->SetBranchAddress("giphi",    fRtd.giphi);
 
   t->SetBranchAddress("gkpt",     fRtd.gkpt);
   t->SetBranchAddress("gketa",    fRtd.gketa);
@@ -696,7 +792,9 @@ void plotLq::loadFiles(string afiles) {
     TFile *pF(0); 
     // -- MC
     pF = loadFile(sfile); 
-    TTree *t = (TTree*)pF->Get("events"); 
+    sdecay = "single";
+    if (string::npos != sname.find("pair")) sdecay = "pair";
+    TTree *t = (TTree*)pF->Get(Form("%s/events", sdecay.c_str())); 
     int nevt = t->GetEntries();
     if (string::npos != sname.find("dy")) {
       dataset *ds = new dataset(); 
@@ -714,9 +812,9 @@ void plotLq::loadFiles(string afiles) {
       ds->fLumi   = nevt/ds->fXsec/ds->fBf/1000.; // [lumi] = 1/fb
       //      ds->fName   = "MadGraph " + sdecay; 
       ds->fName   = sdecay; 
-      ds->fFillStyle = 3365; 
-      ds->fSize = 1; 
-      ds->fWidth = 2; 
+      ds->fFillStyle = 3636; 
+      ds->fSize = 0.5; 
+      ds->fWidth = 1.0; 
       fDS.insert(make_pair(sname, ds)); 
       cout << "  inserted into fDS" << endl;
     }
@@ -732,13 +830,13 @@ void plotLq::loadFiles(string afiles) {
 	ds->fLcolor = kBlue; 
 	ds->fFcolor = kBlue; 
 	ds->fSymbol = 24; 
-	ds->fFillStyle = 3356; 
+	ds->fFillStyle = 3653; 
       } else {
 	ds->fColor = kRed; 
 	ds->fLcolor = kRed; 
 	ds->fFcolor = kRed; 
 	ds->fSymbol = 25; 
-	ds->fFillStyle = 3365; 
+	ds->fFillStyle = 3635; 
       }
       ds->fF      = pF; 
       ds->fXsec   = atof(sxsec.c_str());          // [xsec] = pb
@@ -747,9 +845,8 @@ void plotLq::loadFiles(string afiles) {
       ds->fLambda = lambda;
       ds->fLumi   = nevt/ds->fXsec/ds->fBf/1000.; // [lumi] = 1/fb
       ds->fName   = sdecay; 
-      ds->fFillStyle = 3356; 
-      ds->fSize = 1; 
-      ds->fWidth = 2; 
+      ds->fSize = 0.5; 
+      ds->fWidth = 1.0; 
       fDS.insert(make_pair(sname, ds)); 
     }
 

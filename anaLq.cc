@@ -97,19 +97,58 @@ void anaLq::endAnalysis() {
 
 // ----------------------------------------------------------------------
 void anaLq::eventProcessing() {
-
-  initVariables();
-
+  
+  // -- fish out the CORRECT TRUE LQs and their decay/associated products
   truthAnalysis(); 
-  analysis();
+
+  // -- fill gen-level vectors for leptons and quarks (leading and subleading particles)
+  genSelection(); 
+
+  // -- gen-level analysis
+  fTypeName = "pair";
+  genPairAnalysis();
+  fillHist();
+
+  fTypeName = "single";
+  genSingleAnalysis();
+  fillHist();
+  return;
+
+  // -- rec-level inputs: leptons and jets
+  leptonSelection();
+  jetSelection();
+
+
+  // -- single production analysis
+  TYPE = 1;
+  fTypeName = "single";
+
+  preselection();
+
+  if (fPreselected) {
+    lqSelection();
+    candAnalysis();
+  }
+  fillHist(); 
+
+  // -- pair production analysis
+  TYPE = 2; 
+  fTypeName = "pair";
+  preselection(); 
+  if (fPreselected) {
+    lqlqSelection();
+    candAnalysis();
+  }
+  fillHist(); 
+
 }
 
 
 // ----------------------------------------------------------------------
 void anaLq::truthAnalysis() {
 
-  for (unsigned int i = 0; i < fGenLQ.size(); ++i) delete fGenLQ[i];
-  fGenLQ.clear();
+  for (unsigned int i = 0; i < fTrueLQ.size(); ++i) delete fTrueLQ[i];
+  fTrueLQ.clear();
 
 
   if (0) {
@@ -143,46 +182,197 @@ void anaLq::truthAnalysis() {
     }
   }
 
-  if (pGen1) {
-    genLQProducts(pGen0);
-    genLQProducts(pGen1);
-  } else if (pGen0) {
-    genLQSingle(pGen0);
-  } 
+  if (pGen0) genLQProducts(pGen0);
+  if (pGen1) genLQProducts(pGen1);
 }
 
 
 // ----------------------------------------------------------------------
-void anaLq::analysis() {
-  // -- rec-level inputs: leptons and jets
-  leptonSelection();
-  jetSelection();
+void anaLq::genPairAnalysis() {
 
-  // -- single production analysis
-  TYPE = 1;
-  fTypeName = "single";
+  for (unsigned int i = 0; i < fGenLQ.size(); ++i) delete fGenLQ[i];
+  fGenLQ.clear();
 
-  preselection();
+  if (fGenLeptons.size() < 2) return;
+  if (fGenJets.size() < 2) return;
 
-  if (fPreselected) {
-    lqSelection();
-    candAnalysis();
+  double mdiff[2];
+  TLorentzVector p4L[2], p4J[2], p4LQ[2]; 
+  for (unsigned int il = 0; il < fGenLeptons.size(); ++il) {
+    p4L[il].SetPtEtaPhiM(fGenLeptons[il]->PT, fGenLeptons[il]->Eta, fGenLeptons[il]->Phi, fGenLeptons[il]->Mass);
   }
-  fillHist(); 
 
-  // -- pair production analysis
-  TYPE = 2; 
-  fTypeName = "pair";
-  genBgPair();
-  preselection(); 
-  if (fPreselected) {
-    lqlqSelection();
-    candAnalysis();
+  for (unsigned int ij = 0; ij < fGenJets.size(); ++ij) {
+    p4J[ij].SetPtEtaPhiM(fGenJets[ij]->PT, fGenJets[ij]->Eta, fGenJets[ij]->Phi, fGenJets[ij]->Mass);
   }
-  fillHist(); 
+
+  p4LQ[0] = p4L[0] + p4J[0];
+  p4LQ[1] = p4L[1] + p4J[1];
+  mdiff[0] = TMath::Abs(p4LQ[0].M() - p4LQ[1].M()); 
+
+  p4LQ[0] = p4L[0] + p4J[1];
+  p4LQ[1] = p4L[1] + p4J[0];
+  mdiff[1] = TMath::Abs(p4LQ[0].M() - p4LQ[1].M()); 
+
+  if (0) {
+    cout << "mdiff[0] = " << mdiff[0] << " from L " << genIndex(fGenLeptons[0]) << " plus J " << fGenJets[0] 
+	 << " and L " << genIndex(fGenLeptons[1]) << " plus J " << fGenJets[1] 
+	 << endl;
+    cout << "mdiff[1] = " << mdiff[1] << " from L " << genIndex(fGenLeptons[0]) << " plus J " << fGenJets[1] 
+	 << " and L " << genIndex(fGenLeptons[1]) << " plus J " << fGenJets[0] 
+	 << endl;
+  }
+
+  if (mdiff[0] < mdiff[1]) {
+    fGenLQ.push_back(createGenLQ(fGenLeptons[0], fGenJets[0], 0)); 
+    fGenLQ.push_back(createGenLQ(fGenLeptons[1], fGenJets[1], 0)); 
+  } else {
+    fGenLQ.push_back(createGenLQ(fGenLeptons[0], fGenJets[1], 0)); 
+    fGenLQ.push_back(createGenLQ(fGenLeptons[1], fGenJets[0], 0)); 
+  }
 
 }
 
+
+// ----------------------------------------------------------------------
+void anaLq::genSingleAnalysis() {
+
+  for (unsigned int i = 0; i < fGenLQ.size(); ++i) delete fGenLQ[i];
+  fGenLQ.clear();
+
+  if (fGenLeptons.size() < 2) return;
+  if (fGenJets.size() < 1) return;
+
+  double mdiff[2];
+  TLorentzVector p4L[2], p4J[2], p4LQ[2]; 
+  for (unsigned int il = 0; il < fGenLeptons.size(); ++il) {
+    p4L[il].SetPtEtaPhiM(fGenLeptons[il]->PT, fGenLeptons[il]->Eta, fGenLeptons[il]->Phi, fGenLeptons[il]->Mass);
+  }
+
+  for (unsigned int ij = 0; ij < fGenJets.size(); ++ij) {
+    p4J[ij].SetPtEtaPhiM(fGenJets[ij]->PT, fGenJets[ij]->Eta, fGenJets[ij]->Phi, fGenJets[ij]->Mass);
+  }
+
+  p4LQ[0] = p4L[0] + p4J[0];
+  fGenLQ.push_back(createGenLQ(fGenLeptons[0], fGenJets[0], fGenLeptons[1], (fGenJets.size() > 1 ? fGenJets[1] : 0))); 
+}
+
+
+// ----------------------------------------------------------------------
+genLq* anaLq::createGenLQ(GenParticle *pL, Jet *pJ, GenParticle *pK, Jet *pI) {
+  genLq *lq = new genLq(); 
+  lq->q = pL->Charge;
+  bool tm(false); 
+  for (unsigned int i = 0; i < fTrueLQ.size(); ++i) {
+    if (0 == pK) {
+      if (fTrueLQ[i]->pL == pL && fTrueLQ[i]->pJ == pJ) {
+	tm = true; 
+	break;
+      }
+    } else {
+      if (fTrueLQ[i]->pL == pL && fTrueLQ[i]->pJ == pJ && fTrueLQ[i]->pK == pK) {
+	tm = true; 
+	break;
+      }
+    }
+  }
+
+  //  cout << "Creating LQ from L = " << genIndex(pL) << " pT: " << pL->PT << ", J = " << pJ << " pT: " << pJ->PT << endl;
+  
+  lq->tm = (tm?1:0); 
+  lq->q = pL->Charge;
+  lq->pL = pL; 
+  lq->p4L.SetPtEtaPhiM(pL->PT, pL->Eta, pL->Phi, pL->Mass);
+
+  lq->pJ = pJ;
+  lq->p4J.SetPtEtaPhiM(pJ->PT, pJ->Eta,  pJ->Phi,  pJ->Mass);
+  
+  TLorentzVector lj = lq->p4L + lq->p4J; 
+  lq->p4LJ = lj; 
+
+  lq->pQ = 0;
+  lq->p4LQ = lj; 
+
+  lq->pK = pK; 
+  if (pK) {
+    lq->p4K.SetPtEtaPhiM(pK->PT, pK->Eta, pK->Phi, pK->Mass);
+  } else {
+    lq->p4K.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  }
+
+  lq->pI = pI;
+  if (pI) {
+    lq->p4I.SetPtEtaPhiM(pI->PT, pI->Eta, pI->Phi, pI->Mass);
+  } else {
+    lq->p4I.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  }
+
+  //  cout << "mass = " << lq->p4LJ.M() << " tm = " << tm << endl;
+  return lq;
+}
+
+
+// ----------------------------------------------------------------------
+void anaLq::genSelection() {
+
+  // -- do not delete the objects pointed to. This will screw the TClonesArray!
+  fGenLeptons.clear();
+  fGenJets.clear();
+
+  Jet *pJet(0); 
+  double pTj0(-1.), pTj1(-1.);
+  Jet *pJ0(0), *pJ1(0); 
+  double dr(0.3);
+  fNGenJets = 0; 
+  for (int i = 0; i < fbGenJets->GetEntries(); ++i) {
+    pJet = getGenJet(i); 
+    // -- remove leptons from gen jets
+    int lidx = isLeptonJet(pJet, dr); 
+    if (lidx > 0)  continue;
+    
+    if (pJet->PT > pTj0) {
+      pTj1 = pTj0; 
+      pJ1  = pJ0; 
+      pTj0 = pJet->PT;
+      pJ0  = pJet;
+    } else if (pJet->PT > pTj1) {
+      pTj1 = pJet->PT;
+      pJ1  = pJet;
+    }
+    ++fNGenJets;
+  }
+
+  GenParticle *pGen(0), *pL0(0), *pL1(0); 
+  double pTl0(-1.), pTl1(-1.);
+  TLorentzVector m4Gen, m4L0, m4L1; 
+  for (int i = 0; i < fbParticles->GetEntries(); ++i) {
+    pGen = getParticle(i); 
+    if (13 == TMath::Abs(pGen->PID)) {
+      m4Gen.SetPtEtaPhiM(pGen->PT, pGen->Eta, pGen->Phi, MMUON); 
+      if (pTl0 > -1. && m4Gen.DeltaR(m4L0) < 0.1) continue;
+      if (pTl1 > -1. && m4Gen.DeltaR(m4L1) < 0.1) continue;
+      if (pGen->PT > pTl0) {
+	pL1  = pL0; 
+	pTl1 = pTl0; 
+	m4L1 = m4L0; 
+	pL0  = pGen;
+	pTl0 = pGen->PT; 
+	m4L0 = m4Gen; 
+      } else if (pGen->PT > pTl1) {
+	pL1  = pGen;
+	pTl1 = pGen->PT; 
+	m4L1 = m4Gen; 
+      } 
+    }
+  }
+
+
+  if (pL0) fGenLeptons.push_back(pL0); 
+  if (pL1) fGenLeptons.push_back(pL1);
+  if (pJ0) fGenJets.push_back(pJ0);
+  if (pJ1) fGenJets.push_back(pJ1);
+
+}
 
 // ----------------------------------------------------------------------
 void anaLq::leptonSelection() {
@@ -606,9 +796,11 @@ bool anaLq::isAncestor(GenParticle *mo, GenParticle *dau) {
 }
 
 // ----------------------------------------------------------------------
-void anaLq::dumpGenBlock(bool withGluons) {
+void anaLq::dumpGenBlock(bool withGluons, int nlines) {
 
-  for (int i = 0; i < fbParticles->GetEntries(); ++i) {
+  if (nlines < 0) nlines = fbParticles->GetEntries();
+  cout << "=== GenBlock for event " << fEvt << " ===" << endl;
+  for (int i = 0; i < nlines; ++i) {
     if (21 == getParticle(i)->PID) {
       if (withGluons) printParticle(getParticle(i)); 
     } else {
@@ -631,7 +823,7 @@ void anaLq::dumpGenJets() {
     if (il > 0) {
       sl = Form("lepton %d", il); 
     } else {
-      sl = ""; 
+      sl = Form("0x%lx", pJet); 
     }
 
     cout << Form("%4d PT: %+9.3f %+9.3f %+9.3f Mass: %7.3f dE: %5.4f dF: %5.4f n+: %d n0: %d %s" , 
@@ -663,6 +855,7 @@ void anaLq::setupReducedTree(TTree *t) {
   t->Branch("gphi",     fRtd.gphi,            "gphi[ngen]/D");
   t->Branch("gmlj",     fRtd.gmlj,            "gmlj[ngen]/D");
   t->Branch("glq",      fRtd.glq,             "glq[ngen]/I");
+  t->Branch("gtm",      fRtd.gtm,             "gtm[ngen]/I");
 
   t->Branch("glpt",     fRtd.glpt,           "glpt[ngen]/D");
   t->Branch("gleta",    fRtd.gleta,          "gleta[ngen]/D");
@@ -680,12 +873,17 @@ void anaLq::setupReducedTree(TTree *t) {
   t->Branch("gketa",    fRtd.gketa,          "gketa[ngen]/D");
   t->Branch("gkphi",    fRtd.gkphi,          "gkphi[ngen]/D");
 
+  t->Branch("gipt",     fRtd.gipt,           "gipt[ngen]/D");
+  t->Branch("gieta",    fRtd.gieta,          "gieta[ngen]/D");
+  t->Branch("giphi",    fRtd.giphi,          "giphi[ngen]/D");
+
   t->Branch("nrec",    &fRtd.nrec,            "nrec/I");
   t->Branch("m",        fRtd.m,               "m[nrec]/D");
   t->Branch("pt",       fRtd.pt,              "pt[nrec]/D");
   t->Branch("eta",      fRtd.eta,             "eta[nrec]/D");
   t->Branch("phi",      fRtd.phi,             "phi[nrec]/D");
   t->Branch("lq",       fRtd.lq,              "lq[nrec]/I");
+  t->Branch("tm",       fRtd.tm,              "tm[nrec]/I");
 
   t->Branch("lpt",      fRtd.lpt,              "lpt[nrec]/D");
   t->Branch("leta",     fRtd.leta,             "leta[nrec]/D");
@@ -715,6 +913,7 @@ void anaLq::fillRedTreeData() {
   fRtd.channel = CHANNEL; 
   fRtd.w8      = fW8;
 
+  bool perfectTM(true);
   for (unsigned int i = 0; i < fGenLQ.size(); ++i) {
     fRtd.gm[i]   = fGenLQ[i]->p4LQ.M(); 
     fRtd.gpt[i]  = fGenLQ[i]->p4LQ.Pt(); 
@@ -722,6 +921,8 @@ void anaLq::fillRedTreeData() {
     fRtd.gphi[i] = fGenLQ[i]->p4LQ.Phi(); 
 
     fRtd.glq[i]  = fGenLQ[i]->q; 
+    fRtd.gtm[i]  = fGenLQ[i]->tm; 
+    if (!fGenLQ[i]->tm) perfectTM = false; 
 
     fRtd.glpt[i]  = fGenLQ[i]->p4L.Pt(); 
     fRtd.gleta[i] = fGenLQ[i]->p4L.Eta(); 
@@ -749,8 +950,30 @@ void anaLq::fillRedTreeData() {
       fRtd.gketa[i] = -9999.;
       fRtd.gkphi[i] = -9999.;
     }
+
+    if (fGenLQ[i]->pI) {
+      fRtd.gipt[i]  = fGenLQ[i]->p4I.Pt(); 
+      fRtd.gieta[i] = fGenLQ[i]->p4I.Eta(); 
+      fRtd.giphi[i] = fGenLQ[i]->p4I.Phi(); 
+    } else {
+      fRtd.gipt[i]  = -9999.;
+      fRtd.gieta[i] = -9999.;
+      fRtd.giphi[i] = -9999.;
+    }
+
   }
   fRtd.ngen = fGenLQ.size(); 
+
+  if (0 && !perfectTM) {
+    cout << "Event " << fEvt << " with imperfect TM. fGenLeptons.size() = " << fGenLeptons.size() 
+	 << " fGenJets.size() = " << fGenJets.size() 
+	 << endl;
+    dumpGenJets(); 
+    dumpGenBlock(true, 70); 
+    
+
+
+  }
 
   if (!fPreselected) {
     fRtd.nrec = 0; 
@@ -764,6 +987,7 @@ void anaLq::fillRedTreeData() {
     fRtd.eta[i]  = fLQ[i]->p4.Eta();
     fRtd.phi[i]  = fLQ[i]->p4.Phi();
     
+    fRtd.tm[i]    = fLQ[i]->tm;
     fRtd.lq[i]    = fLeptons[fLQ[i]->idxL]->q;
     fRtd.lpt[i]   = fLeptons[fLQ[i]->idxL]->p4.Pt();
     fRtd.leta[i]  = fLeptons[fLQ[i]->idxL]->p4.Phi();
@@ -785,8 +1009,6 @@ void anaLq::fillRedTreeData() {
   }
 
   fRtd.nrec = fLQ.size(); 
-
-
 }
 
 
@@ -853,14 +1075,15 @@ void anaLq::genLQProducts(GenParticle *lq) {
   }    
 
   // -- so far choose on best delta(R) match!
-  if (dRBest > -1 && dRMin < 0.3) {
+  if (dRBest > -1 && dRMin < 0.5) {
     j = getGenJet(dRBest);
     //    cout << " xx choosing jet = " << dRBest << " with ET = " << j->PT << " for jet of LQ " << lqIdx << endl;
   }
 
   // -- create and fill struct
   genLq *gen = new genLq(); 
-  gen->q = l->Charge;
+  gen->q  = l->Charge;
+  //  gen->tm = 1; // not really applicable for TRUTH candidates!
 
   gen->pLQ = lq;
   gen->p4LQ.SetPtEtaPhiM(lq->PT, lq->Eta, lq->Phi, lq->Mass);
@@ -883,87 +1106,29 @@ void anaLq::genLQProducts(GenParticle *lq) {
     gen->p4LJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.); 
   }
 
-  // -- this will be reset in genLqSingle for single LQ processing
-  gen->pK = 0;
-  gen->p4K.SetPtEtaPhiM(-9999., -9999., -9999., -9999.); 
-
-  fGenLQ.push_back(gen);
-}
-
-
-// ----------------------------------------------------------------------
-void anaLq::genLQSingle(GenParticle *lq) {
-
-  // -- Fill single LQ into first set of variables
-  genLQProducts(lq); 
-
-  // -- find gen-level bachelor lepton K to LQ
-  int lqIdx = genIndex(lq);
-  if (lqIdx < 0) return; // do nothing for background
+  // -- find POSSIBLE gen-level bachelor lepton K to LQ
   int lqMomIdx = lq->M1;
-  GenParticle *pGen(0);
   for (int i = 0; i < fbParticles->GetEntries(); ++i) {
     if (i == lqIdx) continue;
     pGen = getParticle(i); 
-    if (pGen->M1 == lqMomIdx) {
+    if (isLepton(pGen->PID) && pGen->M1 == lqMomIdx) {
       break;
+    } else {
+      pGen = 0; 
     }
   }
 
-  genLq *correct = fGenLQ.back(); 
-  correct->pK = pGen;
-  correct->p4K.SetPtEtaPhiM(pGen->PT, pGen->Eta, pGen->Phi, pGen->Mass);
-
-
-  // -- Fill the second possibility: gen->pK + subleading genJet, with gen->pL as K
-  // ------------------------------------------------------------------------------
-  Jet *pJetLq = correct->pJ;
-  Jet *pJet(0); 
-  double pTmax(-1.);
-  int imax(-1);
-  double dr(0.3);
-  for (int i = 0; i < fbGenJets->GetEntries(); ++i) {
-    pJet = getGenJet(i); 
-    // -- remove leptons from gen jets
-    if (isLeptonJet(pJet, dr)) continue;
-    if (pJetLq == pJet) continue;
-    if (pJet->PT > pTmax) {
-      pTmax = pJet->PT;
-      imax = i; 
-    }
+  if (pGen) {
+    gen->pK = pGen;
+    gen->p4K.SetPtEtaPhiM(pGen->PT, pGen->Eta, pGen->Phi, pGen->Mass);
+  } else {
+    gen->pK = 0;
+    gen->p4K.SetPtEtaPhiM(-9999., -9999., -9999., -9999.); 
   }
 
-  if (imax < 0) return;
-  pJet = getGenJet(imax); 
-
-  TLorentzVector p4J; p4J.SetPtEtaPhiM(pJet->PT, pJet->Eta, pJet->Phi, pJet->Mass);
-  GenParticle *l = correct->pK;
-  GenParticle *k = correct->pL;
-  TLorentzVector p4Lq = correct->p4K + p4J;
-
-  genLq *fake = new genLq(); 
-  fake->q = l->Charge;
-
-  fake->pLQ = 0;
-  fake->p4LQ = p4Lq;
-  
-  fake->pL = l; 
-  fake->p4L.SetPtEtaPhiM(l->PT, l->Eta, l->Phi, l->Mass);
-
-  fake->pK = k; 
-  fake->p4K.SetPtEtaPhiM(k->PT, k->Eta, k->Phi, k->Mass);
-  
-  fake->pQ = 0; 
-  fake->p4Q = p4J;
-
-  fake->pJ = pJet;
-  fake->p4J = p4J;
-    
-  fake->p4LJ = p4Lq; 
-
-  fGenLQ.push_back(fake);
-
+  fTrueLQ.push_back(gen);
 }
+
 
 
 // ----------------------------------------------------------------------
@@ -1030,7 +1195,6 @@ void anaLq::genBgPair() {
 
   // -- combine the leptons with the best-matching jet
   TLorentzVector p4Lq0, p4Lq1; 
-  int iBest(-1);
   double mdiff0(99999.), mdiff1(99999.); 
   TLorentzVector lq0, lq1; 
   lq0 = p4L0 + p4J0;

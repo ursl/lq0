@@ -55,7 +55,10 @@ public:
   // -- gen-level analysis
   void truthAnalysis();
   void genLQProducts(GenParticle *lq);
-  void genLQSingle(GenParticle *lq);
+  void genSelection(); 
+  genLq* createGenLQ(GenParticle *l, Jet *j, GenParticle *k = 0, Jet *i = 0); 
+  void genPairAnalysis();
+  void genSingleAnalysis();
   void genBgPair();
   void genBgSingle();
 
@@ -64,7 +67,6 @@ public:
   double nearestLepton(Jet *j); 
 
   // -- reco-level analysis
-  void analysis();
   void leptonSelection();
   double muonIso(Muon *m);
   void jetSelection();
@@ -77,7 +79,7 @@ public:
 
   // -- print utilities
   void printSummary(int mode = 0); 
-  void dumpGenBlock(bool withGluons=false); 
+  void dumpGenBlock(bool withGluons=false, int nlines = -1); 
   void dumpGenJets(); 
   bool isAncestor(GenParticle *mo, GenParticle *dau);  
   void printParticle(GenParticle *); 
@@ -107,6 +109,7 @@ public:
     *fbElectrons,
     *fbMuons;
 
+  int fEvt; 
 
   TFile       *fpHistFile; 
   redTreeData fRtd;
@@ -117,8 +120,10 @@ public:
   std::map<std::string, TH1*> fHists;
 
   // -- gen LQ PAIRS and daughter particles
-  std::vector<genLq *> fGenLQ; 
-
+  std::vector<genLq *> fTrueLQ, fGenLQ; 
+  std::vector<GenParticle *> fGenLeptons; 
+  std::vector<Jet *> fGenJets; 
+  int fNGenJets; 
   // -- reco vectors
   std::vector<lepton *> fLeptons;
   std::vector<jet *> fJets;

@@ -6,7 +6,7 @@
 
 struct lq {
   TLorentzVector p4; 
-  int q; 
+  int q, tm; 
   int idxJ, idxL, idxK;
 };
 
