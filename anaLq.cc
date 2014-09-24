@@ -102,6 +102,9 @@ void anaLq::endAnalysis() {
 void anaLq::eventProcessing() {
   
   if (0) cout << "----------------------------------------------------------------------" << endl;
+
+  fPreselected = false;
+
   // -- fish out the CORRECT TRUE LQs and their decay/associated products
   truthAnalysis(); 
 
@@ -261,7 +264,6 @@ void anaLq::genSingleAnalysis() {
   if (fGenLeptons.size() < 2) return;
   if (fGenJets.size() < 1) return;
 
-  double mdiff[2];
   TLorentzVector p4L[2], p4J[2], p4LQ[2]; 
   for (unsigned int il = 0; il < fGenLeptons.size(); ++il) {
     p4L[il].SetPtEtaPhiM(fGenLeptons[il]->PT, fGenLeptons[il]->Eta, fGenLeptons[il]->Phi, fGenLeptons[il]->Mass);
@@ -841,7 +843,7 @@ void anaLq::dumpGenJets() {
     if (il > 0) {
       sl = Form("lepton %d", il); 
     } else {
-      sl = Form("0x%lx", pJet); 
+      sl = Form("0x%lx", (void*)pJet); 
     }
 
     cout << Form("%4d PT: %+9.3f %+9.3f %+9.3f Mass: %7.3f dE: %5.4f dF: %5.4f n+: %d n0: %d %s" , 
