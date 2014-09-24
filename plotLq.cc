@@ -31,6 +31,7 @@ plotLq::plotLq(string dir,  string files, string setup): plotClass(dir, files, s
 
 // ----------------------------------------------------------------------
 plotLq::~plotLq() {
+  fHistFile->Close();
 }
 
 // ----------------------------------------------------------------------
@@ -195,23 +196,51 @@ void plotLq::makeAll(int bitmask) {
 }
 
 // ----------------------------------------------------------------------
-void plotLq::treeAnalysis(string cds1, string cds2) {
-  // -- pair
-  fPair = true;
-  fCds = cds1; 
-  bookHist(fCds); 
-  TTree *tp = getTree(fCds, "pair"); 
-  setupTree(tp); 
-  loopOverTree(tp, 3, 20000); 
+void plotLq::treeAnalysis(string cds1, string cds2, string cds3) {
+  if (0) {
+    // -- pair
+    fPair = false;
+    fCds = cds1; 
+    bookHist(fCds); 
+    TTree *tp = getTree(fCds, "pair"); 
+    setupTree(tp); 
+    loopOverTree(tp, 3, 20000); 
+    
+    // -- single
+    fPair = false;
+    fCds = cds2;
+    bookHist(fCds); 
+    TTree *ts = getTree(fCds, "pair"); 
+    setupTree(ts); 
+    loopOverTree(ts, 3, 20000); 
+  }
 
-  // -- single
-  fPair = false;
-  fCds = cds2;
-  bookHist(fCds); 
-  TTree *ts = getTree(fCds, "single"); 
-  setupTree(ts); 
-  loopOverTree(ts, 3, 20000); 
-  
+  if (1) {
+    // -- pair
+    fPair = false;
+    fCds = cds1; 
+    bookHist(fCds); 
+    TTree *tp = getTree(fCds, "lq"); 
+    setupTree(tp); 
+    loopOverTree(tp, 4, 20000); 
+    
+    // -- single
+    fPair = false;
+    fCds = cds2;
+    bookHist(fCds); 
+    TTree *ts = getTree(fCds, "lq"); 
+    setupTree(ts); 
+    loopOverTree(ts, 4, 20000); 
+
+    // -- single
+    fPair = false;
+    fCds = cds3;
+    bookHist(fCds); 
+    TTree *tb = getTree(fCds, "lq"); 
+    setupTree(tb); 
+    loopOverTree(tb, 4, 20000); 
+  }
+
   char hist[200];
   int ipad(1); 
   zone(5, 5);
@@ -363,30 +392,39 @@ void plotLq::overlayAll() {
 }
 
 // ----------------------------------------------------------------------
-void plotLq::optimizePairCuts(string sg, string bg, double lumi) {
-  fPair = true;
+void plotLq::optimizePairCuts(string dir, string sg, string bg, double lumi, int nevts) {
+
+  if (!dir.compare("pair")) {
+    fPair = true;
+  } else {
+    fPair = false;
+  }
 
   // -- signal
   fCds = sg; 
   bookHist(sg); 
   fOptMode = 1; 
+  double nevtsScale(1.); 
+  TTree *ts = getTree(sg, dir); 
+  if (nevts > -1) {
+    nevtsScale = fDS[sg]->fLumi*nevts/ts->GetEntries();
+  }
   double sgScale = lumi/fDS[sg]->fLumi;
-  TTree *ts = getTree(sg); 
   setupTree(ts); 
-  loopOverTree(ts, 2, 1000); 
+  loopOverTree(ts, 2, nevts); 
 
   // -- background
   fCds = bg; 
   bookHist(bg); 
   fOptMode = 2; 
   double bgScale = lumi/fDS[bg]->fLumi;
-  TTree *tb = getTree(bg); 
+  TTree *tb = getTree(bg, dir); 
   setupTree(tb); 
-  loopOverTree(tb, 2, 1000); 
+  loopOverTree(tb, 2, nevts); 
 
 
   fHistFile->cd();
-  TTree *t = new TTree("opt", "opt");
+  TTree *t = new TTree(Form("opt_%s", dir.c_str()), Form("opt_%s", dir.c_str()));
   double s, b, s0, b0; 
   double st, mll, mlj;
   double ssb, sb;
@@ -413,7 +451,8 @@ void plotLq::optimizePairCuts(string sg, string bg, double lumi) {
     mlj = fSelPoints[i].fLargerThan[2].second;
     t->Fill();
   }
-  
+
+  t->Write();
 }
 
 
@@ -447,6 +486,24 @@ void plotLq::loopFunction1() {
   }
 
 }
+
+
+// ----------------------------------------------------------------------
+// gen-level analysis 
+void plotLq::loopFunction4() {
+
+  char cds[200];
+  sprintf(cds, "%s", fCds.c_str());
+
+  for (int i = 0; i < fRtd.ngen; ++i) {
+
+    
+
+  }
+  
+
+}
+
 
 
 // ----------------------------------------------------------------------
@@ -587,23 +644,19 @@ void plotLq::loopFunction2() {
   if (first) {
     first = false; 
 
-    static const double stArr[] = { 300.,  320.,  340.,  360.,  380.,  400.,  420.,  440.,  460.,  480.,
-				    500.,  520.,  540.,  560.,  580.,  600.,  620.,  640.,  660.,  680.,
-				    700.,  750.,  800.,  850.,  900.,  950., 1000., 1050., 1100., 1150.,
-                                   1200., 1250., 1300., 1350., 1400., 1450., 1500.
+    static const double stArr[] = { 300.,  350., 400.,  500., 600., 700., 800., 900., 1000., 1100., 1200., 1300., 1400., 
+				    1500., 1700., 2000., 2200., 2500., 3000.
     };
     vector<double> stCuts(stArr, stArr + sizeof(stArr)/sizeof(stArr[0]));
 
-    static const double mllArr[] = {100., 110., 120., 130., 140., 150., 160., 170., 180., 190., 
-				    200., 210., 220., 230., 240., 250., 260., 270., 280., 290., 
-				    300.
+    static const double mllArr[] = {100., 150., 200., 250., 300., 250., 400., 450., 500., 600., 700., 800., 900., 
+				    1000., 1200., 1500., 2000.
     };
     vector<double> mllCuts(mllArr, mllArr + sizeof(mllArr)/sizeof(mllArr[0]));
 
 
-    static const double mljArr[] = {100., 110., 120., 130., 140., 150., 160., 170., 180., 190., 
-				    200., 220., 240., 260., 280., 300., 320., 340., 360., 380., 
-				    400., 450., 500., 550., 600., 650., 700., 750.
+    static const double mljArr[] = {100., 150., 200., 250., 300., 350., 400., 450., 500., 550., 600., 650., 700., 750., 
+				    800., 850., 900., 950., 1000., 1100., 1200.
     };
     vector<double> mljCuts(mljArr, mljArr + sizeof(mljArr)/sizeof(mljArr[0]));
 
@@ -669,6 +722,7 @@ void plotLq::loopOverTree(TTree *t, int ifunc, int nevts, int nstart) {
   if (ifunc == 1) pF = &plotLq::loopFunction1;
   if (ifunc == 2) pF = &plotLq::loopFunction2;
   if (ifunc == 3) pF = &plotLq::loopFunction3;
+  if (ifunc == 4) pF = &plotLq::loopFunction4;
 
   // -- the real loop starts here
   for (int jentry = nbegin; jentry < nend; jentry++) {

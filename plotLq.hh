@@ -16,7 +16,7 @@ public :
 
   // -- Main analysis methods 
   virtual void   makeAll(int bitmask = 0);
-  virtual void   treeAnalysis(std::string cds1, std::string cds2); 
+  virtual void   treeAnalysis(std::string cds1, std::string cds2, std::string cds3); 
   virtual void   normOverlay(std::string f1, std::string f2); 
 
   void           overlayAll();
@@ -27,8 +27,10 @@ public :
   virtual void   loopFunction1(); 
   virtual void   loopFunction2(); 
   virtual void   loopFunction3(); 
+  virtual void   loopFunction4(); 
   
-  void           optimizePairCuts(std::string sg, std::string bg, double lumi = 20.); 
+  void           optimizePairCuts(std::string dir, std::string sg, std::string bg, 
+				  double lumi = 20., int nevts = -1); 
 
 
 private: 
