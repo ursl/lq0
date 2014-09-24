@@ -245,11 +245,11 @@ void anaLq::genPairAnalysis() {
   }
 
   if (mdiff[0] < mdiff[1]) {
-    fGenLQ.push_back(createGenLQ(fGenLeptons[0], fGenJets[0], 0)); 
-    fGenLQ.push_back(createGenLQ(fGenLeptons[1], fGenJets[1], 0)); 
+    fGenLQ.push_back(createGenLQ(fGenLeptons[0], fGenJets[0], 0, 0)); 
+    fGenLQ.push_back(createGenLQ(fGenLeptons[1], fGenJets[1], 0, 0)); 
   } else {
-    fGenLQ.push_back(createGenLQ(fGenLeptons[0], fGenJets[1], 0)); 
-    fGenLQ.push_back(createGenLQ(fGenLeptons[1], fGenJets[0], 0)); 
+    fGenLQ.push_back(createGenLQ(fGenLeptons[0], fGenJets[1], 0, 0)); 
+    fGenLQ.push_back(createGenLQ(fGenLeptons[1], fGenJets[0], 0, 0)); 
   }
 
 }
@@ -309,6 +309,7 @@ genLq* anaLq::createGenLQ(GenParticle *pL, Jet *pJ, GenParticle *pK, Jet *pI) {
   lq->p4LJ = lj; 
 
   lq->pQ = 0;
+  lq->p4Q = lq->p4J; 
   lq->p4LQ = lj; 
 
   lq->pK = pK; 
