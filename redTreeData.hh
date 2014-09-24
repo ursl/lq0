@@ -7,28 +7,28 @@ struct redTreeData {
 
   int ngen;
   // LQ 
-  double gm[2], gpt[2], geta[2], gphi[2];
+  double gm[4], gpt[4], geta[4], gphi[4];
   // gen-level lepton charge (q)
-  int glq[2], gtm[2]; 
+  int glq[4], gtm[4]; 
   // lepton + gen jet
-  double gmlj[2]; 
+  double gmlj[4]; 
   // gen-level particles
-  double glpt[2], gleta[2], glphi[2], 
-    gqpt[2], gqeta[2], gqphi[2], 
-    gjpt[2], gjeta[2], gjphi[2], 
-    gkpt[2], gketa[2], gkphi[2],
-    gipt[2], gieta[2], giphi[2];
+  double glpt[4], gleta[4], glphi[4], 
+    gqpt[4], gqeta[4], gqphi[4], 
+    gjpt[4], gjeta[4], gjphi[4], 
+    gkpt[4], gketa[4], gkphi[4],
+    gipt[4], gieta[4], giphi[4];
 
   // -- reco 
   int nrec;
   // LQ
-  double m[2], pt[2], eta[2], phi[2]; 
+  double m[4], pt[4], eta[4], phi[4]; 
   // rec-level lepton charge (q)
-  int lq[2], tm[2];  
+  int lq[4], tm[4];  
   // reco-level particles
-  double lpt[2], leta[2], lphi[2];  // lepton
-  double jpt[2], jeta[2], jphi[2];  // jet
-  double kpt[2], keta[2], kphi[2];  // bachelor lepton k
+  double lpt[4], leta[4], lphi[4];  // lepton
+  double jpt[4], jeta[4], jphi[4];  // jet
+  double kpt[4], keta[4], kphi[4];  // bachelor lepton k
 
   // other information
   double st; 
