@@ -334,7 +334,6 @@ genLq* anaLq::createGenLQ(GenParticle *pL, Jet *pJ, GenParticle *pK, Jet *pI) {
 
 // ----------------------------------------------------------------------
 void anaLq::genSelection() {
-
   // -- do not delete the objects pointed to. This will screw the TClonesArray!
   fGenLeptons.clear();
   fGenJets.clear();
