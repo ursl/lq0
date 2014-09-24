@@ -57,6 +57,7 @@ public:
   void genLQProducts(GenParticle *lq);
   void genSelection(); 
   genLq* createGenLQ(GenParticle *l, Jet *j, GenParticle *k = 0, Jet *i = 0); 
+  void genLqAnalysis();
   void genPairAnalysis();
   void genSingleAnalysis();
   void genBgPair();

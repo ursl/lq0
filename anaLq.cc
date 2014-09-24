@@ -87,6 +87,9 @@ void anaLq::startAnalysis() {
   fTypeName = "pair";
   bookHist();
 
+  fTypeName = "lq";
+  bookHist();
+
 }
 
 // ----------------------------------------------------------------------
@@ -98,21 +101,16 @@ void anaLq::endAnalysis() {
 // ----------------------------------------------------------------------
 void anaLq::eventProcessing() {
   
+  if (0) cout << "----------------------------------------------------------------------" << endl;
   // -- fish out the CORRECT TRUE LQs and their decay/associated products
   truthAnalysis(); 
 
   // -- fill gen-level vectors for leptons and quarks (leading and subleading particles)
   genSelection(); 
 
-  // -- gen-level analysis
-  fTypeName = "pair";
-  genPairAnalysis();
+  fTypeName = "lq";
+  genLqAnalysis(); 
   fillHist();
-
-  fTypeName = "single";
-  genSingleAnalysis();
-  fillHist();
-  return;
 
   // -- rec-level inputs: leptons and jets
   leptonSelection();
@@ -122,9 +120,8 @@ void anaLq::eventProcessing() {
   // -- single production analysis
   TYPE = 1;
   fTypeName = "single";
-
+  genSingleAnalysis();
   preselection();
-
   if (fPreselected) {
     lqSelection();
     candAnalysis();
@@ -134,6 +131,7 @@ void anaLq::eventProcessing() {
   // -- pair production analysis
   TYPE = 2; 
   fTypeName = "pair";
+  genPairAnalysis();
   preselection(); 
   if (fPreselected) {
     lqlqSelection();
@@ -184,6 +182,26 @@ void anaLq::truthAnalysis() {
 
   if (pGen0) genLQProducts(pGen0);
   if (pGen1) genLQProducts(pGen1);
+}
+
+
+
+// ----------------------------------------------------------------------
+void anaLq::genLqAnalysis() {
+  
+  for (unsigned int i = 0; i < fGenLQ.size(); ++i) delete fGenLQ[i];
+  fGenLQ.clear();
+  
+  if (fGenLeptons.size() < 2) return;
+  if (fGenJets.size() < 2) return;
+
+  // -- full combinatorics
+  for (unsigned int il = 0; il < 2; ++il) {
+    for (unsigned int ij = 0; ij < 2; ++ij) {
+      fGenLQ.push_back(createGenLQ(fGenLeptons[il], fGenJets[ij], 0, 0)); 
+    }
+  }
+
 }
 
 
@@ -277,8 +295,6 @@ genLq* anaLq::createGenLQ(GenParticle *pL, Jet *pJ, GenParticle *pK, Jet *pI) {
     }
   }
 
-  //  cout << "Creating LQ from L = " << genIndex(pL) << " pT: " << pL->PT << ", J = " << pJ << " pT: " << pJ->PT << endl;
-  
   lq->tm = (tm?1:0); 
   lq->q = pL->Charge;
   lq->pL = pL; 
@@ -307,7 +323,9 @@ genLq* anaLq::createGenLQ(GenParticle *pL, Jet *pJ, GenParticle *pK, Jet *pI) {
     lq->p4I.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
   }
 
-  //  cout << "mass = " << lq->p4LJ.M() << " tm = " << tm << endl;
+  if (0) cout << "mass = " << lq->p4LJ.M() << " tm = " << tm 
+	      << " lepton: " << genIndex(pL) << " jet: " << pJ
+	      << endl;
   return lq;
 }
 
@@ -1009,6 +1027,9 @@ void anaLq::fillRedTreeData() {
   }
 
   fRtd.nrec = fLQ.size(); 
+  fRtd.st     = fST; 
+  fRtd.mll    = fMll; 
+  fRtd.mljmin = fMljMin; 
 }
 
 
@@ -1127,6 +1148,8 @@ void anaLq::genLQProducts(GenParticle *lq) {
   }
 
   fTrueLQ.push_back(gen);
+
+  if (0) cout << "Truth LQ lepton = " << genIndex(l) << " quark = " << genIndex(q) << " jet = " << j << endl;
 }
 
 
