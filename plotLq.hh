@@ -29,8 +29,9 @@ public :
   virtual void   loopFunction3(); 
   virtual void   loopFunction4(); 
   
-  void           optimizePairCuts(std::string dir, std::string sg, std::string bg, 
-				  double lumi = 20., int nevts = -1); 
+  void           optimizeCuts(std::string dir, std::string sg, std::string bg, 
+			      double lumi = 20., int nevts = -1); 
+  void           displayOptimization(std::string file, std::string tree); 
 
 
 private: 

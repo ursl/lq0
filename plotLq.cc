@@ -392,7 +392,13 @@ void plotLq::overlayAll() {
 }
 
 // ----------------------------------------------------------------------
-void plotLq::optimizePairCuts(string dir, string sg, string bg, double lumi, int nevts) {
+void plotLq::displayOptimization(string file, string tree) {
+
+
+}
+
+// ----------------------------------------------------------------------
+void plotLq::optimizeCuts(string dir, string sg, string bg, double lumi, int nevts) {
 
   if (!dir.compare("pair")) {
     fPair = true;
