@@ -1,0 +1,55 @@
+#!//usr/bin/perl
+
+
+# ----------------------------------------------------------------------
+# Usage: ./runDelphes -D /STORE/LQ/s_first_down/Events/
+# ----------------------------------------------------------------------
+
+use Getopt::Std;
+getopts('dD:');
+
+my $pfile = "tag_1_pythia_events";
+my $dfile = "tag_1_delphes_events";
+
+@subdirs = &readDirs($opt_D); 
+
+for ($i = 0; $i <= $#subdirs; $i++) {
+    print "runJob($opt_D/$subdirs[$i])\n";
+    &runJob("$opt_D/$subdirs[$i]");
+}
+
+exit(0);
+
+
+# ----------------------------------------------------------------------
+# rm -f tag_1_delphes_events.root
+# ../Delphes-3.1.2/DelphesSTDHEP ./delphes-ID.tcl tag_1_delphes_events.root ./tag_1_pythia_events.hep
+# ../Delphes-3.1.2/root2lhco tag_1_delphes_events.root tag_1_delphes_events.lhco
+# gzip tag_1_delphes_events.lhco
+sub runJob() {
+    ($dir) = @_; 
+    print "/bin/rm -f $dir/$dfile.root\n";
+    if (!$opt_d) {system("/bin/rm -f $dir/$dfile.root");}
+    print "gunzip $dir/$pfile.hep\n";
+    if (!$opt_d) {system("gunzip $dir/$pfile.hep");}
+    print "../Delphes-3.1.2/DelphesSTDHEP ./delphes-ID.tcl $dir/$dfile.root $dir/$pfile.hep\n";
+    if (!$opt_d) {system("../Delphes-3.1.2/DelphesSTDHEP ./delphes-ID.tcl $dir/$dfile.root $dir/$pfile.hep");}
+    print "../Delphes-3.1.2/root2lhco $dir/$dfile.root $dir/$dfile.lhco\n";
+    if (!$opt_d) {system("../Delphes-3.1.2/root2lhco $dir/$dfile.root $dir/$dfile.lhco");}
+    print "gzip $dir/$pfile.hep\n";
+    if (!$opt_d) {system("gzip $dir/$pfile.hep");}
+    print "gzip $dir/$dfile.lhco\n";
+    if (!$opt_d) {system("gzip $dir/$dfile.lhco");}
+}
+
+
+# ----------------------------------------------------------------------
+sub readDirs() {
+    ($dir) = @_; 
+   
+    opendir(D, "$dir") || die "Can't open directory $d: $!\n";
+    my @list = sort grep !/^\.\.?$/, readdir(D);
+    closedir(D);
+
+    return @list; 
+}
