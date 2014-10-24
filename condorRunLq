@@ -1,0 +1,8 @@
+#!/bin/tcsh
+
+echo $JOB
+cd /users/ursl/lq/lq0
+/bin/ls
+$JOB
+
+

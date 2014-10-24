@@ -1,0 +1,7 @@
+executable  =  condorRunLq
+universe    =  vanilla
+log         =  
+output      =  
+initialdir  =  /users/ursl/lq/lq0
+getenv      =  True
+queue
