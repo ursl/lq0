@@ -15,22 +15,23 @@ public :
   void           splitType(std::string stype, std::string &name, double &mass, double &lambda);
 
   // -- Main analysis methods 
-  virtual void   makeAll(int bitmask = 0);
-  virtual void   treeAnalysis(std::string cds1, std::string cds2, std::string cds3); 
-  virtual void   normOverlay(std::string f1, std::string f2); 
-
-  void           overlayAll();
+  void   makeAll(int bitmask = 0);
+  void   treeAnalysis(std::string cds1, std::string cds2, std::string cds3); 
+  void   normOverlay(std::string f1, std::string f2); 
+  void   genMass(std::string type = "lq_pair", int offset = 29, int nplot = 4);    
+  void   overlayAll();
   
-  virtual void   bookHist(std::string name); 
-  virtual void   setupTree(TTree *t); 
-  virtual void   loopOverTree(TTree *t, int ifunc, int nevts = -1, int nstart = 0); 
-  virtual void   loopFunction1(); 
-  virtual void   loopFunction2(); 
-  virtual void   loopFunction3(); 
-  virtual void   loopFunction4(); 
+  void   bookHist(std::string name); 
+  void   setupTree(TTree *t); 
+  void   loopOverTree(TTree *t, int ifunc, int nevts = -1, int nstart = 0); 
+  void   loopFunction1(); 
+  void   loopFunction2(); 
+  void   loopFunction3(); 
+  void   loopFunction4(); 
   
-  void           optimizeCuts(std::vector<std::string> samples, std::string dir, double lumi = 20., int nevts = -1); 
-  void           displayOptimization(std::string file, std::string tree); 
+  void  optimizeCuts(std::vector<std::string> samples, std::string dir, double lumi = 20., int nevts = -1); 
+  void  optAnalysis(int mode = 1, std::string filename = "opt.root", std::string treename = "opt_single");
+  void  displayOptimization(std::string file, std::string tree); 
 
 
 private: 

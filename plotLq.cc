@@ -192,7 +192,27 @@ void plotLq::bookHist(string name) {
 
 // ----------------------------------------------------------------------
 void plotLq::makeAll(int bitmask) {
-  //  if (bitmask & 0x1) treeAnalysis();
+  if (bitmask & 0x1) {
+    genMass();
+    c1->SaveAs("genMass-lq_pair.pdf");
+    genMass("lq_pair_down", 37, 3);
+    c1->SaveAs("genMass-lq_pair_down.pdf");
+    genMass("lq_pair_up", 37, 3);
+    c1->SaveAs("genMass-lq_pair_up.pdf");
+    genMass("lq_single_up", 37, 3);
+    c1->SaveAs("genMass-lq_single_up.pdf");
+    genMass("lq_single_down", 37, 3);
+    c1->SaveAs("genMass-lq_single_down.pdf");
+  }
+
+  if (bitmask & 0x2) {
+    vector<string> samples;
+    samples.push_back("lq_single_up_37");
+    samples.push_back("dy_el");
+    optimizeCuts(samples, "opt.root", 100.);
+  }
+      
+    
 }
 
 // ----------------------------------------------------------------------
@@ -398,41 +418,45 @@ void plotLq::displayOptimization(string file, string tree) {
 }
 
 // ----------------------------------------------------------------------
-void plotLq::optimizeCuts(vector<string> samples, string dir, double lumi, int nevts) {
+void plotLq::optimizeCuts(vector<string> samples, string fname, double lumi, int nevts) {
 
-  static bool first(true); 
-  if (first) {
-    first = false; 
+  TFile *f(0); 
+  cout << "open file " << Form("%s/%s", 
+			       fDirectory.c_str(), fname.c_str()) << " RECREATE" << endl;
+  f = TFile::Open(Form("%s/%s", 
+		       fDirectory.c_str(), fname.c_str()), "RECREATE");     
 
-    // -- ST
-    static const double stArr[] = { 300.,  350., 400.,  500., 600., 700., 800., 900., 1000., 1100., 1200., 1300., 1400., 
-				    1500., 1700., 2000., 2200., 2500., 3000.
-    };
-    vector<double> stCuts(stArr, stArr + sizeof(stArr)/sizeof(stArr[0]));
 
-    // -- m(l,l)
-    static const double mllArr[] = {100., 150., 200., 250., 300., 250., 400., 450., 500., 600., 700., 800., 900., 
-				    1000., 1200., 1500., 2000.
-    };
-    vector<double> mllCuts(mllArr, mllArr + sizeof(mllArr)/sizeof(mllArr[0]));
-
-    // -- m(l,j)
-    static const double mljArr[] = {100., 150., 200., 250., 300., 350., 400., 450., 500., 550., 600., 650., 700., 750., 
-				    800., 850., 900., 950., 1000., 1100., 1200.
-    };
-    vector<double> mljCuts(mljArr, mljArr + sizeof(mljArr)/sizeof(mljArr[0]));
-
-    for (unsigned int i = 0; i < stCuts.size(); ++i) {
-      for (unsigned int j = 0; j < mljCuts.size(); ++j) {
-	for (unsigned int k = 0; k < mllCuts.size(); ++k) {
-	  selpoint s; 
-	  s.fLargerThan.push_back(make_pair(&fRtd.st, stCuts[i])); 
-	  s.fLargerThan.push_back(make_pair(&fRtd.mljmin, mljCuts[j])); 
-	  s.fLargerThan.push_back(make_pair(&fRtd.mll, mllCuts[k])); 
-	  fSelPoints.push_back(s); 
-	}
+  // -- ST
+  static const double stArr[] = { 500., 700., 1000., 1200., 1400., 1700., 2200., 2500., 3000.
+  };
+  vector<double> stCuts(stArr, stArr + sizeof(stArr)/sizeof(stArr[0]));
+  
+  // -- m(l,l)
+  static const double mllArr[] = {100., 200., 300., 400., 500., 600., 700., 800., 900., 1000., 1200., 1500., 2000.
+  };
+  vector<double> mllCuts(mllArr, mllArr + sizeof(mllArr)/sizeof(mllArr[0]));
+  
+  // -- m(l,j)
+  static const double mljArr[] = {100., 200., 300., 400., 500., 600., 700., 800., 900., 1000., 1100., 1200.
+  };
+  vector<double> mljCuts(mljArr, mljArr + sizeof(mljArr)/sizeof(mljArr[0]));
+  
+  for (unsigned int i = 0; i < stCuts.size(); ++i) {
+    for (unsigned int j = 0; j < mljCuts.size(); ++j) {
+      for (unsigned int k = 0; k < mllCuts.size(); ++k) {
+	selpoint s; 
+	s.fLargerThan.push_back(make_pair(&fRtd.st, stCuts[i])); 
+	s.fLargerThan.push_back(make_pair(&fRtd.mljmin, mljCuts[j])); 
+	s.fLargerThan.push_back(make_pair(&fRtd.mll, mllCuts[k])); 
+	fSelPoints.push_back(s); 
       }
     }
+  }
+
+  string dir("pair"); 
+  if (string::npos != samples[0].find("single")) {
+    dir = "single";
   }
 
   if (!dir.compare("pair")) {
@@ -440,7 +464,7 @@ void plotLq::optimizeCuts(vector<string> samples, string dir, double lumi, int n
   } else {
     fPair = false;
   }
-
+  
   // -- signal
   fCds = samples[0];
   fOptMode = 0; 
@@ -466,7 +490,7 @@ void plotLq::optimizeCuts(vector<string> samples, string dir, double lumi, int n
     loopOverTree(tb, 2, nevts); 
   }
 
-  fHistFile->cd();
+  f->cd();
   TTree *t = new TTree(Form("opt_%s", dir.c_str()), Form("opt_%s", dir.c_str()));
   double s, b, s0, b0; 
   double st, mll, mlj;
@@ -497,6 +521,65 @@ void plotLq::optimizeCuts(vector<string> samples, string dir, double lumi, int n
   }
 
   t->Write();
+  f->Close();
+}
+
+
+// ----------------------------------------------------------------------
+void plotLq::optAnalysis(int mode, string filename, string treename) {
+  TFile *f(0); 
+  if (filename.compare("")) {
+    f = TFile::Open(Form("%s/%s", fDirectory.c_str(), filename.c_str())); 
+  }
+  TTree *t = (TTree*)f->Get(treename.c_str()); 
+  if (0 == t) {
+    cout << "no tree with name " << treename << " found in file " << filename << endl;
+    return;
+  }
+
+  // -- setup tree
+  double ssb, sb, s, b, b1; 
+  double st, mll, mlj;
+  t->SetBranchAddress("ssb",   &ssb);
+  t->SetBranchAddress("s",     &s);
+  t->SetBranchAddress("b",     &b);
+  t->SetBranchAddress("st",    &st);
+  t->SetBranchAddress("mll",   &mll);
+  t->SetBranchAddress("mlj",   &mlj);
+
+  TH1D *hst = new TH1D("hst", "", 300, 0., 3001.);
+  TH1D *hmll = new TH1D("hmll", "", 400, 0., 2001.);
+  TH1D *hmlj = new TH1D("hmlj", "", 400, 0., 2000.);
+  
+  // -- loop over tree
+  int ibin(0);
+  int nentries = Int_t(t->GetEntries());
+  double fom(0.); 
+  for (int jentry = 0; jentry < nentries; jentry++) {
+    t->GetEntry(jentry);
+    if (1 == mode) fom = ssb;
+    if (fom > hst->GetBinContent(hst->FindBin(st))) {
+      hst->SetBinContent(hst->FindBin(st), fom); 
+    }
+
+    if (fom > hmll->GetBinContent(hst->FindBin(mll))) {
+      hmll->SetBinContent(hmll->FindBin(mll), fom); 
+    }
+
+    if (fom > hmlj->GetBinContent(hst->FindBin(mlj))) {
+      hmlj->SetBinContent(hmlj->FindBin(mlj), fom); 
+    }
+  }
+
+  zone(2,2);
+  hst->Draw();
+  c0->cd(2);
+  hmll->Draw();
+  c0->cd(3);
+  hmlj->Draw();
+  c0->SaveAs(Form("%s/opt-%d.pdf", fDirectory.c_str(), mode)); 
+    
+
 }
 
 
@@ -881,7 +964,28 @@ void plotLq::loadFiles(string afiles) {
       ds->fSize = 0.5; 
       ds->fWidth = 1.0; 
       fDS.insert(make_pair(sname, ds)); 
-      cout << "  inserted into fDS" << endl;
+    }
+
+    if (string::npos != sname.find("ttbarjj")) {
+      dataset *ds = new dataset(); 
+      sdecay = "ttbar#rightarrow jj";
+      ds->fColor = kMagenta; 
+      ds->fLcolor = kMagenta; 
+      ds->fFcolor = kMagenta; 
+      ds->fSymbol = 26; 
+
+      ds->fF      = pF; 
+      ds->fXsec   = atof(sxsec.c_str());          // [xsec] = pb
+      ds->fBf     = 1.;
+      ds->fMass   = -1.;
+      ds->fLambda = -1.;
+      ds->fLumi   = nevt/ds->fXsec/ds->fBf/1000.; // [lumi] = 1/fb
+      //      ds->fName   = "MadGraph " + sdecay; 
+      ds->fName   = sdecay; 
+      ds->fFillStyle = 3365; 
+      ds->fSize = 0.5; 
+      ds->fWidth = 1.0; 
+      fDS.insert(make_pair(sname, ds)); 
     }
 
 
@@ -926,3 +1030,59 @@ void plotLq::loadFiles(string afiles) {
 }
 
 
+// ----------------------------------------------------------------------
+void plotLq::genMass(string type, int offset, int nplot) {
+  makeCanvas(1); 
+  c1->Clear();
+
+  newLegend(0.2, 0.3, 0.6, 0.8);
+
+  string dir = "pair";
+  if (string::npos != type.find("single")) {
+    dir = "single"; 
+  }
+  string hname = Form("%s/m", dir.c_str());
+
+  vector<string> ds; 
+  for (int i = 0; i < nplot; ++i) {
+    ds.push_back(Form("%s_%d", type.c_str(), offset+i)); 
+  }
+//   ds.push_back(Form("lq_%s_%d", type.c_str(), offset+i)); 
+//   ds.push_back(Form("lq_%s_%d", type.c_str(), offset)); 
+//   ds.push_back(Form("lq_%s_%d", type.c_str(), offset)); 
+
+  
+  TH1D *h(0); 
+  for (unsigned int i = 0; i < ds.size(); ++i) {
+    cout << ds[i] << " mass = " << fDS[ds[i]]->fMass << "GeV, lambda = " << fDS[ds[i]]->fLambda << endl;
+    h = fDS[ds[i]]->getHist(hname);
+    if (0 == i) setHist(h, kBlack); 
+    if (1 == i) setHist(h, kBlue); 
+    if (2 == i) setHist(h, kMagenta); 
+    if (3 == i) setHist(h, kRed); 
+    if (0 == i) {
+      h->SetMaximum(2.*h->GetMaximum());
+      h->DrawCopy();
+    } else {
+      h->DrawCopy("same");
+    }
+    legg->AddEntry(h, Form("m = %4.0f, #lambda = %3.2f", fDS[ds[i]]->fMass, fDS[ds[i]]->fLambda), "l");
+  }
+
+  legg->Draw();
+	      
+//   TH1D *h1 = fDS[Form("lq_%s_30", type.c_str())]->getHist(hname);
+//   setHist(h1, kBlue); 
+//   h1->Draw("same");
+//   legg->Add(h0, Form("m = %4.0f, #Lambda = %3.2f", fDS[Form("lq_%s_30", type.c_str())]->fMass, fDS[Form("lq_%s_30", type.c_str())]->fLambda)
+
+//   TH1D *h2 = fDS[Form("lq_%s_31", type.c_str())]->getHist(hname);
+//   setHist(h2, kMagenta); 
+//   h2->Draw("same");
+
+//   TH1D *h3 = fDS[Form("lq_%s_32", type.c_str())]->getHist(hname);
+//   setHist(h3, kRed); 
+//   h3->DrawCopy("same");
+
+	    
+}
