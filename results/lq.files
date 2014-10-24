@@ -1,19 +1,32 @@
-# name,m(LQ),lambda     xsec in pb
-type=lq01_pair,500,1   xsec=5.95749446160207183E-002  file=results/lq01_pair.root
-#type=lq_pair_02,500,2   xsec=7.28309367680646524E-002  file=results/lq_pair_02.root
-#type=lq_pair_03,500,3   xsec=0.13333105078991217       file=results/lq_pair_03.root
-#type=lq_pair_04,500,0.3 xsec=5.89097600880104377E-002  file=results/lq_pair_04.root
-#									      
-#type=lq_pair_05,700,1   xsec=5.26160599529681625E-003  file=results/lq_pair_05.root
-#type=lq_pair_06,700,2   xsec=6.34707342839731584E-003  file=results/lq_pair_06.root
-#type=lq_pair_07,700,3   xsec=1.13372942979995533E-002  file=results/lq_pair_07.root
-#type=lq_pair_08,700,0.3 xsec=5.19425296410336822E-003  file=results/lq_pair_08.root
+# -- second 
+type=lq_pair_29,1400,1.0      xsec=5.42269565350451263E-005  file=store/lq_pair_29.root
+type=lq_pair_30,1400,2.0      xsec=9.71906758428732714E-004  file=store/lq_pair_30.root
+type=lq_pair_31,1400,3.0      xsec=4.11263045839628093E-003  file=store/lq_pair_31.root
+type=lq_pair_32,1400,0.3      xsec=4.55064751090521381E-006  file=store/lq_pair_32.root
 #
-type=lq01_single,500,1   xsec=5.91662664919526335E-002 file=results/lq01_single.root
-#type=lq_single_02,500,2   xsec=0.27582803628029551      file=results/lq_single_02.root
-#type=lq_single_03,500,3   xsec=0.71143247463064618      file=results/lq_single_03.root
-#type=lq_single_04,500,0.3 xsec=5.23365620230081211E-003 file=results/lq_single_04.root
+type=lq_single_29,1400,1.0    xsec=6.41788986309529562E-006 file=store/lq_single_29.root
+type=lq_single_30,1400,2.0    xsec=8.18606106310113506E-006 file=store/lq_single_30.root
+type=lq_single_31,1400,3.0    xsec=1.51542226679954152E-005 file=store/lq_single_31.root
+type=lq_single_32,1400,0.3    xsec=6.20724310130320223E-006 file=store/lq_single_32.root
+# -- first down
+type=lq_pair_down_37,1400,0.30      xsec=6.1836662224961752E-006  file=store/lq_pair_down_37.root
+type=lq_pair_down_38,1400,0.03      xsec=6.3280474826979402E-006  file=store/lq_pair_down_38.root
+type=lq_pair_down_39,1400,0.50      xsec=6.1106338514005319E-006  file=store/lq_pair_down_39.root
 #
+type=lq_single_down_37,1400,0.30      xsec=1.3216925944985764E-004  file=store/lq_single_down_37.root
+type=lq_single_down_38,1400,0.03      xsec=5.6038632192981019E-007  file=store/lq_single_down_38.root
+type=lq_single_down_39,1400,0.50      xsec=7.4852497243004781E-004  file=store/lq_single_down_42.root
+# -- first up
+type=lq_pair_up_37,1400,0.30      xsec=5.6278051215946764E-006  file=store/lq_pair_up_37.root
+type=lq_pair_up_38,1400,0.03      xsec=6.3234417484954081E-006  file=store/lq_pair_up_38.root
+type=lq_pair_up_39,1400,0.50      xsec=5.2621262272975308E-006  file=store/lq_pair_up_39.root
+# 
+type=lq_single_up_37,1400,0.30      xsec=2.8454353506987648E-004  file=store/lq_single_up_37.root
+type=lq_single_up_38,1400,0.03      xsec=1.5375158025996238E-006  file=store/lq_single_up_38.root
+type=lq_single_up_39,1400,0.50      xsec=1.4479983209991967E-003  file=store/lq_single_up_39.root
 # -- background
-#type=dy_pair,-1,-1      xsec=211.0   file=results/dy_pair.root
-#type=dy_single,-1,-1    xsec=211.0   file=results/dy_single.root
+type=dy,-1,-1        xsec=35.9   file=store/dy.root
+type=ttbarjj,-1,-1   xsec=16.9   file=store/ttbarjj_a.root
+#
+type=dy_el,-1,-1        xsec=35.9   file=store/dy_el.root
+type=ttbarjj_el,-1,-1   xsec=16.9   file=store/ttbarjj_a_el.root
