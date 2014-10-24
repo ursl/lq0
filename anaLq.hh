@@ -70,11 +70,13 @@ public:
   // -- reco-level analysis
   void leptonSelection();
   double muonIso(Muon *m);
+  double electronIso(Electron *e);
   void jetSelection();
   double jetMuonSeparation(Jet *j);
   void preselection();
   void lqlqSelection();
   void lqSelection();
+  int  truthMatching(lq *); 
 
   void candAnalysis();
 
@@ -134,7 +136,8 @@ public:
   int         TYPE; // 1 = single LQ production, 2 = LQ pair production
   int         CHANNEL; // 11 = electron; 13 = muon
 
-  double      MUISODELTAR; 
+  double      MUISODELTAR, ELISODELTAR; 
+  double      MUISO, ELISO; 
   double      L0PT, L1PT;
   double      J0PT, J1PT;
 

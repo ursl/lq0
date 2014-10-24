@@ -74,6 +74,10 @@ void anaLq::startAnalysis() {
        << endl;
 
   MUISODELTAR = 0.3;
+  ELISODELTAR = 0.3;
+
+  MUISO = 0.1; 
+  ELISO = 0.1;
 
   L0PT = 45.; 
   L1PT = 45.; 
@@ -121,7 +125,6 @@ void anaLq::eventProcessing() {
 
 
   // -- single production analysis
-  TYPE = 1;
   fTypeName = "single";
   genSingleAnalysis();
   preselection();
@@ -132,7 +135,6 @@ void anaLq::eventProcessing() {
   fillHist(); 
 
   // -- pair production analysis
-  TYPE = 2; 
   fTypeName = "pair";
   genPairAnalysis();
   preselection(); 
@@ -183,8 +185,31 @@ void anaLq::truthAnalysis() {
     }
   }
 
+  // -- Fill true LQ into fTrueLQ
   if (pGen0) genLQProducts(pGen0);
   if (pGen1) genLQProducts(pGen1);
+
+  // -- basic histogramming
+  if (pGen1) {
+    fpHistFile->cd("pair");
+  } else {
+    fpHistFile->cd("single");
+  }
+
+  for (unsigned int i = 0; i < fTrueLQ.size(); ++i) {
+    ((TH1D*)gDirectory->Get("pt"))->Fill(fTrueLQ[i]->p4LQ.Pt()); 
+    ((TH1D*)gDirectory->Get("phi"))->Fill(fTrueLQ[i]->p4LQ.Phi()); 
+    ((TH1D*)gDirectory->Get("eta"))->Fill(fTrueLQ[i]->p4LQ.Eta()); 
+    ((TH1D*)gDirectory->Get("m"))->Fill(fTrueLQ[i]->p4LQ.M()); 
+
+    if (fTrueLQ[i]->p4LJ.Pt() < 9990.) {
+      ((TH1D*)gDirectory->Get("ljpt"))->Fill(fTrueLQ[i]->p4LJ.Pt()); 
+      ((TH1D*)gDirectory->Get("ljm"))->Fill(fTrueLQ[i]->p4LJ.M()); 
+    }
+
+  }
+  
+  fpHistFile->cd();
 }
 
 
@@ -316,14 +341,14 @@ genLq* anaLq::createGenLQ(GenParticle *pL, Jet *pJ, GenParticle *pK, Jet *pI) {
   if (pK) {
     lq->p4K.SetPtEtaPhiM(pK->PT, pK->Eta, pK->Phi, pK->Mass);
   } else {
-    lq->p4K.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+    lq->p4K.SetPtEtaPhiM(9999., 99999., 9999., 9999.);
   }
 
   lq->pI = pI;
   if (pI) {
     lq->p4I.SetPtEtaPhiM(pI->PT, pI->Eta, pI->Phi, pI->Mass);
   } else {
-    lq->p4I.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+    lq->p4I.SetPtEtaPhiM(9999., 9999., 9999., 9999.);
   }
 
   if (0) cout << "mass = " << lq->p4LJ.M() << " tm = " << tm 
@@ -406,8 +431,8 @@ void anaLq::leptonSelection() {
     for (int i = 0; i < fbMuons->GetEntries(); ++i) {
       pM = getMuon(i); 
       if (pM->PT < L1PT) continue;
-      if (TMath::Abs(pM->Eta) > 2.1) continue;
-      if (muonIso(pM) > 0.1) continue;
+      if (TMath::Abs(pM->Eta) > 2.4) continue;
+      if (muonIso(pM) > MUISO) continue;
       lepton *l = new lepton;
       m4.SetPtEtaPhiM(pM->PT, pM->Eta, pM->Phi, MMUON); 
       l->p4        = m4;
@@ -416,16 +441,30 @@ void anaLq::leptonSelection() {
       l->pElectron = 0; 
       fLeptons.push_back(l);
     }      
-
-    if (fLeptons.size() > 1) {
-      sort(fLeptons.begin(), fLeptons.end(), sortPtLepton);
-    }
-
   }
 
   if (11 == CHANNEL) {
-    cout << "implement electron selection!!" << endl;
-    exit(1); 
+    Electron *pE(0); 
+    TLorentzVector e4; 
+    for (int i = 0; i < fbElectrons->GetEntries(); ++i) {
+      pE = getElectron(i); 
+      if (pE->PT < L1PT) continue;
+      if (TMath::Abs(pE->Eta) > 2.5) continue;
+      if (electronIso(pE) > ELISO) continue;
+      lepton *l = new lepton;
+      e4.SetPtEtaPhiM(pE->PT, pE->Eta, pE->Phi, MELECTRON); 
+      l->p4        = e4;
+      l->q         = pE->Charge;
+      l->pMuon     = 0;
+      l->pElectron = pE; 
+      fLeptons.push_back(l);
+    }      
+    
+
+  }
+
+  if (fLeptons.size() > 1) {
+    sort(fLeptons.begin(), fLeptons.end(), sortPtLepton);
   }
 
 
@@ -464,11 +503,11 @@ void anaLq::preselection() {
   fGoodEvent   = false; 
 
   fPreselected = false;
-  fST = -9999.; 
+  fST = 9999.; 
 
-  if (1 == TYPE) {
+  if ("single" == fTypeName) {
     if (fLeptons.size() < 2) return;
-    if (fJets.size() < 2)    return;
+    if (fJets.size() < 1)    return;
 
     if (fLeptons[0]->p4.Pt() < L0PT) return;
     if (fJets[0]->p4.Pt() < J0PT)    return;
@@ -479,14 +518,14 @@ void anaLq::preselection() {
     ll4 = fLeptons[0]->p4 + fLeptons[1]->p4;
     if (ll4.M() < 50.)  return;
 
-    fST = fLeptons[0]->p4.Pt() + fLeptons[1]->p4.Pt() + fJets[0]->p4.Pt() + fJets[1]->p4.Pt();
+    fST = fLeptons[0]->p4.Pt() + fLeptons[1]->p4.Pt() + fJets[0]->p4.Pt();
     if (fST < 0) return;
 
     fPreselected = true;
     return;
   }
 
-  if (2 == TYPE) {
+  if ("pair" == fTypeName) {
     if (fLeptons.size() < 2) return;
     if (fJets.size() < 2)    return;
 
@@ -513,7 +552,6 @@ void anaLq::preselection() {
 // ----------------------------------------------------------------------
 // -- this is CMS' pair selection
 void anaLq::lqlqSelection() {
-
   // -- clear LQ vector
   for (unsigned int i = 0; i < fLQ.size(); ++i) delete fLQ[i];
   fLQ.clear();
@@ -554,6 +592,7 @@ void anaLq::lqlqSelection() {
   Lq->idxL = 0; 
   Lq->idxK = -1; 
   Lq->idxJ = iBest; 
+  Lq->tm   = truthMatching(Lq);
   fLQ.push_back(Lq); 
 
   Lq = new lq;
@@ -562,6 +601,7 @@ void anaLq::lqlqSelection() {
   Lq->idxL = 1; 
   Lq->idxK = -1; 
   Lq->idxJ = 1-iBest; 
+  Lq->tm   = truthMatching(Lq);
   fLQ.push_back(Lq); 
       
 }
@@ -573,18 +613,24 @@ void anaLq::lqSelection() {
   for (unsigned int i = 0; i < fLQ.size(); ++i) delete fLQ[i];
   fLQ.clear();
 
-  // FIXME this has to be improved!
-  lq *Lq(0); 
-  for (unsigned int i = 0; i < 2; ++i) {
-    TLorentzVector lq0 = fLeptons[i]->p4 + fJets[i]->p4; 
-    Lq = new lq;
-    Lq->p4   = lq0; 
-    Lq->q    = fLeptons[i]->q; 
-    Lq->idxL = i; 
-    Lq->idxK = 1-i;
-    Lq->idxJ = i;
-    fLQ.push_back(Lq); 
+
+  int iBest(-1);
+  TLorentzVector lq0 = fLeptons[0]->p4 + fJets[0]->p4; 
+  TLorentzVector lq1 = fLeptons[1]->p4 + fJets[0]->p4; 
+  if (lq0.M() > lq1.M()) {
+    iBest = 0; 
+  } else {
+    iBest = 1; 
   }
+
+  lq0 = fLeptons[iBest]->p4 + fJets[0]->p4; 
+  lq *Lq = new lq;
+  Lq->p4   = lq0; 
+  Lq->q    = fLeptons[iBest]->q; 
+  Lq->idxL = iBest; 
+  Lq->idxK = 1-iBest;
+  Lq->idxJ = 0;
+  fLQ.push_back(Lq); 
 }
 
 
@@ -672,17 +718,13 @@ void anaLq::bookHist() {
   setupReducedTree(t);
 
   // -- Histograms
-  h1 = new TH1D("pt",  "lq gen pt", 40, 0., 400.); 
+  h1 = new TH1D("pt",  "lq gen pt", 150, 0., 1500.); 
   h1 = new TH1D("phi", "lq gen phi", 40, -3.15, 3.15); 
-  h1 = new TH1D("m",   "lq gen m", 22, 400., 1500.); 
+  h1 = new TH1D("eta", "lq gen eta", 40, -5., 5.); 
+  h1 = new TH1D("m",   "lq gen m", 100, 0., 2000.); 
 
-  h1 = new TH1D("lqpt",  "l+q gen pt", 40, 0., 400); 
-  h1 = new TH1D("lqphi", "l+q gen phi", 40, -3.15, 3.15); 
-  h1 = new TH1D("lqm",   "l+q gen m", 22, 400., 1500.); 
-
-  h1 = new TH1D("ljpt",  "l+j gen pt", 40, 0., 400); 
-  h1 = new TH1D("ljphi", "l+j gen phi", 40, -3.15, 3.15); 
-  h1 = new TH1D("ljm",   "l+j gen m", 40, 400., 1500.); 
+  h1 = new TH1D("ljpt",  "l+j gen pt", 150, 0., 1500); 
+  h1 = new TH1D("ljm",   "l+j gen m", 100, 0., 2000.); 
 
 
   vector<string> levels; 
@@ -690,9 +732,7 @@ void anaLq::bookHist() {
   levels.push_back("sel"); 
 
   for (unsigned int i = 0; i < levels.size(); ++i) {
-  
     // -- histograms as in plotLq:
-
     // -- m
     fHists.insert(make_pair(Form("%s_m", levels[i].c_str()), 
 			    new TH1D(Form("%s_m", levels[i].c_str()), 
@@ -958,7 +998,7 @@ void anaLq::fillRedTreeData() {
       fRtd.gjeta[i] = fGenLQ[i]->p4J.Eta(); 
       fRtd.gjphi[i] = fGenLQ[i]->p4J.Phi(); 
     } else {
-      fRtd.gmlj[i]  = -9999.;
+      fRtd.gmlj[i]  = 9999.;
     }
 
     if (fGenLQ[i]->pK) {
@@ -966,9 +1006,9 @@ void anaLq::fillRedTreeData() {
       fRtd.gketa[i] = fGenLQ[i]->p4K.Eta(); 
       fRtd.gkphi[i] = fGenLQ[i]->p4K.Phi(); 
     } else {
-      fRtd.gkpt[i]  = -9999.;
-      fRtd.gketa[i] = -9999.;
-      fRtd.gkphi[i] = -9999.;
+      fRtd.gkpt[i]  = 9999.;
+      fRtd.gketa[i] = 9999.;
+      fRtd.gkphi[i] = 9999.;
     }
 
     if (fGenLQ[i]->pI) {
@@ -976,9 +1016,9 @@ void anaLq::fillRedTreeData() {
       fRtd.gieta[i] = fGenLQ[i]->p4I.Eta(); 
       fRtd.giphi[i] = fGenLQ[i]->p4I.Phi(); 
     } else {
-      fRtd.gipt[i]  = -9999.;
-      fRtd.gieta[i] = -9999.;
-      fRtd.giphi[i] = -9999.;
+      fRtd.gipt[i]  = 9999.;
+      fRtd.gieta[i] = 9999.;
+      fRtd.giphi[i] = 9999.;
     }
 
   }
@@ -1022,9 +1062,9 @@ void anaLq::fillRedTreeData() {
       fRtd.keta[i]  = fLeptons[fLQ[i]->idxK]->p4.Phi();
       fRtd.kphi[i]  = fLeptons[fLQ[i]->idxK]->p4.Eta();
     } else {
-      fRtd.kpt[i]   = -9999.;
-      fRtd.keta[i]  = -9999.;
-      fRtd.kphi[i]  = -9999.;
+      fRtd.kpt[i]   = 9999.;
+      fRtd.keta[i]  = 9999.;
+      fRtd.kphi[i]  = 9999.;
     }
   }
 
@@ -1106,7 +1146,7 @@ void anaLq::genLQProducts(GenParticle *lq) {
   // -- create and fill struct
   genLq *gen = new genLq(); 
   gen->q  = l->Charge;
-  //  gen->tm = 1; // not really applicable for TRUTH candidates!
+  gen->tm = 2; 
 
   gen->pLQ = lq;
   gen->p4LQ.SetPtEtaPhiM(lq->PT, lq->Eta, lq->Phi, lq->Mass);
@@ -1125,8 +1165,8 @@ void anaLq::genLQProducts(GenParticle *lq) {
     gen->p4LJ = lj; 
   } else {
     gen->pJ = 0;
-    gen->p4J.SetPtEtaPhiM(-9999., -9999., -9999., -9999.); 
-    gen->p4LJ.SetPtEtaPhiM(-9999., -9999., -9999., -9999.); 
+    gen->p4J.SetPtEtaPhiM(9999., 9999., 9999., 9999.); 
+    gen->p4LJ.SetPtEtaPhiM(9999., 9999., 9999., 9999.); 
   }
 
   // -- find POSSIBLE gen-level bachelor lepton K to LQ
@@ -1146,7 +1186,7 @@ void anaLq::genLQProducts(GenParticle *lq) {
     gen->p4K.SetPtEtaPhiM(pGen->PT, pGen->Eta, pGen->Phi, pGen->Mass);
   } else {
     gen->pK = 0;
-    gen->p4K.SetPtEtaPhiM(-9999., -9999., -9999., -9999.); 
+    gen->p4K.SetPtEtaPhiM(9999., 9999., 9999., 9999.); 
   }
 
   fTrueLQ.push_back(gen);
@@ -1237,7 +1277,7 @@ void anaLq::genBgPair() {
   fake0->p4L.SetPtEtaPhiM(pL0->PT, pL0->Eta, pL0->Phi, pL0->Mass);
 
   fake0->pK = 0; 
-  fake0->p4K.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  fake0->p4K.SetPtEtaPhiM(9999., 9999., 9999., 9999.);
 
   genLq *fake1 = new genLq(); 
   fake1->q = pL1->Charge;
@@ -1246,7 +1286,7 @@ void anaLq::genBgPair() {
   fake1->p4L.SetPtEtaPhiM(pL1->PT, pL1->Eta, pL1->Phi, pL1->Mass);
 
   fake1->pK = 0; 
-  fake1->p4K.SetPtEtaPhiM(-9999., -9999., -9999., -9999.);
+  fake1->p4K.SetPtEtaPhiM(9999., 9999., 9999., 9999.);
 
   if (mdiff0 < mdiff1) {
     p4Lq0 = p4L0 + p4J0;
@@ -1392,6 +1432,27 @@ double anaLq::muonIso(Muon *m) {
   return iso;
 }
 
+// ----------------------------------------------------------------------
+double anaLq::electronIso(Electron *e) {
+
+  double iso(0.);
+  Track *pT(0);
+  TLorentzVector e4, t4; 
+  e4.SetPtEtaPhiM(e->PT, e->Eta, e->Phi, MELECTRON); 
+  for (int i = 0; i < fbTracks->GetEntries(); ++i) {
+    pT = getTrack(i); 
+    t4.SetPtEtaPhiM(pT->PT, pT->Eta, pT->Phi, MPION); 
+    if (pT->Particle == e->Particle) {
+      continue;
+    }
+    if (e4.DeltaR(t4) < ELISODELTAR) {
+      iso += t4.Pt();
+    }
+  }
+  iso /= e->PT; 
+  return iso;
+}
+
 
 // ----------------------------------------------------------------------
 double anaLq::jetMuonSeparation(Jet *j) {
@@ -1412,4 +1473,22 @@ double anaLq::jetMuonSeparation(Jet *j) {
   }
 
   return sepMin;
+}
+
+
+// ----------------------------------------------------------------------
+int anaLq::truthMatching(lq *Lq) {
+  
+  TLorentzVector l = fLeptons[Lq->idxL]->p4;
+  TLorentzVector j = fJets[Lq->idxJ]->p4;
+
+  for (unsigned int i = 0; i < fTrueLQ.size(); ++i) {
+    TLorentzVector gl = fTrueLQ[i]->p4L;
+    TLorentzVector gj = fTrueLQ[i]->p4Q;
+    if (l.DeltaR(gl) < 0.3 && j.DeltaR(gj) < 0.3) {
+      // cout << "truthmatched to true LQ " << i << endl;
+      return i;
+    }
+  }
+  return -1;
 }
