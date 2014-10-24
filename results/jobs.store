@@ -1,0 +1,72 @@
+# -- define the command to run and the delphes output file
+$runCommand = "bin/runLq"; 
+$dfile      = "tag_1_delphes_events.root";
+
+# -- keep in the order given below
+tie %jobs, "Tie::IxHash";
+
+# -- define all the jobs
+%jobs = ();
+
+# ---------
+# -- SIGNAL
+# ---------
+
+my @sjobs = ("01", "02", "03", "04", "13", "14", "15", "29", "30", "31", "32");
+#my @sjobs = ("01");
+
+# -- pair LQ 2nd generation
+#foreach (@sjobs) {
+foreach (1..32) {
+  $in = sprintf("%02d", $_);
+  $jobs{"sg_pair_LQ_run$in"} = "-C \"CHANNEL=13\" -o  $dir/lq_pair_${in}.root -f /STORE/LQ/pair/Events/run_$in/$dfile |& tee $dir/lq_pair_${in}.log"; 
+}
+
+# -- single LQ 2nd generation
+#foreach (@sjobs) {
+foreach (1..32) {
+  $in = sprintf("%02d", $_);
+  $jobs{"sg_single_LQ_run$in"} = "-C \"CHANNEL=13\" -o $dir/lq_single_${in}.root -f /STORE/LQ/single/Events/run_$in/$dfile |& tee $dir/lq_single_${in}.log"; 
+}
+
+# -- single LQ 1st generation I
+#foreach (@sjobs) {
+foreach (1..51) {
+  $in = sprintf("%02d", $_);
+  $jobs{"sg_single_down_LQ_run$in"} = "-C \"CHANNEL=11\" -o $dir/lq_single_down_${in}.root -f /STORE/LQ/s_first_down/Events/run_$in/$dfile |& tee $dir/lq_single_down_${in}.log"; 
+}
+
+# -- single LQ 1st generation II
+#foreach (@sjobs) {
+foreach (1..51) {
+  $in = sprintf("%02d", $_);
+  $jobs{"sg_single_up_LQ_run$in"} = "-C \"CHANNEL=11\ -o $dir/lq_single_up_${in}.root -f /STORE/LQ/s_first_up/Events/run_$in/$dfile |& tee $dir/lq_single_up_${in}.log"; 
+}
+
+# -- pair LQ 1st generation I
+#foreach (@sjobs) {
+foreach (1..51) {
+  $in = sprintf("%02d", $_);
+  $jobs{"sg_pair_down_LQ_run$in"} = "-C \"CHANNEL=11\" -o $dir/lq_pair_down_${in}.root -f /STORE/LQ/pair_first_down/Events/run_$in/$dfile |& tee $dir/lq_pair_down_${in}.log"; 
+}
+
+# -- pair LQ 1st generation II
+#foreach (@sjobs) {
+foreach (1..51) {
+  $in = sprintf("%02d", $_);
+  $jobs{"sg_pair_up_LQ_run$in"} = "-C \"CHANNEL=11\ -o $dir/lq_pair_up_${in}.root -f /STORE/LQ/pair_first_up/Events/run_$in/$dfile |& tee $dir/lq_pair_up_${in}.log"; 
+}
+
+
+
+# -------------
+# -- background
+# -------------
+$jobs{"bg_mu_Drell-Yan"}   = "-C \"NAME=dy,CHANNEL=13\" -o $dir/dy.root -c chains/cDY_3jets |& tee $dir/dy.log";
+$jobs{"bg_mu_ttbarjj_a"}   = "-C \"NAME=ttbarjj_a,CHANNEL=13\" -o $dir/ttbarjj_a.root -c chains/cttbarjj_a |& tee $dir/ttbarjj_a.log";
+$jobs{"bg_mu_ttbarjj_b"}   = "-C \"NAME=ttbarjj_a,CHANNEL=13\" -o $dir/ttbarjj_b.root -c chains/cttbarjj_b |& tee $dir/ttbarjj_b.log";
+
+$jobs{"bg_el_Drell-Yan"}   = "-C \"NAME=dy,CHANNEL=11\" -o $dir/dy_el.root -c chains/cDY_3jets |& tee $dir/dy_el.log";
+$jobs{"bg_el_ttbarjj_a"}   = "-C \"NAME=ttbarjj_a,CHANNEL=11\" -o $dir/ttbarjj_a_el.root -c chains/cttbarjj_a |& tee $dir/ttbarjj_a_el.log";
+$jobs{"bg_el_ttbarjj_b"}   = "-C \"NAME=ttbarjj_a,CHANNEL=11\" -o $dir/ttbarjj_b_el.root -c chains/cttbarjj_b |& tee $dir/ttbarjj_b_el.log";
+

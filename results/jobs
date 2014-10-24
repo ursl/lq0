@@ -12,17 +12,31 @@ tie %jobs, "Tie::IxHash";
 # -- SIGNAL
 # ---------
 
+my @sjobs = ("01", "02", "03", "04", "29", "30", "31", "32");
+#my @sjobs = ("01");
+
 # -- pair LQ
-my $njobs = 4; # make this 32 if you want the full setup
-for ($i = 1; $i <= $njobs; $i++) {
-  $in = sprintf("%02d", $i);
-  $jobs{"sg pair LQ run$in"} = "-C \"NAME=lq_pair_${in},CHANNEL=13,TYPE=2\" -o $dir/lq_pair_${in}.root -f /STORE/LQ/pair/Events/run_$in/$dfile"; 
+foreach (@sjobs) {
+  $in = sprintf("%02d", $_);
+  $jobs{"sg_pair_LQ_run$in"} = "-C \"CHANNEL=13\" -o  $dir/lq_pair_${in}.root -f /STORE/LQ/pair/Events/run_$in/$dfile |& tee $dir/lq_pair_${in}.log"; 
 }
 
 # -- single LQ
-for ($i = 1; $i <= $njobs; $i++) {
-  $in = sprintf("%02d", $i);
-  $jobs{"sg single LQ run$in"} = "-C \"NAME=lq_single_${in},CHANNEL=13,TYPE=1\" -o $dir/lq_single_${in}.root -f /STORE/LQ/single/Events/run_$in/$dfile"; 
+foreach (@sjobs) {
+  $in = sprintf("%02d", $_);
+  $jobs{"sg_single_LQ_run$in"} = "-C \"CHANNEL=13\" -o $dir/lq_single_${in}.root -f /STORE/LQ/single/Events/run_$in/$dfile |& tee $dir/lq_single_${in}.log"; 
+}
+
+# -- single LQ 1st generation I
+foreach (@sjobs) {
+  $in = sprintf("%02d", $_);
+  $jobs{"sg_single_down_LQ_run$in"} = "-C \"CHANNEL=13\" -o $dir/lq_single_down_${in}.root -f /STORE/LQ/s_first_down/Events/run_$in/$dfile |& tee $dir/lq_single_down_${in}.log"; 
+}
+
+# -- single LQ 1st generation II
+foreach (@sjobs) {
+  $in = sprintf("%02d", $_);
+  $jobs{"sg_single_up_LQ_run$in"} = "-C \"CHANNEL=13\" -o $dir/lq_single_up_${in}.root -f /STORE/LQ/s_first_up/Events/run_$in/$dfile |& tee $dir/lq_single_up_${in}.log"; 
 }
 
 
@@ -30,7 +44,7 @@ for ($i = 1; $i <= $njobs; $i++) {
 # -------------
 # -- background
 # -------------
-$jobs{"bg pair Drell-Yan"}   = "-C \"NAME=dy_pair,CHANNEL=13,TYPE=2\" -o $dir/dy_pair.root -c chains/cDY_3jets";
-$jobs{"bg single Drell-Yan"} = "-C \"NAME=dy_single,CHANNEL=13,TYPE=1\" -o $dir/dy_single.root -c chains/cDY_3jets";
-
+$jobs{"bg_Drell-Yan"}   = "-C \"NAME=dy,CHANNEL=13\" -o $dir/dy.root -c chains/cDY_3jets |& tee $dir/dy.log";
+$jobs{"bg_ttbarjj_a"}   = "-C \"NAME=ttbarjj_a,CHANNEL=13\" -o $dir/ttbarjj_a.root -c chains/cttbarjj_a |& tee $dir/ttbarjj_a.log";
+$jobs{"bg_ttbarjj_b"}   = "-C \"NAME=ttbarjj_a,CHANNEL=13\" -o $dir/ttbarjj_b.root -c chains/cttbarjj_b |& tee $dir/ttbarjj_b.log";
 
