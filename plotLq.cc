@@ -398,7 +398,42 @@ void plotLq::displayOptimization(string file, string tree) {
 }
 
 // ----------------------------------------------------------------------
-void plotLq::optimizeCuts(string dir, string sg, string bg, double lumi, int nevts) {
+void plotLq::optimizeCuts(vector<string> samples, string dir, double lumi, int nevts) {
+
+  static bool first(true); 
+  if (first) {
+    first = false; 
+
+    // -- ST
+    static const double stArr[] = { 300.,  350., 400.,  500., 600., 700., 800., 900., 1000., 1100., 1200., 1300., 1400., 
+				    1500., 1700., 2000., 2200., 2500., 3000.
+    };
+    vector<double> stCuts(stArr, stArr + sizeof(stArr)/sizeof(stArr[0]));
+
+    // -- m(l,l)
+    static const double mllArr[] = {100., 150., 200., 250., 300., 250., 400., 450., 500., 600., 700., 800., 900., 
+				    1000., 1200., 1500., 2000.
+    };
+    vector<double> mllCuts(mllArr, mllArr + sizeof(mllArr)/sizeof(mllArr[0]));
+
+    // -- m(l,j)
+    static const double mljArr[] = {100., 150., 200., 250., 300., 350., 400., 450., 500., 550., 600., 650., 700., 750., 
+				    800., 850., 900., 950., 1000., 1100., 1200.
+    };
+    vector<double> mljCuts(mljArr, mljArr + sizeof(mljArr)/sizeof(mljArr[0]));
+
+    for (unsigned int i = 0; i < stCuts.size(); ++i) {
+      for (unsigned int j = 0; j < mljCuts.size(); ++j) {
+	for (unsigned int k = 0; k < mllCuts.size(); ++k) {
+	  selpoint s; 
+	  s.fLargerThan.push_back(make_pair(&fRtd.st, stCuts[i])); 
+	  s.fLargerThan.push_back(make_pair(&fRtd.mljmin, mljCuts[j])); 
+	  s.fLargerThan.push_back(make_pair(&fRtd.mll, mllCuts[k])); 
+	  fSelPoints.push_back(s); 
+	}
+      }
+    }
+  }
 
   if (!dir.compare("pair")) {
     fPair = true;
@@ -407,27 +442,29 @@ void plotLq::optimizeCuts(string dir, string sg, string bg, double lumi, int nev
   }
 
   // -- signal
-  fCds = sg; 
-  bookHist(sg); 
-  fOptMode = 1; 
+  fCds = samples[0];
+  fOptMode = 0; 
+  bookHist(fCds); 
   double nevtsScale(1.); 
-  TTree *ts = getTree(sg, dir); 
+  TTree *ts = getTree(fCds, dir); 
   if (nevts > -1) {
-    nevtsScale = fDS[sg]->fLumi*nevts/ts->GetEntries();
+    nevtsScale = fDS[fCds]->fLumi*nevts/ts->GetEntries();
   }
-  double sgScale = lumi/fDS[sg]->fLumi;
+  double sgScale = lumi/fDS[fCds]->fLumi;
   setupTree(ts); 
   loopOverTree(ts, 2, nevts); 
 
   // -- background
-  fCds = bg; 
-  bookHist(bg); 
-  fOptMode = 2; 
-  double bgScale = lumi/fDS[bg]->fLumi;
-  TTree *tb = getTree(bg, dir); 
-  setupTree(tb); 
-  loopOverTree(tb, 2, nevts); 
-
+  vector<double> bgScale; 
+  for (unsigned int i = 1; i < samples.size(); ++i) {
+    fCds = samples[i];
+    fOptMode = i; 
+    bookHist(fCds); 
+    bgScale.push_back(lumi/fDS[fCds]->fLumi);
+    TTree *tb = getTree(fCds, dir); 
+    setupTree(tb); 
+    loopOverTree(tb, 2, nevts); 
+  }
 
   fHistFile->cd();
   TTree *t = new TTree(Form("opt_%s", dir.c_str()), Form("opt_%s", dir.c_str()));
@@ -445,11 +482,12 @@ void plotLq::optimizeCuts(string dir, string sg, string bg, double lumi, int nev
   t->Branch("mll",  &mll,   "mll/D");
   t->Branch("mlj",  &mlj,   "mlj/D");
   
+  // FIXME this still has only ONE background!
   for (unsigned int i = 0; i < fSelPoints.size(); ++i) {
-    s0  = fSelPoints[i].fSgCnt;
-    b0  = fSelPoints[i].fBgCnt;
-    s   = sgScale * fSelPoints[i].fSgCnt;
-    b   = bgScale * fSelPoints[i].fBgCnt;
+    s0  = fSelPoints[i].fCnt[0];
+    b0  = fSelPoints[i].fCnt[1];
+    s   = sgScale * fSelPoints[i].fCnt[0];
+    b   = bgScale[0] * fSelPoints[i].fCnt[1];
     ssb = (s+b>0? s/TMath::Sqrt(s+b):0.);
     sb  = (b>0?   s/TMath::Sqrt(b)  :0.);
     st  = fSelPoints[i].fLargerThan[0].second;
@@ -646,45 +684,12 @@ void plotLq::loopFunction3() {
 
 // ----------------------------------------------------------------------
 void plotLq::loopFunction2() {
-  static bool first(true); 
-  if (first) {
-    first = false; 
 
-    static const double stArr[] = { 300.,  350., 400.,  500., 600., 700., 800., 900., 1000., 1100., 1200., 1300., 1400., 
-				    1500., 1700., 2000., 2200., 2500., 3000.
-    };
-    vector<double> stCuts(stArr, stArr + sizeof(stArr)/sizeof(stArr[0]));
-
-    static const double mllArr[] = {100., 150., 200., 250., 300., 250., 400., 450., 500., 600., 700., 800., 900., 
-				    1000., 1200., 1500., 2000.
-    };
-    vector<double> mllCuts(mllArr, mllArr + sizeof(mllArr)/sizeof(mllArr[0]));
-
-
-    static const double mljArr[] = {100., 150., 200., 250., 300., 350., 400., 450., 500., 550., 600., 650., 700., 750., 
-				    800., 850., 900., 950., 1000., 1100., 1200.
-    };
-    vector<double> mljCuts(mljArr, mljArr + sizeof(mljArr)/sizeof(mljArr[0]));
-
-    for (unsigned int i = 0; i < stCuts.size(); ++i) {
-      for (unsigned int j = 0; j < mljCuts.size(); ++j) {
-	for (unsigned int k = 0; k < mllCuts.size(); ++k) {
-	  selpoint s; 
-	  s.fLargerThan.push_back(make_pair(&fRtd.st, stCuts[i])); 
-	  s.fLargerThan.push_back(make_pair(&fRtd.mll, mllCuts[k])); 
-	  s.fLargerThan.push_back(make_pair(&fRtd.mljmin, mljCuts[j])); 
-	  fSelPoints.push_back(s); 
-	}
-      }
-    }
-  }
+  // -- add possible cand selection cuts that are not optimized
+  // .. HERE ..
 
   for (unsigned int i = 0; i < fSelPoints.size(); ++i) {
-    if (1 == fOptMode) {
-      fSelPoints[i].eval(true);
-    } else {
-      fSelPoints[i].eval(false);
-    }
+    fSelPoints[i].eval(fOptMode, 1.);
   }
 
 }
