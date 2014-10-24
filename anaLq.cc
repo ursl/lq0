@@ -116,8 +116,8 @@ void anaLq::eventProcessing() {
   genSelection(); 
 
   fTypeName = "lq";
-  genLqAnalysis(); 
-  fillHist();
+  //  genLqAnalysis(); 
+  //  fillHist();
 
   // -- rec-level inputs: leptons and jets
   leptonSelection();
@@ -194,17 +194,19 @@ void anaLq::truthAnalysis() {
   }
 
   // -- off-shell t-channel single LQ production
-  fDummy = 0; 
+  fOffShell = 0; 
   if (0 == pGen0) {
     GenParticle *p1(0), *p2(0); 
     for (int i = 0; i < fbParticles->GetEntries() - 1; ++i) {
       p1 = getParticle(i); 
       p2 = getParticle(i+1); 
       bool sameMother = (p1->M1 == p2->M1);
-      if (sameMother) {
+      bool quarkMother = (p1->M1 > -1?isQuark(getParticle(p1->M1)->PID): 0);
+      bool topMother = (p1->M1 > -1?TMath::Abs(getParticle(p1->M1)->PID) == 6: 0) ;
+      if (sameMother && quarkMother && !topMother) {
 	if ((isLepton(p1->PID) && isQuark(p2->PID)) || (isLepton(p2->PID) && isQuark(p1->PID))) {
 	  //cout << "off-shell LQ production" << endl;
-	  fDummy = 1; 
+	  fOffShell = 1; 
 	  pGen0 = getParticle(p1->M1);
 	  break;
 	}
@@ -540,9 +542,11 @@ void anaLq::preselection() {
 
     if (fLeptons[0]->p4.DeltaR(fLeptons[1]->p4) < 0.3) return;
 
+    if (fLeptons[0]->q*fLeptons[1]->q > 0) return;
+
     TLorentzVector ll4; 
     ll4 = fLeptons[0]->p4 + fLeptons[1]->p4;
-    if (ll4.M() < 50.)  return;
+    if (ll4.M() < 100.)  return;
 
     fST = fLeptons[0]->p4.Pt() + fLeptons[1]->p4.Pt() + fJets[0]->p4.Pt();
     if (fST < 0) return;
@@ -562,7 +566,7 @@ void anaLq::preselection() {
 
     TLorentzVector ll4; 
     ll4 = fLeptons[0]->p4 + fLeptons[1]->p4;
-    if (ll4.M() < 50.)  return;
+    if (ll4.M() < 100.)  return;
 
     fST = fLeptons[0]->p4.Pt() + fLeptons[1]->p4.Pt() + fJets[0]->p4.Pt() + fJets[1]->p4.Pt();
     if (fST < 300) return;
@@ -695,7 +699,7 @@ void anaLq::fillHist() {
     fHists["pre_l1pt"]->Fill(fLeptons[1]->p4.Pt()); 
 
     fHists["pre_j0pt"]->Fill(fJets[0]->p4.Pt()); 
-    fHists["pre_j1pt"]->Fill(fJets[1]->p4.Pt()); 
+    if (fJets.size() > 1) fHists["pre_j1pt"]->Fill(fJets[1]->p4.Pt()); 
 
     fHists["pre_st"]->Fill(fRtd.st); 
     fHists["pre_mll"]->Fill(fMll); 
@@ -1149,7 +1153,7 @@ void anaLq::genLQProducts(GenParticle *lq) {
   // -- create and fill struct
   genLq *gen = new genLq(); 
   gen->q  = l->Charge;
-  gen->tm = 2; 
+  gen->tm = fOffShell; 
 
   gen->pL = l; 
   gen->p4L.SetPtEtaPhiM(l->PT, l->Eta, l->Phi, l->Mass);
@@ -1197,8 +1201,17 @@ void anaLq::genLQProducts(GenParticle *lq) {
   fTrueLQ.push_back(gen);
 
   if (0) cout << "Truth LQ lepton = " << genIndex(l) << " quark = " << genIndex(q) << " jet = " << j 
-	      << " and mass = " << gen->p4LQ.M() << (fDummy == 1? " off-shell": "") 
+	      << " and mass = " << gen->p4LQ.M() << (fOffShell == 1? " off-shell": "") 
 	      << endl;
+
+  // -- printout for validation of background processing
+  if (0 && 1 == fOffShell) {
+    cout << "---------- ?? ---------- event " << fEvt << " LQ at " << lqIdx << " lepton = " << genIndex(l) << " quark = " << genIndex(q) << endl;
+    for (int i = 0; i < 100; ++i) {
+      printParticle(getParticle(i)); 
+    }
+  }    
+
 }
 
 
