@@ -132,6 +132,8 @@ public:
   std::vector<jet *> fJets;
   std::vector<lq *> fLQ;
 
+  int fDummy; 
+
   // -- cuts
   int         TYPE; // 1 = single LQ production, 2 = LQ pair production
   int         CHANNEL; // 11 = electron; 13 = muon

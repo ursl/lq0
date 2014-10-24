@@ -160,15 +160,6 @@ void anaLq::truthAnalysis() {
     cout << "----------------------------------------------------------------------" << endl;
   }
 
-
-  static int first(1); 
-  if (first) {
-    first = 0; 
-    for (int i = 0; i < 15; ++i) {
-      printParticle(getParticle(i)); 
-    }
-  }
-    
   const int LQID(9000006); 
   // -- find LQ
   GenParticle *pGen(0), *pGen0(0), *pGen1(0);
@@ -181,6 +172,42 @@ void anaLq::truthAnalysis() {
       } else {
 	pGen1 = pGen;
 	break;
+      }
+    }
+  }
+
+  static int firstLQ(1), firstLQbar(1); 
+  if (firstLQ && ((pGen0 && pGen0->PID == LQID) || (pGen1 && pGen1->PID == LQID))) {
+    firstLQ = 0; 
+    cout << "---------- LQ ---------- event " << fEvt << endl;
+    for (int i = 0; i < 25; ++i) {
+      printParticle(getParticle(i)); 
+    }
+  } 
+  
+  if (firstLQbar && ((pGen0 && pGen0->PID == -LQID) || (pGen1 && pGen1->PID == -LQID))) {
+    cout << "---------- LQbar ---------- event " << fEvt << endl;
+    firstLQbar = 0; 
+    for (int i = 0; i < 25; ++i) {
+      printParticle(getParticle(i)); 
+    }
+  }
+
+  // -- off-shell t-channel single LQ production
+  fDummy = 0; 
+  if (0 == pGen0) {
+    GenParticle *p1(0), *p2(0); 
+    for (int i = 0; i < fbParticles->GetEntries() - 1; ++i) {
+      p1 = getParticle(i); 
+      p2 = getParticle(i+1); 
+      bool sameMother = (p1->M1 == p2->M1);
+      if (sameMother) {
+	if ((isLepton(p1->PID) && isQuark(p2->PID)) || (isLepton(p2->PID) && isQuark(p1->PID))) {
+	  //cout << "off-shell LQ production" << endl;
+	  fDummy = 1; 
+	  pGen0 = getParticle(p1->M1);
+	  break;
+	}
       }
     }
   }
@@ -206,7 +233,6 @@ void anaLq::truthAnalysis() {
       ((TH1D*)gDirectory->Get("ljpt"))->Fill(fTrueLQ[i]->p4LJ.Pt()); 
       ((TH1D*)gDirectory->Get("ljm"))->Fill(fTrueLQ[i]->p4LJ.M()); 
     }
-
   }
   
   fpHistFile->cd();
@@ -630,6 +656,7 @@ void anaLq::lqSelection() {
   Lq->idxL = iBest; 
   Lq->idxK = 1-iBest;
   Lq->idxJ = 0;
+  Lq->tm   = truthMatching(Lq);
   fLQ.push_back(Lq); 
 }
 
@@ -973,73 +1000,49 @@ void anaLq::fillRedTreeData() {
   fRtd.channel = CHANNEL; 
   fRtd.w8      = fW8;
 
-  bool perfectTM(true);
-  for (unsigned int i = 0; i < fGenLQ.size(); ++i) {
-    fRtd.gm[i]   = fGenLQ[i]->p4LQ.M(); 
-    fRtd.gpt[i]  = fGenLQ[i]->p4LQ.Pt(); 
-    fRtd.geta[i] = fGenLQ[i]->p4LQ.Eta(); 
-    fRtd.gphi[i] = fGenLQ[i]->p4LQ.Phi(); 
+  for (unsigned int i = 0; i < fTrueLQ.size(); ++i) {
+    fRtd.gm[i]   = fTrueLQ[i]->p4LQ.M(); 
+    fRtd.gpt[i]  = fTrueLQ[i]->p4LQ.Pt(); 
+    fRtd.geta[i] = fTrueLQ[i]->p4LQ.Eta(); 
+    fRtd.gphi[i] = fTrueLQ[i]->p4LQ.Phi(); 
 
-    fRtd.glq[i]  = fGenLQ[i]->q; 
-    fRtd.gtm[i]  = fGenLQ[i]->tm; 
-    if (!fGenLQ[i]->tm) perfectTM = false; 
+    fRtd.glq[i]  = fTrueLQ[i]->q; 
+    fRtd.gtm[i]  = fTrueLQ[i]->tm; 
 
-    fRtd.glpt[i]  = fGenLQ[i]->p4L.Pt(); 
-    fRtd.gleta[i] = fGenLQ[i]->p4L.Eta(); 
-    fRtd.glphi[i] = fGenLQ[i]->p4L.Phi(); 
+    fRtd.glpt[i]  = fTrueLQ[i]->p4L.Pt(); 
+    fRtd.gleta[i] = fTrueLQ[i]->p4L.Eta(); 
+    fRtd.glphi[i] = fTrueLQ[i]->p4L.Phi(); 
 
-    fRtd.gqpt[i]  = fGenLQ[i]->p4Q.Pt(); 
-    fRtd.gqeta[i] = fGenLQ[i]->p4Q.Eta(); 
-    fRtd.gqphi[i] = fGenLQ[i]->p4Q.Phi(); 
+    fRtd.gqpt[i]  = fTrueLQ[i]->p4Q.Pt(); 
+    fRtd.gqeta[i] = fTrueLQ[i]->p4Q.Eta(); 
+    fRtd.gqphi[i] = fTrueLQ[i]->p4Q.Phi(); 
 
-    if (fGenLQ[i]->pJ) {
-      fRtd.gmlj[i]  = fGenLQ[i]->p4LJ.M(); 
-      fRtd.gjpt[i]  = fGenLQ[i]->p4J.Pt(); 
-      fRtd.gjeta[i] = fGenLQ[i]->p4J.Eta(); 
-      fRtd.gjphi[i] = fGenLQ[i]->p4J.Phi(); 
+    if (fTrueLQ[i]->pJ) {
+      fRtd.gmlj[i]  = fTrueLQ[i]->p4LJ.M(); 
+      fRtd.gjpt[i]  = fTrueLQ[i]->p4J.Pt(); 
+      fRtd.gjeta[i] = fTrueLQ[i]->p4J.Eta(); 
+      fRtd.gjphi[i] = fTrueLQ[i]->p4J.Phi(); 
     } else {
       fRtd.gmlj[i]  = 9999.;
     }
 
-    if (fGenLQ[i]->pK) {
-      fRtd.gkpt[i]  = fGenLQ[i]->p4K.Pt(); 
-      fRtd.gketa[i] = fGenLQ[i]->p4K.Eta(); 
-      fRtd.gkphi[i] = fGenLQ[i]->p4K.Phi(); 
+    if (fTrueLQ[i]->pK) {
+      fRtd.gkpt[i]  = fTrueLQ[i]->p4K.Pt(); 
+      fRtd.gketa[i] = fTrueLQ[i]->p4K.Eta(); 
+      fRtd.gkphi[i] = fTrueLQ[i]->p4K.Phi(); 
     } else {
       fRtd.gkpt[i]  = 9999.;
       fRtd.gketa[i] = 9999.;
       fRtd.gkphi[i] = 9999.;
     }
-
-    if (fGenLQ[i]->pI) {
-      fRtd.gipt[i]  = fGenLQ[i]->p4I.Pt(); 
-      fRtd.gieta[i] = fGenLQ[i]->p4I.Eta(); 
-      fRtd.giphi[i] = fGenLQ[i]->p4I.Phi(); 
-    } else {
-      fRtd.gipt[i]  = 9999.;
-      fRtd.gieta[i] = 9999.;
-      fRtd.giphi[i] = 9999.;
-    }
-
   }
-  fRtd.ngen = fGenLQ.size(); 
-
-  if (0 && !perfectTM) {
-    cout << "Event " << fEvt << " with imperfect TM. fGenLeptons.size() = " << fGenLeptons.size() 
-	 << " fGenJets.size() = " << fGenJets.size() 
-	 << endl;
-    dumpGenJets(); 
-    dumpGenBlock(true, 70); 
-    
-
-
-  }
+  fRtd.ngen = fTrueLQ.size(); 
 
   if (!fPreselected) {
     fRtd.nrec = 0; 
     return;
-
   }
+
   // -- and now fill all LQs (pair production characterized by kpt < 0; single production with kpt > 0)
   for (unsigned int i = 0; i < fLQ.size(); ++i) {
     fRtd.m[i]    = fLQ[i]->p4.M();
@@ -1148,14 +1151,16 @@ void anaLq::genLQProducts(GenParticle *lq) {
   gen->q  = l->Charge;
   gen->tm = 2; 
 
-  gen->pLQ = lq;
-  gen->p4LQ.SetPtEtaPhiM(lq->PT, lq->Eta, lq->Phi, lq->Mass);
-  
   gen->pL = l; 
   gen->p4L.SetPtEtaPhiM(l->PT, l->Eta, l->Phi, l->Mass);
   
   gen->pQ = q; 
   gen->p4Q.SetPtEtaPhiM(q->PT, q->Eta, q->Phi, q->Mass);
+
+  // -- this also covers off-shell LQ production, where the "mother" of the L and Q is an off-shell quark, which has not much to do with the (L+Q) system)
+  TLorentzVector LQ = gen->p4L + gen->p4Q; 
+  gen->pLQ = lq;
+  gen->p4LQ = LQ;
 
   if (j) {
     gen->pJ = j;
@@ -1191,7 +1196,9 @@ void anaLq::genLQProducts(GenParticle *lq) {
 
   fTrueLQ.push_back(gen);
 
-  if (0) cout << "Truth LQ lepton = " << genIndex(l) << " quark = " << genIndex(q) << " jet = " << j << endl;
+  if (0) cout << "Truth LQ lepton = " << genIndex(l) << " quark = " << genIndex(q) << " jet = " << j 
+	      << " and mass = " << gen->p4LQ.M() << (fDummy == 1? " off-shell": "") 
+	      << endl;
 }
 
 
