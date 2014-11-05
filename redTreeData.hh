@@ -18,6 +18,7 @@ struct redTreeData {
     gjpt[4], gjeta[4], gjphi[4], 
     gkpt[4], gketa[4], gkphi[4],
     gipt[4], gieta[4], giphi[4];
+  int gkq[4]; 
 
   // -- reco 
   int nrec;
@@ -29,6 +30,7 @@ struct redTreeData {
   double lpt[4], leta[4], lphi[4];  // lepton
   double jpt[4], jeta[4], jphi[4];  // jet
   double kpt[4], keta[4], kphi[4];  // bachelor lepton k
+  int kq[4]; 
 
   // other information
   double st; 
