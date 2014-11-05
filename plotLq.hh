@@ -20,6 +20,8 @@ public :
   void   normOverlay(std::string f1, std::string f2); 
   void   genMass(std::string type = "lq_pair", int offset = 29, int nplot = 4);    
   void   overlayAll();
+
+  void   genMassPlots(std::string dir = "single"); 
   
   void   bookHist(std::string name); 
   void   setupTree(TTree *t); 

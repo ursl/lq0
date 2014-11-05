@@ -1086,3 +1086,53 @@ void plotLq::genMass(string type, int offset, int nplot) {
 
 	    
 }
+
+
+// ----------------------------------------------------------------------
+void plotLq::genMassPlots(string dir) {
+
+  map<string, dataset*>::iterator ids = fDS.begin();
+  map<string, dataset*>::iterator eds = fDS.end();
+  TH1D *ha = new TH1D("ha", "", 200, 0., 2000.); setHist(ha, kBlack); 
+  setTitles(ha, "m [GeV]", "Entries/bin", 0.05, 1.1, 2.0); 
+  TH1D *hr = new TH1D("hr", "", 200, 0., 2000.); setFilledHist(hr, kBlue, kBlue, 3653); 
+  TH1D *hn = new TH1D("hn", "", 200, 0., 2000.); setFilledHist(hn, kRed, kRed, 3635); 
+  double na(0.), nr(0.), nn(0.); 
+  tl->SetNDC(kTRUE);
+  tl->SetTextSize(0.03);
+  for (; ids != eds; ++ids) {
+    if (string::npos == ids->first.find("lq")) continue;
+    if (string::npos == ids->first.find(dir)) continue;
+    if (string::npos == ids->first.find("down") && string::npos == ids->first.find("up")) continue;
+    ha->Reset(); 
+    ha->SetTitle(Form("%s (m = %4.0f GeV, #lambda = %3.2f)", 
+		      ids->first.c_str(), ids->second->fMass, ids->second->fLambda)); 
+    hr->Reset(); 
+    hn->Reset(); 
+    cout << ids->first << endl;
+    TTree *t = getTree(ids->first, dir);
+    t->Draw("gm>>ha", "");
+    t->Draw("gm>>hr", "gtm==0");
+    t->Draw("gm>>hn", "gtm==1");
+    na = ha->GetSumOfWeights();
+    nr = hr->GetSumOfWeights();
+    nn = hn->GetSumOfWeights();
+    cout << "all: " << na
+	 <<  " resonant: " << nr
+	 <<  " non-resonant: " << nn
+	 << endl;
+    zone();
+    shrinkPad(0.15, 0.2); 
+    ha->Draw("hist");
+    hr->Draw("histsame");
+    hn->Draw("histsame");
+
+    tl->DrawLatex(0.25, 0.80, Form("%5.0f (all)", na)); 
+    tl->DrawLatex(0.25, 0.76, Form("%5.0f (resonant)", nr)); 
+    tl->DrawLatex(0.25, 0.72, Form("%5.0f (non-resonant)", nn)); 
+
+    c0->SaveAs(Form("%s/genmass-%s-%s.pdf", fDirectory.c_str(), dir.c_str(), ids->first.c_str())); 
+  }
+
+
+}
