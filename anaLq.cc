@@ -112,10 +112,10 @@ void anaLq::eventProcessing() {
   // -- fish out the CORRECT TRUE LQs and their decay/associated products
   truthAnalysis(); 
 
-  // -- fill gen-level vectors for leptons and quarks (leading and subleading particles)
+  // -- fill gen-level vectors for leptons and gen-jets (leading and subleading particles)
   genSelection(); 
 
-  fTypeName = "lq";
+  //  fTypeName = "lq";
   //  genLqAnalysis(); 
   //  fillHist();
 
@@ -202,11 +202,13 @@ void anaLq::truthAnalysis() {
       p2 = getParticle(i+1); 
       bool sameMother = (p1->M1 == p2->M1);
       bool quarkMother = (p1->M1 > -1?isQuark(getParticle(p1->M1)->PID): 0);
+      bool gluonMother = (p1->M1 > -1?getParticle(p1->M1)->PID == 21: 0);
       bool topMother = (p1->M1 > -1?TMath::Abs(getParticle(p1->M1)->PID) == 6: 0) ;
-      if (sameMother && quarkMother && !topMother) {
+      if (sameMother && (quarkMother || gluonMother) && !topMother) {
 	if ((isLepton(p1->PID) && isQuark(p2->PID)) || (isLepton(p2->PID) && isQuark(p1->PID))) {
 	  //cout << "off-shell LQ production" << endl;
 	  fOffShell = 1; 
+	  if (gluonMother) fOffShell = 2; 
 	  pGen0 = getParticle(p1->M1);
 	  break;
 	}
@@ -224,6 +226,11 @@ void anaLq::truthAnalysis() {
   } else {
     fpHistFile->cd("single");
   }
+
+  if (0 && 0 == fTrueLQ.size()) {
+    cout << "NO LQ found?!" << endl;
+    dumpGenBlock(true); 
+  }    
 
   for (unsigned int i = 0; i < fTrueLQ.size(); ++i) {
     ((TH1D*)gDirectory->Get("pt"))->Fill(fTrueLQ[i]->p4LQ.Pt()); 
@@ -243,6 +250,7 @@ void anaLq::truthAnalysis() {
 
 
 // ----------------------------------------------------------------------
+// -- not used currently!
 void anaLq::genLqAnalysis() {
   
   for (unsigned int i = 0; i < fGenLQ.size(); ++i) delete fGenLQ[i];
@@ -368,8 +376,10 @@ genLq* anaLq::createGenLQ(GenParticle *pL, Jet *pJ, GenParticle *pK, Jet *pI) {
   lq->pK = pK; 
   if (pK) {
     lq->p4K.SetPtEtaPhiM(pK->PT, pK->Eta, pK->Phi, pK->Mass);
+    lq->qK = pK->Charge;
   } else {
     lq->p4K.SetPtEtaPhiM(9999., 99999., 9999., 9999.);
+    lq->qK = 9999;
   }
 
   lq->pI = pI;
@@ -963,6 +973,7 @@ void anaLq::setupReducedTree(TTree *t) {
   t->Branch("gkpt",     fRtd.gkpt,           "gkpt[ngen]/D");
   t->Branch("gketa",    fRtd.gketa,          "gketa[ngen]/D");
   t->Branch("gkphi",    fRtd.gkphi,          "gkphi[ngen]/D");
+  t->Branch("gkq",      fRtd.gkq,            "gkq[ngen]/I");
 
   t->Branch("gipt",     fRtd.gipt,           "gipt[ngen]/D");
   t->Branch("gieta",    fRtd.gieta,          "gieta[ngen]/D");
@@ -1034,10 +1045,12 @@ void anaLq::fillRedTreeData() {
       fRtd.gkpt[i]  = fTrueLQ[i]->p4K.Pt(); 
       fRtd.gketa[i] = fTrueLQ[i]->p4K.Eta(); 
       fRtd.gkphi[i] = fTrueLQ[i]->p4K.Phi(); 
+      fRtd.gkq[i]   = fTrueLQ[i]->qK; 
     } else {
       fRtd.gkpt[i]  = 9999.;
       fRtd.gketa[i] = 9999.;
       fRtd.gkphi[i] = 9999.;
+      fRtd.gkq[i]   = 9999;
     }
   }
   fRtd.ngen = fTrueLQ.size(); 
@@ -1183,7 +1196,7 @@ void anaLq::genLQProducts(GenParticle *lq) {
   for (int i = 0; i < fbParticles->GetEntries(); ++i) {
     if (i == lqIdx) continue;
     pGen = getParticle(i); 
-    if (isLepton(pGen->PID) && pGen->M1 == lqMomIdx) {
+    if (isLepton(pGen->PID) && ((pGen->M1 == lqMomIdx) || (pGen->M1 == lqIdx + 1)  || (pGen->M1 == lqIdx - 1))) {
       break;
     } else {
       pGen = 0; 
@@ -1193,9 +1206,11 @@ void anaLq::genLQProducts(GenParticle *lq) {
   if (pGen) {
     gen->pK = pGen;
     gen->p4K.SetPtEtaPhiM(pGen->PT, pGen->Eta, pGen->Phi, pGen->Mass);
+    gen->qK = pGen->Charge;
   } else {
     gen->pK = 0;
     gen->p4K.SetPtEtaPhiM(9999., 9999., 9999., 9999.); 
+    gen->qK = 9999;
   }
 
   fTrueLQ.push_back(gen);
@@ -1499,15 +1514,30 @@ double anaLq::jetMuonSeparation(Jet *j) {
 // ----------------------------------------------------------------------
 int anaLq::truthMatching(lq *Lq) {
   
-  TLorentzVector l = fLeptons[Lq->idxL]->p4;
   TLorentzVector j = fJets[Lq->idxJ]->p4;
+  TLorentzVector l = fLeptons[Lq->idxL]->p4;
+  TLorentzVector k = (Lq->idxK > -1? fLeptons[Lq->idxK]->p4: TLorentzVector(0., 0., 0., 0.));
 
   for (unsigned int i = 0; i < fTrueLQ.size(); ++i) {
     TLorentzVector gl = fTrueLQ[i]->p4L;
     TLorentzVector gj = fTrueLQ[i]->p4Q;
-    if (l.DeltaR(gl) < 0.3 && j.DeltaR(gj) < 0.3) {
-      // cout << "truthmatched to true LQ " << i << endl;
-      return i;
+    TLorentzVector gk = fTrueLQ[i]->p4K;
+
+    if (k.Pt() > 0.1) {
+      if (l.DeltaR(gl) < 0.3 && j.DeltaR(gj) < 0.3 &&k.DeltaR(gk) < 0.3) {
+	//	cout << "truthmatched to true single LQ " << i << endl;
+	return i;
+      } else {
+	// 	cout << "L: pT = " << l.Pt() << "/" << gl.Pt() << ", eta = " << l.Eta() << "/" << gl.Eta() << ", phi = " << l.Phi() << "/" << gl.Phi() << endl;
+	// 	cout << "J: pT = " << j.Pt() << "/" << gj.Pt() << ", eta = " << j.Eta() << "/" << gj.Eta() << ", phi = " << j.Phi() << "/" << gj.Phi() << endl;
+	// 	cout << "K: pT = " << k.Pt() << "/" << gk.Pt() << ", eta = " << k.Eta() << "/" << gk.Eta() << ", phi = " << k.Phi() << "/" << gk.Phi() << endl;
+      }
+    } else {
+      //      cout << "K: pT = " << k.Pt() << endl;
+      if (l.DeltaR(gl) < 0.3 && j.DeltaR(gj) < 0.3) {
+	//      cout << "truthmatched to true pair LQ " << i << endl;
+	return i;
+      }
     }
   }
   return -1;
