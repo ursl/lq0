@@ -25,6 +25,8 @@ plotLq::plotLq(string dir,  string files, string setup): plotClass(dir, files, s
 
   loadFiles(files);
 
+  fLumi = 100.;
+
   fHistFile = TFile::Open(Form("%s/plotLq.root", dir.c_str()), "RECREATE"); 
 }
 
@@ -947,9 +949,9 @@ void plotLq::loadFiles(string afiles) {
     if (string::npos != sname.find("dy")) {
       dataset *ds = new dataset(); 
       sdecay = "Drell-Yan";
-      ds->fColor = kRed; 
-      ds->fLcolor = kRed; 
-      ds->fFcolor = kRed; 
+      ds->fColor = kGreen+2; 
+      ds->fLcolor = kGreen+2; 
+      ds->fFcolor = kGreen+2; 
       ds->fSymbol = 25; 
 
       ds->fF      = pF; 
@@ -960,7 +962,7 @@ void plotLq::loadFiles(string afiles) {
       ds->fLumi   = nevt/ds->fXsec/ds->fBf/1000.; // [lumi] = 1/fb
       //      ds->fName   = "MadGraph " + sdecay; 
       ds->fName   = sdecay; 
-      ds->fFillStyle = 3636; 
+      ds->fFillStyle = 3657; 
       ds->fSize = 0.5; 
       ds->fWidth = 1.0; 
       fDS.insert(make_pair(sname, ds)); 
@@ -969,9 +971,9 @@ void plotLq::loadFiles(string afiles) {
     if (string::npos != sname.find("ttbarjj")) {
       dataset *ds = new dataset(); 
       sdecay = "ttbar#rightarrow jj";
-      ds->fColor = kMagenta; 
-      ds->fLcolor = kMagenta; 
-      ds->fFcolor = kMagenta; 
+      ds->fColor = kMagenta+2; 
+      ds->fLcolor = kMagenta+2; 
+      ds->fFcolor = kMagenta+2; 
       ds->fSymbol = 26; 
 
       ds->fF      = pF; 
@@ -982,7 +984,7 @@ void plotLq::loadFiles(string afiles) {
       ds->fLumi   = nevt/ds->fXsec/ds->fBf/1000.; // [lumi] = 1/fb
       //      ds->fName   = "MadGraph " + sdecay; 
       ds->fName   = sdecay; 
-      ds->fFillStyle = 3365; 
+      ds->fFillStyle = 3375; 
       ds->fSize = 0.5; 
       ds->fWidth = 1.0; 
       fDS.insert(make_pair(sname, ds)); 
@@ -1105,7 +1107,7 @@ void plotLq::genMassPlots(string dir) {
     if (string::npos == ids->first.find(dir)) continue;
     if (string::npos == ids->first.find("down") && string::npos == ids->first.find("up")) continue;
     ha->Reset(); 
-    ha->SetTitle(Form("%s (m = %4.0f GeV, #lambda = %3.2f)", 
+    ha->SetTitle(Form("%s (m = %4.0f GeV,    #lambda = %3.2f)", 
 		      ids->first.c_str(), ids->second->fMass, ids->second->fLambda)); 
     hr->Reset(); 
     hn->Reset(); 
@@ -1113,26 +1115,116 @@ void plotLq::genMassPlots(string dir) {
     TTree *t = getTree(ids->first, dir);
     t->Draw("gm>>ha", "");
     t->Draw("gm>>hr", "gtm==0");
-    t->Draw("gm>>hn", "gtm==1");
-    na = ha->GetSumOfWeights();
-    nr = hr->GetSumOfWeights();
-    nn = hn->GetSumOfWeights();
+    int oflow = t->Draw("gm>>hn", "gtm>0&&gm>2000");
+    t->Draw("gm>>hn", "gtm>0");
+    na = ha->Integral();
+    nr = hr->Integral();
+    nn = hn->Integral();
     cout << "all: " << na
 	 <<  " resonant: " << nr
 	 <<  " non-resonant: " << nn
+	 << " overflow: " << oflow
 	 << endl;
     zone();
     shrinkPad(0.15, 0.2); 
+    gPad->SetLogy(1);
+    ha->SetMinimum(0.5);
+    double hamax = hr->GetMaximum(); 
+    if (hn->GetMaximum() > hamax) hamax = hn->GetMaximum();
+    ha->SetMaximum(10.*hamax); 
     ha->Draw("hist");
     hr->Draw("histsame");
     hn->Draw("histsame");
 
-    tl->DrawLatex(0.25, 0.80, Form("%5.0f (all)", na)); 
-    tl->DrawLatex(0.25, 0.76, Form("%5.0f (resonant)", nr)); 
-    tl->DrawLatex(0.25, 0.72, Form("%5.0f (non-resonant)", nn)); 
+    tl->DrawLatex(0.25, 0.86, Form("%5.0f (all)", na)); 
+    tl->DrawLatex(0.25, 0.83, Form("%5.0f (resonant)", nr)); 
+    tl->DrawLatex(0.25, 0.80, Form("%5.0f (non-resonant)", nn)); 
 
     c0->SaveAs(Form("%s/genmass-%s-%s.pdf", fDirectory.c_str(), dir.c_str(), ids->first.c_str())); 
   }
 
 
+}
+
+
+// ----------------------------------------------------------------------
+void plotLq::showVar(string var, string cuts, string signal, string dir) {
+
+  gStyle->SetOptStat(0); 
+
+  int NBINS(100); 
+  double xlo(0.), xhi(2000.);
+  string xtitle("m(LQ) [GeV]");
+  if (var == "pt") {
+    NBINS = 100;
+    xlo = 0.;
+    xhi = 1000.;
+  }
+
+  // -- signal
+  TH1D *hS = new TH1D("hS", "", NBINS, xlo, xhi); setFilledHist(hS, kBlue, kBlue, 3653); 
+  // -- cross feed
+  TH1D *hX = new TH1D("hX", "", NBINS, xlo, xhi); setFilledHist(hX, kRed, kRed, 3635); 
+  // -- DY
+  TH1D *hD = new TH1D("hD", "", NBINS, xlo, xhi); setFilledHist(hD, kRed, kRed, 3635); 
+  setHist(hD, fDS["dy"]); 
+  // -- ttbar
+  TH1D *hT = new TH1D("hT", "", NBINS, xlo, xhi); setFilledHist(hT, kRed, kRed, 3635); 
+  setHist(hT, fDS["ttbarjj"]); 
+
+  TTree *t = getTree(signal, dir);
+  //  string allCuts = (cuts == ""?string("tm>-1") : string(Form("tm>-1&&%s", cuts.c_str())));
+  string allCuts = cuts; 
+  t->Draw("m>>hS", allCuts.c_str(), "goff");
+  normHist(hS, signal, LUMI);
+  setTitles(hS, xtitle.c_str(), hS->GetYaxis()->GetTitle(), 0.05, 1.0, 1.5);
+  hS->Draw("hist");
+
+  string xfsignal = xfeed(signal); 
+  cout << "===> signal = " << signal << " -> xf = " << xfsignal << endl;
+  
+  double ymax = hS->GetMaximum(); 
+
+  shrinkPad(0.1, 0.15); 
+  t = getTree(xfsignal, dir);
+  t->Draw("m>>hX", allCuts.c_str(), "goff");
+  normHist(hX, signal, LUMI);
+  hX->Draw("samehist");
+  if (hX->GetMaximum() > ymax) ymax = hX->GetMaximum();
+
+  t = getTree("ttbarjj", dir);
+  t->Draw("m>>hT", allCuts.c_str(), "goff");
+  normHist(hT, "ttbarjj", LUMI);
+  hT->Draw("samehist");
+  if (hT->GetMaximum() > ymax) ymax = hT->GetMaximum();
+
+  t = getTree("dy", dir);
+  t->Draw("m>>hD", allCuts.c_str(), "goff");
+  normHist(hT, "dy", LUMI);
+  hD->Draw("samehist");
+  if (hD->GetMaximum() > ymax) ymax = hD->GetMaximum();
+
+  hS->SetMaximum(1.2*ymax); 
+  
+  newLegend(0.6, 0.7, 0.85, 0.85);
+  legg->SetTextSize(0.03);
+  legg->SetHeader(dir.c_str()); 
+  legg->AddEntry(hS, Form("%s", signal.c_str()), "f");
+  legg->AddEntry(hX, Form("%s", xfsignal.c_str()), "f");
+  legg->AddEntry(hT, Form("%s", "ttbarjj_a"), "f");
+  legg->AddEntry(hD, Form("%s", "Drell-Yan"), "f");
+  
+  legg->Draw();
+
+}
+
+
+// ----------------------------------------------------------------------
+string plotLq::xfeed(string signal) {
+  if (string::npos != signal.find("single")) {
+    replaceAll(signal, "single", "pair"); 
+  } else {
+    replaceAll(signal, "pair", "single"); 
+  }
+  return signal;
 }

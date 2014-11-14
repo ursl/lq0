@@ -22,6 +22,7 @@ public :
   void   overlayAll();
 
   void   genMassPlots(std::string dir = "single"); 
+  void   showVar(std::string var = "m", std::string cuts = "", std::string signal = "lq_single_down_01", std::string dir = "single"); 
   
   void   bookHist(std::string name); 
   void   setupTree(TTree *t); 
@@ -35,6 +36,8 @@ public :
   void  optAnalysis(int mode = 1, std::string filename = "opt.root", std::string treename = "opt_single");
   void  displayOptimization(std::string file, std::string tree); 
 
+
+  std::string xfeed(std::string signal); 
 
 private: 
 
