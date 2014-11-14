@@ -462,44 +462,73 @@ void anaLq::leptonSelection() {
 
   for (unsigned int i = 0; i < fLeptons.size(); ++i) delete fLeptons[i];
   fLeptons.clear();
-  
+
+  for (unsigned int i = 0; i < fMuons.size(); ++i) delete fMuons[i];
+  fMuons.clear();
+
+  for (unsigned int i = 0; i < fElectrons.size(); ++i) delete fElectrons[i];
+  fElectrons.clear();
+
+  // -- create muon list
+  Muon *pM(0); 
+  TLorentzVector m4; 
+  for (int i = 0; i < fbMuons->GetEntries(); ++i) {
+    pM = getMuon(i); 
+    if (TMath::Abs(pM->Eta) > 2.1) continue;
+    if (muonIso(pM) > MUISO) continue;
+    if (pM->PT < 10) continue;
+    lepton *l = new lepton;
+    m4.SetPtEtaPhiM(pM->PT, pM->Eta, pM->Phi, MMUON); 
+    l->p4        = m4;
+    l->q         = pM->Charge;
+    l->pMuon     = pM;
+    l->pElectron = 0; 
+    fMuons.push_back(l); 
+  }
+
+  // -- create electron list
+  Electron *pE(0); 
+  TLorentzVector e4; 
+  for (int i = 0; i < fbElectrons->GetEntries(); ++i) {
+    pE = getElectron(i); 
+    if (pE->PT < 10) continue;
+    if (TMath::Abs(pE->Eta) > 2.5) continue;
+    if (electronIso(pE) > ELISO) continue;
+    lepton *l = new lepton;
+    e4.SetPtEtaPhiM(pE->PT, pE->Eta, pE->Phi, MELECTRON); 
+    l->p4        = e4;
+    l->q         = pE->Charge;
+    l->pMuon     = 0;
+    l->pElectron = pE; 
+    fLeptons.push_back(l);
+  }      
+    
+  // -- create lepton list according to channel
+  lepton *l(0); 
   if (13 == CHANNEL) {
-    Muon *pM(0); 
-    TLorentzVector m4; 
-    for (int i = 0; i < fbMuons->GetEntries(); ++i) {
-      pM = getMuon(i); 
-      if (pM->PT < L1PT) continue;
-      if (TMath::Abs(pM->Eta) > 2.4) continue;
-      if (muonIso(pM) > MUISO) continue;
-      lepton *l = new lepton;
-      m4.SetPtEtaPhiM(pM->PT, pM->Eta, pM->Phi, MMUON); 
-      l->p4        = m4;
-      l->q         = pM->Charge;
-      l->pMuon     = pM;
+    for (unsigned int i = 0; i < fMuons.size(); ++i) {
+      if (fMuons[i]->p4.Pt() < L1PT) continue;
+      l = new lepton;
+      l->p4        = fMuons[i]->p4;
+      l->q         = fMuons[i]->q;
+      l->pMuon     = fMuons[i]->pMuon;
       l->pElectron = 0; 
       fLeptons.push_back(l);
-    }      
+    }
   }
 
   if (11 == CHANNEL) {
-    Electron *pE(0); 
-    TLorentzVector e4; 
-    for (int i = 0; i < fbElectrons->GetEntries(); ++i) {
-      pE = getElectron(i); 
-      if (pE->PT < L1PT) continue;
-      if (TMath::Abs(pE->Eta) > 2.5) continue;
-      if (electronIso(pE) > ELISO) continue;
-      lepton *l = new lepton;
-      e4.SetPtEtaPhiM(pE->PT, pE->Eta, pE->Phi, MELECTRON); 
-      l->p4        = e4;
-      l->q         = pE->Charge;
+    for (unsigned int i = 0; i < fElectrons.size(); ++i) {
+      if (fElectrons[i]->p4.Pt() < L1PT) continue;
+      l = new lepton;
+      l->p4        = fElectrons[i]->p4;
+      l->q         = fElectrons[i]->q;
       l->pMuon     = 0;
-      l->pElectron = pE; 
+      l->pElectron = fElectrons[i]->pElectron; 
       fLeptons.push_back(l);
-    }      
-    
-
+    }
   }
+
 
   if (fLeptons.size() > 1) {
     sort(fLeptons.begin(), fLeptons.end(), sortPtLepton);
@@ -544,20 +573,26 @@ void anaLq::preselection() {
   fST = 9999.; 
 
   if ("single" == fTypeName) {
+    // -- at least two leptons and one jet
     if (fLeptons.size() < 2) return;
     if (fJets.size() < 1)    return;
 
+    // -- lepton pT above L0PT and jet pT above J1PT (which is at 45 GeV), as J0PT is too high for the single LQ case
     if (fLeptons[0]->p4.Pt() < L0PT) return;
-    if (fJets[0]->p4.Pt() < J0PT)    return;
-
+    if (fJets[0]->p4.Pt() < J1PT)    return;
+    
+    // -- delta R cut on leptons
     if (fLeptons[0]->p4.DeltaR(fLeptons[1]->p4) < 0.3) return;
 
+    // -- opposite charge requirement
     if (fLeptons[0]->q*fLeptons[1]->q > 0) return;
 
+    // -- lepton-pair mass
     TLorentzVector ll4; 
     ll4 = fLeptons[0]->p4 + fLeptons[1]->p4;
-    if (ll4.M() < 100.)  return;
+    if (ll4.M() < 50.)  return;
 
+    // -- ST caculated with two leptons and one jet
     fST = fLeptons[0]->p4.Pt() + fLeptons[1]->p4.Pt() + fJets[0]->p4.Pt();
     if (fST < 0) return;
 
@@ -566,11 +601,15 @@ void anaLq::preselection() {
   }
 
   if ("pair" == fTypeName) {
+    // -- at least two leptons and two jets
     if (fLeptons.size() < 2) return;
     if (fJets.size() < 2)    return;
 
+    // -- lepton and jet pT cuts
     if (fLeptons[0]->p4.Pt() < L0PT) return;
+    if (fLeptons[1]->p4.Pt() < L1PT) return;
     if (fJets[0]->p4.Pt() < J0PT)    return;
+    if (fJets[1]->p4.Pt() < J1PT)    return;
 
     if (fLeptons[0]->p4.DeltaR(fLeptons[1]->p4) < 0.3) return;
 
@@ -659,9 +698,12 @@ void anaLq::lqSelection() {
   TLorentzVector lq1 = fLeptons[1]->p4 + fJets[0]->p4; 
   if (lq0.M() > lq1.M()) {
     iBest = 0; 
+    fMljMin = lq1.M();
   } else {
     iBest = 1; 
+    fMljMin = lq0.M();
   }
+
 
   lq0 = fLeptons[iBest]->p4 + fJets[0]->p4; 
   lq *Lq = new lq;
@@ -672,6 +714,9 @@ void anaLq::lqSelection() {
   Lq->idxJ = 0;
   Lq->tm   = truthMatching(Lq);
   fLQ.push_back(Lq); 
+
+
+
 }
 
 

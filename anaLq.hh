@@ -128,7 +128,7 @@ public:
   std::vector<Jet *> fGenJets; 
   int fNGenJets; 
   // -- reco vectors
-  std::vector<lepton *> fLeptons;
+  std::vector<lepton *> fLeptons, fMuons, fElectrons;
   std::vector<jet *> fJets;
   std::vector<lq *> fLQ;
 
