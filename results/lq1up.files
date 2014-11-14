@@ -106,5 +106,3 @@ type=lq_single_up_51,1600,0.50      xsec=7.6419746219003970E-004  file=store/lq_
 # -- background
 type=dy,-1,-1        xsec=35.9   file=store/dy_el.root
 type=ttbarjj,-1,-1   xsec=16.9   file=store/ttbarjj_a_el.root
-
-
