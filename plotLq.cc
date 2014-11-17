@@ -883,9 +883,9 @@ void plotLq::setupTree(TTree *t) {
   t->SetBranchAddress("keta" ,    fRtd.keta);
   t->SetBranchAddress("kphi",     fRtd.kphi);
 
-  t->SetBranchAddress("st",       &fRtd.st);
-  t->SetBranchAddress("mll" ,     &fRtd.mll);
-  t->SetBranchAddress("mljmin",   &fRtd.mljmin);
+  t->SetBranchAddress("st",       fRtd.st);
+  t->SetBranchAddress("mll" ,     fRtd.mll);
+  t->SetBranchAddress("mljmin",   fRtd.mljmin);
 
 
 
