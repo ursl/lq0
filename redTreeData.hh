@@ -4,7 +4,7 @@
 #define NLQ 10
 
 struct redTreeData {
-  int type, channel; 
+  int channel; 
   double w8; 
 
   int ngen;
@@ -34,11 +34,12 @@ struct redTreeData {
   double kpt[NLQ], keta[NLQ], kphi[NLQ];  // bachelor lepton k
   int kq[NLQ]; 
 
-  // other information since this information can depend on the lq combination, it is per LQ (this is redundant for pair production ...)
+  // other information since this information can depend on the lq combination, it is per LQ 
+  // (this is certainly redundant for pair production ...)
   double st[NLQ]; 
   double mll[NLQ];
   double mljmin[NLQ];
-
+  int    type[NLQ];
 };
 
 #endif

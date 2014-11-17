@@ -118,21 +118,22 @@ void anaLq::eventProcessing() {
   fTypeName = "single";
   genSingleAnalysis();
   preselection();
-  fType = 1; 
   if (fPreselected) {
+    fType = 1; 
     lqSelection();
-    candAnalysis();
+    
+    fType = 2; 
+    lqSelection();
+    fillHist(); 
   }
-  fillHist(); 
 
   // -- pair production analysis
   fTypeName = "pair";
   genPairAnalysis();
   preselection(); 
-  if (fPreselected) {
-    lqlqSelection();
-    candAnalysis();
-  }
+  if (fPreselected) lqlqSelection();
+  //    candAnalysis();
+
   fillHist(); 
 
 }
@@ -143,7 +144,6 @@ void anaLq::truthAnalysis() {
 
   for (unsigned int i = 0; i < fTrueLQ.size(); ++i) delete fTrueLQ[i];
   fTrueLQ.clear();
-
 
   if (0) {
     cout << "======================================================================" << endl;
@@ -564,7 +564,9 @@ void anaLq::preselection() {
   fST = 9999.; 
 
   if ("single" == fTypeName) {
-    // -- at least two leptons and one jet
+    //fJets.size() << " " << fLeptons[0]->p4.Pt() << " " << fJets[0]->p4.Pt() << " " << endl;
+
+   // -- at least two leptons and one jet
     if (fLeptons.size() < 2) return;
     if (fJets.size() < 1)    return;
 
@@ -619,48 +621,69 @@ void anaLq::preselection() {
 // ----------------------------------------------------------------------
 void anaLq::lqSelection() {
 
-  // -- clear LQ vector
-  for (unsigned int i = 0; i < fLQ.size(); ++i) delete fLQ[i];
-  fLQ.clear();
+  if (1 == fType) {
+    // -- chose the higher-mass LQ combination
+    int iBest(-1);
+    TLorentzVector lq0 = fLeptons[0]->p4 + fJets[0]->p4; 
+    TLorentzVector lq1 = fLeptons[1]->p4 + fJets[0]->p4; 
+    double mljmin(0.); 
+    if (lq0.M() > lq1.M()) {
+      iBest = 0; 
+      mljmin = lq1.M();
+    } else {
+      iBest = 1; 
+      mljmin = lq0.M();
+    }
+    
+    lq0 = fLeptons[iBest]->p4 + fJets[0]->p4; 
+    lq *Lq = new lq;
+    Lq->p4   = lq0; 
+    Lq->q    = fLeptons[iBest]->q; 
+    Lq->idxL = iBest; 
+    Lq->idxK = 1-iBest;
+    Lq->idxJ = 0;
+    Lq->tm   = truthMatching(Lq);
+    
+    // -- calculate event variables
+    Lq->st     = fLeptons[0]->p4.Pt() + fLeptons[1]->p4.Pt() + fJets[0]->p4.Pt();
+    Lq->mll    = (fLeptons[0]->p4 + fLeptons[1]->p4).M();
+    Lq->mljmin = mljmin;
+    Lq->type   = fType; 
+    
+    fLQ.push_back(Lq); 
+  } else if (2 == fType) { 
+    // -- choose the subleading lepton as the bachelor
+    TLorentzVector lq0 = fLeptons[0]->p4 + fJets[0]->p4; 
+    TLorentzVector lq1 = fLeptons[1]->p4 + fJets[0]->p4; 
+    double mljmin(0.); 
+    if (lq0.M() > lq1.M()) {
+      mljmin = lq1.M();
+    } else {
+      mljmin = lq0.M();
+    }
 
+    lq *Lq   = new lq;
+    Lq->p4   = lq0; 
+    Lq->q    = fLeptons[0]->q; 
+    Lq->idxL = 0; 
+    Lq->idxK = 1;
+    Lq->idxJ = 0;
+    Lq->tm   = truthMatching(Lq);
+    
+    // -- calculate event variables
+    Lq->st     = fLeptons[0]->p4.Pt() + fLeptons[1]->p4.Pt() + fJets[0]->p4.Pt();
+    Lq->mll    = (fLeptons[0]->p4 + fLeptons[1]->p4).M();
+    Lq->mljmin = mljmin;
+    Lq->type   = fType; 
+    fLQ.push_back(Lq); 
 
-  int iBest(-1);
-  TLorentzVector lq0 = fLeptons[0]->p4 + fJets[0]->p4; 
-  TLorentzVector lq1 = fLeptons[1]->p4 + fJets[0]->p4; 
-  double mljmin(0.); 
-  if (lq0.M() > lq1.M()) {
-    iBest = 0; 
-    mljmin = lq1.M();
-  } else {
-    iBest = 1; 
-    mljmin = lq0.M();
   }
-
-  lq0 = fLeptons[iBest]->p4 + fJets[0]->p4; 
-  lq *Lq = new lq;
-  Lq->p4   = lq0; 
-  Lq->q    = fLeptons[iBest]->q; 
-  Lq->idxL = iBest; 
-  Lq->idxK = 1-iBest;
-  Lq->idxJ = 0;
-  Lq->tm   = truthMatching(Lq);
-
-  // -- calculate event variables
-  Lq->st     = fLeptons[0]->p4.Pt() + fLeptons[1]->p4.Pt() + fJets[0]->p4.Pt();
-  Lq->mll    = (fLeptons[0]->p4 + fLeptons[1]->p4).M();
-  Lq->mljmin = mljmin;
-
-  fLQ.push_back(Lq); 
 }
 
 
 // ----------------------------------------------------------------------
 // -- this is CMS' pair selection
 void anaLq::lqlqSelection() {
-  // -- clear LQ vector
-  for (unsigned int i = 0; i < fLQ.size(); ++i) delete fLQ[i];
-  fLQ.clear();
-  
   int iBest(-1);
   double mdiff(99999.), mdiffBest(99999.); 
   TLorentzVector lq0, lq1; 
@@ -705,6 +728,7 @@ void anaLq::lqlqSelection() {
   Lq->st     = st; 
   Lq->mll    = mll;
   Lq->mljmin = mljmin;
+  Lq->type   = fType; 
 
   fLQ.push_back(Lq); 
 
@@ -718,6 +742,7 @@ void anaLq::lqlqSelection() {
   Lq->st     = st; 
   Lq->mll    = mll;
   Lq->mljmin = mljmin;
+  Lq->type   = fType; 
   fLQ.push_back(Lq); 
       
 }
@@ -753,40 +778,12 @@ void anaLq::fillHist() {
     fillRedTreeData(); 
     TTree *t = (TTree*)gDirectory->Get("events");
     t->Fill();
-    
-    fHists["pre_l0pt"]->Fill(fLeptons[0]->p4.Pt()); 
-    fHists["pre_l1pt"]->Fill(fLeptons[1]->p4.Pt()); 
-
-    fHists["pre_j0pt"]->Fill(fJets[0]->p4.Pt()); 
-    if (fJets.size() > 1) fHists["pre_j1pt"]->Fill(fJets[1]->p4.Pt()); 
-
-    fHists["pre_st"]->Fill(fLQ[0]->st); 
-    fHists["pre_mll"]->Fill(fLQ[0]->mll); 
-    fHists["pre_mljetmin"]->Fill(fLQ[0]->mljmin); 
-      
-    if (fLQ[0]->p4.M() > 0.) {
-      fHists["pre_m"]->Fill(fLQ[0]->p4.M()); 
-      fHists["pre_pt"]->Fill(fLQ[0]->p4.Pt()); 
-      if ("pair" == fTypeName) {
-	fHists["pre_m"]->Fill(fLQ[1]->p4.M()); 
-	fHists["pre_pt"]->Fill(fLQ[1]->p4.Pt()); 
-      }
-    }
-
-    if (fGoodEvent) { 
-      fHists["sel_st"]->Fill(fLQ[0]->st); 
-      fHists["sel_mll"]->Fill(fLQ[0]->mll); 
-      fHists["sel_mljetmin"]->Fill(fLQ[0]->mljmin); 
-      
-      fHists["sel_m"]->Fill(fLQ[0]->p4.M()); 
-      fHists["sel_pt"]->Fill(fLQ[0]->p4.Pt()); 
-      if ("pair" == fTypeName) {
-	fHists["sel_m"]->Fill(fLQ[1]->p4.M()); 
-	fHists["sel_pt"]->Fill(fLQ[1]->p4.Pt()); 
-      }
-    }
-
   }
+
+
+  // -- clear LQ vector
+  for (unsigned int i = 0; i < fLQ.size(); ++i) delete fLQ[i];
+  fLQ.clear();
 
 }
 
@@ -816,76 +813,7 @@ void anaLq::bookHist() {
   h1 = new TH1D("ljpt",  "l+j gen pt", 150, 0., 1500); 
   h1 = new TH1D("ljm",   "l+j gen m", 100, 0., 2000.); 
 
-
-  vector<string> levels; 
-  levels.push_back("pre"); 
-  levels.push_back("sel"); 
-
-  for (unsigned int i = 0; i < levels.size(); ++i) {
-    // -- histograms as in plotLq:
-    // -- m
-    fHists.insert(make_pair(Form("%s_m", levels[i].c_str()), 
-			    new TH1D(Form("%s_m", levels[i].c_str()), 
-				     Form("%s_m", levels[i].c_str()), 
-				     40, 0, 2000.))); 
-    setTitles(fHists[Form("%s_m", levels[i].c_str())], "m [GeV]", "Entries/bin");
-    
-    // -- st
-    fHists.insert(make_pair(Form("%s_st", levels[i].c_str()), 
-			    new TH1D(Form("%s_st", levels[i].c_str()), 
-				     Form("%s_st", levels[i].c_str()), 
-				     14, 0, 3500.))); 
-    setTitles(fHists[Form("%s_st", levels[i].c_str())], "S_{T} [GeV]", "Entries/bin");
-    
-    // -- mll
-    fHists.insert(make_pair(Form("%s_mll", levels[i].c_str()), 
-			    new TH1D(Form("%s_mll", levels[i].c_str()), 
-				     Form("%s_mll", levels[i].c_str()), 
-				     30, 0, 1500.))); 
-    setTitles(fHists[Form("%s_mll", levels[i].c_str())], "m_{l l} [GeV]", "Entries/bin");
-    
-    // -- mljetmin
-    fHists.insert(make_pair(Form("%s_mljetmin", levels[i].c_str()), 
-			    new TH1D(Form("%s_mljetmin", levels[i].c_str()), 
-				     Form("%s_mljetmin", levels[i].c_str()),
-				     15, 0, 1500.))); 
-    setTitles(fHists[Form("%s_mljetmin", levels[i].c_str())], "m_{l jet}^{min} [GeV]", "Entries/bin");
-    
-    
-    // -- pt
-    fHists.insert(make_pair(Form("%s_pt", levels[i].c_str()), 
-			    new TH1D(Form("%s_pt", levels[i].c_str()), 
-				     Form("%s_pt", levels[i].c_str()), 
-				     100, 0, 1000.))); 
-    setTitles(fHists[Form("%s_pt", levels[i].c_str())], "p_{T} [GeV]", "Entries/bin");
-
-    // -- lepton pt
-    fHists.insert(make_pair(Form("%s_l0pt", levels[i].c_str()), 
-			    new TH1D(Form("%s_l0pt", levels[i].c_str()), 
-				     Form("%s_l0pt", levels[i].c_str()), 
-				     64, 0, 1600.))); 
-    setTitles(fHists[Form("%s_l0pt", levels[i].c_str())], "p_{T}(l_{0}) [GeV]", "Entries/bin");
-
-    fHists.insert(make_pair(Form("%s_l1pt", levels[i].c_str()), 
-			    new TH1D(Form("%s_l1pt", levels[i].c_str()), 
-				     Form("%s_l1pt", levels[i].c_str()), 
-				     40, 0, 800.))); 
-    setTitles(fHists[Form("%s_l1pt", levels[i].c_str())], "p_{T}(l_{1}) [GeV]", "Entries/bin");
-
-    // -- jet pt
-    fHists.insert(make_pair(Form("%s_j0pt", levels[i].c_str()), 
-			    new TH1D(Form("%s_j0pt", levels[i].c_str()), 
-				     Form("%s_j0pt", levels[i].c_str()), 
-				     64, 0, 1600.))); 
-    setTitles(fHists[Form("%s_j0pt", levels[i].c_str())], "p_{T}(j_{0}) [GeV]", "Entries/bin");
-
-    fHists.insert(make_pair(Form("%s_j1pt", levels[i].c_str()), 
-			    new TH1D(Form("%s_j1pt", levels[i].c_str()), 
-				     Form("%s_j1pt", levels[i].c_str()), 
-				     40, 0, 800.))); 
-    setTitles(fHists[Form("%s_j1pt", levels[i].c_str())], "p_{T}(j_{1}) [GeV]", "Entries/bin");
-  }
-  
+ 
 }
 
 
@@ -995,7 +923,6 @@ void anaLq::dumpDaughters(GenParticle *pMom) {
 
 // ----------------------------------------------------------------------
 void anaLq::setupReducedTree(TTree *t) {
-  t->Branch("type",    &fRtd.type,            "type/I");
   t->Branch("w8",      &fRtd.w8,              "w8/D");
 
   t->Branch("ngen",    &fRtd.ngen,            "ngen/I");
@@ -1035,6 +962,7 @@ void anaLq::setupReducedTree(TTree *t) {
   t->Branch("phi",      fRtd.phi,             "phi[nrec]/D");
   t->Branch("lq",       fRtd.lq,              "lq[nrec]/I");
   t->Branch("tm",       fRtd.tm,              "tm[nrec]/I");
+  t->Branch("type",     fRtd.type,            "type[nrec]/I");
 
   t->Branch("lpt",      fRtd.lpt,              "lpt[nrec]/D");
   t->Branch("leta",     fRtd.leta,             "leta[nrec]/D");
@@ -1060,7 +988,6 @@ void anaLq::setupReducedTree(TTree *t) {
 // ----------------------------------------------------------------------
 void anaLq::fillRedTreeData() {
 
-  fRtd.type    = 0;
   fRtd.channel = CHANNEL; 
   fRtd.w8      = fW8;
 
@@ -1139,6 +1066,7 @@ void anaLq::fillRedTreeData() {
     fRtd.st[i]     = fLQ[i]->st; 
     fRtd.mll[i]    = fLQ[i]->mll; 
     fRtd.mljmin[i] = fLQ[i]->mljmin;
+    fRtd.type[i]   = fLQ[i]->type;
   }
 
   fRtd.nrec = fLQ.size(); 

@@ -9,6 +9,7 @@ struct lq {
   int q, tm; 
   int idxJ, idxL, idxK;
   double st, mljmin, mll;
+  int type;
 };
 
 #endif
