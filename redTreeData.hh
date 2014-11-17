@@ -1,42 +1,45 @@
 #ifndef REDTREEDATA_H
 #define REDTREEDATA_H
 
+#define NLQ 10
+
 struct redTreeData {
-  int type, channel; 
+  int channel; 
   double w8; 
 
   int ngen;
   // LQ 
-  double gm[4], gpt[4], geta[4], gphi[4];
+  double gm[NLQ], gpt[NLQ], geta[NLQ], gphi[NLQ];
   // gen-level lepton charge (q)
-  int glq[4], gtm[4]; 
+  int glq[NLQ], gtm[NLQ]; 
   // lepton + gen jet
-  double gmlj[4]; 
+  double gmlj[NLQ]; 
   // gen-level particles
-  double glpt[4], gleta[4], glphi[4], 
-    gqpt[4], gqeta[4], gqphi[4], 
-    gjpt[4], gjeta[4], gjphi[4], 
-    gkpt[4], gketa[4], gkphi[4],
-    gipt[4], gieta[4], giphi[4];
-  int gkq[4]; 
+  double glpt[NLQ], gleta[NLQ], glphi[NLQ], 
+    gqpt[NLQ], gqeta[NLQ], gqphi[NLQ], 
+    gjpt[NLQ], gjeta[NLQ], gjphi[NLQ], 
+    gkpt[NLQ], gketa[NLQ], gkphi[NLQ],
+    gipt[NLQ], gieta[NLQ], giphi[NLQ];
+  int gkq[NLQ]; 
 
   // -- reco 
   int nrec;
   // LQ
-  double m[4], pt[4], eta[4], phi[4]; 
+  double m[NLQ], pt[NLQ], eta[NLQ], phi[NLQ]; 
   // rec-level lepton charge (q)
-  int lq[4], tm[4];  
+  int lq[NLQ], tm[NLQ];  
   // reco-level particles
-  double lpt[4], leta[4], lphi[4];  // lepton
-  double jpt[4], jeta[4], jphi[4];  // jet
-  double kpt[4], keta[4], kphi[4];  // bachelor lepton k
-  int kq[4]; 
+  double lpt[NLQ], leta[NLQ], lphi[NLQ];  // lepton
+  double jpt[NLQ], jeta[NLQ], jphi[NLQ];  // jet
+  double kpt[NLQ], keta[NLQ], kphi[NLQ];  // bachelor lepton k
+  int kq[NLQ]; 
 
-  // other information
-  double st; 
-  double mll;
-  double mljmin;
-
+  // other information since this information can depend on the lq combination, it is per LQ 
+  // (this is certainly redundant for pair production ...)
+  double st[NLQ]; 
+  double mll[NLQ];
+  double mljmin[NLQ];
+  int    type[NLQ];
 };
 
 #endif

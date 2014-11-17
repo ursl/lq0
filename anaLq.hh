@@ -60,8 +60,6 @@ public:
   void genLqAnalysis();
   void genPairAnalysis();
   void genSingleAnalysis();
-  void genBgPair();
-  void genBgSingle();
 
   int  genIndex(GenParticle *); 
   int isLeptonJet(Jet *j, double deltaR = 0.3); 
@@ -145,6 +143,7 @@ public:
 
   std::string fName, fTypeName;
   double      fW8;
+  int         fType;
 
   bool        fPreselected, fGoodEvent;
   double      fST, fMll, fMljMin;

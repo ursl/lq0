@@ -448,9 +448,9 @@ void plotLq::optimizeCuts(vector<string> samples, string fname, double lumi, int
     for (unsigned int j = 0; j < mljCuts.size(); ++j) {
       for (unsigned int k = 0; k < mllCuts.size(); ++k) {
 	selpoint s; 
-	s.fLargerThan.push_back(make_pair(&fRtd.st, stCuts[i])); 
-	s.fLargerThan.push_back(make_pair(&fRtd.mljmin, mljCuts[j])); 
-	s.fLargerThan.push_back(make_pair(&fRtd.mll, mllCuts[k])); 
+	s.fLargerThan.push_back(make_pair(&fRtd.st[0], stCuts[i])); 
+	s.fLargerThan.push_back(make_pair(&fRtd.mljmin[0], mljCuts[j])); 
+	s.fLargerThan.push_back(make_pair(&fRtd.mll[0], mllCuts[k])); 
 	fSelPoints.push_back(s); 
       }
     }
@@ -593,9 +593,9 @@ void plotLq::loopFunction1() {
   
   if (fPair) {
     if (fRtd.m[0] > 0. && fRtd.m[1] > 0.) fGoodEvent = true;
-    if (fRtd.st < 685.)       fGoodEvent = false;
-    if (fRtd.mll < 150.)      fGoodEvent = false;
-    if (fRtd.mljmin < 155.) fGoodEvent = false;
+    if (fRtd.st[0] < 685.)       fGoodEvent = false;
+    if (fRtd.mll[0] < 150.)      fGoodEvent = false;
+    if (fRtd.mljmin[0] < 155.) fGoodEvent = false;
   } else {
     if (fRtd.m[0] > 0.) fGoodEvent = true;
   }
@@ -606,7 +606,7 @@ void plotLq::loopFunction1() {
   if (fGoodEvent) { 
     //    fHists[Form("st_%s", cds)]->Fill(fRtd.st); 
     //    fHists[Form("mll_%s", cds)]->Fill(fRtd.mll); 
-    fHists[Form("mljmin_%s", cds)]->Fill(fRtd.mljmin); 
+    fHists[Form("mljmin_%s", cds)]->Fill(fRtd.mljmin[0]); 
       
     for (int i = 0; i < fRtd.nrec; ++i) {
       fHists[Form("m_%s", cds)]->Fill(fRtd.m[i]); 
