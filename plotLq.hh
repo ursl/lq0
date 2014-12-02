@@ -8,7 +8,7 @@
 class plotLq: public plotClass {
 
 public :
-                 plotLq(std::string dir = "results", std::string files = "lq.files", std::string setup = "m");
+                 plotLq(std::string dir = "results", std::string files = "lq.files", std::string setup = "default");
   virtual        ~plotLq();
 
   virtual void   loadFiles(std::string afiles);
@@ -31,7 +31,11 @@ public :
   void   loopFunction2(); 
   void   loopFunction3(); 
   void   loopFunction4(); 
-  
+
+  // -- signal selection 
+  void signalSelection(); 
+
+  // -- optimization code
   void  optimizeCuts(std::vector<std::string> samples, std::string dir, double lumi = 20., int nevts = -1); 
   void  optAnalysis(int mode = 1, std::string filename = "opt.root", std::string treename = "opt_single");
   void  displayOptimization(std::string file, std::string tree); 
