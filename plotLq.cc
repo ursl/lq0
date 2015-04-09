@@ -27,7 +27,17 @@ plotLq::plotLq(string dir,  string files, string setup): plotClass(dir, files, s
 
   fLumi = 100.;
 
-  fHistFile = TFile::Open(Form("%s/plotLq.root", dir.c_str()), "RECREATE"); 
+  if (setup == "") {
+    fHistFileName = Form("plotLq.root"); 
+  } else {
+    fHistFileName = Form("plotLq-%s.root", setup.c_str()); 
+  }
+  fHistFile = TFile::Open(Form("%s/%s", dir.c_str(), fHistFileName.c_str()), "RECREATE"); 
+
+  fTexFileName = fHistFileName; 
+  replaceAll(fTexFileName, ".root", ".tex"); 
+  system(Form("/bin/rm -f %s", fTexFileName.c_str()));
+
 }
 
 
@@ -1220,6 +1230,87 @@ void plotLq::showVar(string var, string cuts, string signal, string dir) {
 
 
 // ----------------------------------------------------------------------
+void plotLq::signalSelection() {
+
+  gStyle->SetOptStat(0); 
+
+  int NBINS(100); 
+  double xlo(0.), xhi(2000.);
+  string xtitle("m(LQ) [GeV]");
+
+  // -- signal
+  TH1D *hS1 = new TH1D("hS1", "", NBINS, xlo, xhi); setFilledHist(hS1, kBlue, kBlue, 3653); 
+  TH1D *hS2 = new TH1D("hS2", "", NBINS, xlo, xhi); setFilledHist(hS2, kRed, kRed, 3635); 
+
+  TH1D *hN1 = new TH1D("hN1", "", 52, 0., 52.); setFilledHist(hN1, kBlue, kBlue, 3635); 
+  TH1D *hN2 = new TH1D("hN2", "", 52, 0., 52.); setFilledHist(hN2, kRed, kRed, 3635); 
+
+
+  TTree *t(0); 
+
+  string allCuts("tm>-1");
+
+  zone();
+  shrinkPad(0.1, 0.15); 
+
+  fTEX.open(fTexFileName.c_str(), ios::app);
+
+
+
+
+  string signal("");
+  string dir("single");
+  map<string, dataset*>::iterator ids = fDS.begin();
+  map<string, dataset*>::iterator eds = fDS.end();
+  int ibin(1); 
+  for (; ids != eds; ++ids) {
+    hS1->Reset();
+    hS2->Reset();
+    if (string::npos != ids->first.find("ttbar")) continue;
+    if (string::npos != ids->first.find("dy")) continue;
+    if (string::npos != ids->first.find("pair")) continue;
+    signal = ids->first;
+    
+    t = getTree(signal, dir);
+  
+    t->Draw("m>>hS1", Form("type==1 && %s", allCuts.c_str()), "goff");
+    t->Draw("m>>hS2", Form("type==2 && %s", allCuts.c_str()), "goff");
+
+    hN1->SetBinContent(ibin, hS1->GetSumOfWeights()); 
+    hN2->SetBinContent(ibin, hS2->GetSumOfWeights()); 
+    fTEX << formatTex(hS1->GetSumOfWeights(), Form("%s:Nsig1:val", signal.c_str()), 0) << endl;
+    fTEX << formatTex(hS2->GetSumOfWeights(), Form("%s:Nsig2:val", signal.c_str()), 0) << endl;
+
+
+    cout << "signal: " << signal << " dir: " << dir << " mass = " << fDS[signal]->fMass << "GeV, lambda = " << fDS[signal]->fLambda 
+	 << " with entries: " << t->GetEntries()
+	 << " separated into " << hS1->GetSumOfWeights() << "/" << hS2->GetSumOfWeights()
+	 << endl;
+    
+    if (hS1->GetMaximum() > hS2->GetMaximum()) {
+      hS1->Draw();
+      hS2->Draw("same");
+    } else {
+      hS2->Draw();
+      hS1->Draw("same");
+    }
+
+    ++ibin;
+    //     c0->Modified();
+    //     c0->Update();
+  }
+  fTEX.close();
+
+  hN1->Draw();
+  hN2->Draw("same");
+
+  c0->SaveAs(Form("%s/signalSelection-%s.pdf", fDirectory.c_str(), fSetup.c_str())); 
+
+}
+
+
+
+// ----------------------------------------------------------------------
 string plotLq::xfeed(string signal) {
   if (string::npos != signal.find("single")) {
     replaceAll(signal, "single", "pair"); 
@@ -1228,3 +1319,5 @@ string plotLq::xfeed(string signal) {
   }
   return signal;
 }
+
+
