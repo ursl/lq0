@@ -1,29 +1,15 @@
 # -- second 
-type=lq_pair_29,1400,1.0      xsec=5.42269565350451263E-005  file=store/lq_pair_29.root
-type=lq_pair_30,1400,2.0      xsec=9.71906758428732714E-004  file=store/lq_pair_30.root
-type=lq_pair_31,1400,3.0      xsec=4.11263045839628093E-003  file=store/lq_pair_31.root
-type=lq_pair_32,1400,0.3      xsec=4.55064751090521381E-006  file=store/lq_pair_32.root
+type=lq_pair_27,1300,3.0      xsec=3.45362496799647012E-005  file=store/lq_pair_27.root
 #
-type=lq_single_29,1400,1.0    xsec=6.41788986309529562E-006 file=store/lq_single_29.root
-type=lq_single_30,1400,2.0    xsec=8.18606106310113506E-006 file=store/lq_single_30.root
-type=lq_single_31,1400,3.0    xsec=1.51542226679954152E-005 file=store/lq_single_31.root
-type=lq_single_32,1400,0.3    xsec=6.20724310130320223E-006 file=store/lq_single_32.root
+type=lq_single_27,1300,3.0    xsec=5.90297081629942606E-003 file=store/lq_single_27.root
 # -- first down
 type=lq_pair_down_37,1400,0.30      xsec=6.1836662224961752E-006  file=store/lq_pair_down_37.root
-type=lq_pair_down_38,1400,0.03      xsec=6.3280474826979402E-006  file=store/lq_pair_down_38.root
-type=lq_pair_down_39,1400,0.50      xsec=6.1106338514005319E-006  file=store/lq_pair_down_39.root
 #
 type=lq_single_down_37,1400,0.30      xsec=1.3216925944985764E-004  file=store/lq_single_down_37.root
-type=lq_single_down_38,1400,0.03      xsec=5.6038632192981019E-007  file=store/lq_single_down_38.root
-type=lq_single_down_39,1400,0.50      xsec=7.4852497243004781E-004  file=store/lq_single_down_42.root
 # -- first up
 type=lq_pair_up_37,1400,0.30      xsec=5.6278051215946764E-006  file=store/lq_pair_up_37.root
-type=lq_pair_up_38,1400,0.03      xsec=6.3234417484954081E-006  file=store/lq_pair_up_38.root
-type=lq_pair_up_39,1400,0.50      xsec=5.2621262272975308E-006  file=store/lq_pair_up_39.root
 # 
 type=lq_single_up_37,1400,0.30      xsec=2.8454353506987648E-004  file=store/lq_single_up_37.root
-type=lq_single_up_38,1400,0.03      xsec=1.5375158025996238E-006  file=store/lq_single_up_38.root
-type=lq_single_up_39,1400,0.50      xsec=1.4479983209991967E-003  file=store/lq_single_up_39.root
 # -- background
 type=dy,-1,-1        xsec=35.9   file=store/dy.root
 type=ttbarjj,-1,-1   xsec=16.9   file=store/ttbarjj_a.root
